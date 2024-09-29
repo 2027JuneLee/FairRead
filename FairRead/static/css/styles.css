@@ -1,0 +1,175 @@
+.color-blue{
+    color: blue;
+}
+
+.color-red{
+    color: red;
+}
+
+.mybutton{
+    text-decoration: none;
+    color: black;
+    font-size: 36px;
+    background-color: rosybrown;
+    padding: 10px 30px 10px 30px;
+    border-radius: 7px;
+    border: 6px solid mistyrose;
+    transition: 0.5s;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 200;
+}
+
+.mybutton:hover{
+    background-color: burlywood;
+}
+
+.chat-container{
+    border: 1px solid rebeccapurple;
+    margin-top: 50px;
+    border-radius: 2px;
+    padding: 50px 40px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.chat-title {
+    text-align: center;
+}
+
+.chat-input {
+    display: flex;
+}
+
+.chat-input input {
+    flex-grow: 1;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    padding: 8px;
+}
+
+.chat-input button{
+    background-color: blue;
+    border-radius: 5px;
+    border: none;
+    color: white;
+    padding: 3px 8px;
+}
+
+.chat-box{
+    border-radius: 5px;
+    background-color: ghostwhite;
+    border: 1px solid blue;
+    padding: 10px 10px;
+    height: 350px;
+    display: flex;
+    flex-direction: column;
+    margin: 10px 10px;
+    overflow-y: auto;
+
+}
+
+.chat-message{
+    border-radius: 12px;
+    color: white;
+    padding: 8px 12px;
+    background-color: green;
+    max-width: 70%;
+    margin: 5px 10px;
+}
+
+.user-input{
+    border-radius: 12px;
+    color: white;
+    padding: 8px 12px;
+    background-color: mediumblue;
+    max-width: 70%;
+    margin: 5px 10px;
+    align-self: flex-end;
+    text-align: right;
+}
+
+.bot-input{
+    align-self: flex-start;
+    text-align: left;
+}
+
+.login-card{
+    max-width: 500px;
+    padding: 15px;
+}
+
+#login{
+    background: linear-gradient(0deg, rgba(127,247,249,1) 0%, rgba(232,196,119,1) 100%);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-login{
+    background-color: #d6c278;
+    border: 1px solid #b19732;
+    width: 100px;
+    width: 100%;
+    align-items: center;
+    border-radius: 30px;
+}
+
+.btn-login:hover{
+    background-color: #c2a214;
+    border: 1px solid #b19732;
+    color: white;
+}
+
+.signup{
+    margin-top: 10px;
+}
+
+.navbar{
+    background-color: ghostwhite !important;
+    padding: 10px 20px;
+    border-bottom: 2px solid #e7e7e7;
+}
+
+.hero{
+    background: url('https://plus.unsplash.com/premium_photo-1694475191764-09f8c42f7a58?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') no-repeat center center;
+    height: 100vh;
+    position:relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-size: cover;
+}
+
+.hero::before{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.2);
+}
+
+.logo-img{
+    max-width: 160px;
+}
+
+.chart-card{
+    height: 400px;
+    background-color: rgb(249, 248, 255);
+    transition: 0.5s;
+}
+
+.chart-card:hover{
+    transform: translateY(-20px);
+}
+
+/*.card-body{*/
+/*    height: 100% !important;*/
+/*}*/
+
+/*#samplePie{*/
+/*    width: 65% !important;*/
+/*    height: 90% !important;*/
+/*}*/

@@ -1,0 +1,57 @@
+{% extends "header.html" %}
+{% block chatbot %}
+
+<head>
+</head>
+<body>
+    <div class="container chat-container">
+        <h3 class="chat-title">FairRead Chat</h3>
+        <p>We will classify your news for you in the following categories:</p>
+        <div class="chat-box" id="chat-box">
+            <div class="chat-message">Hello, please copy & paste the news or attach the news in pdf or txt format:</div>
+        </div>
+        <div class="chat-input">
+            <input id="user-input">
+            <button onclick="sendMessage()">
+                <i class="bi bi-send"></i>
+            </button>
+        </div>
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+    function sendMessage(){
+        var userInput = document.getElementById("user-input").value.trim();
+        userInput.value = '';
+        document.getElementById("user-input").value = '';
+
+        var chatBox = document.getElementById("chat-box");
+        chatBox.innerHTML += "<div class='chat-message user-input'> "+ userInput +" </div>"
+
+        fetch("/get_response", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({message: userInput})
+        })
+        .then(response => response.json())
+        .then(data=>{
+            console.log(data.response)
+            chatBox.innerHTML += "<div class='chat-message bot-input'>" + data.response + "</div>";
+        })
+
+    }
+
+    var user = document.getElementById("user-input")
+    user.addEventListener('keypress', function(event){
+        if(event.key === "Enter"){
+            event.preventDefault();
+            sendMessage();
+        }
+    });
+</script>
+
+</body>
+</html>
+
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "header.html" %}
+{% block index %}
+<head>
+    <meta charset="UTF-8">
+    <title>Statistics</title>
+</head>
+<body>
+    <div class="container">
+        <h3 class="text-center mt-4 mb-5">Statistics:</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card chart-card mt-4 mt-md-0">
+                    <div class="card-body">
+                        <h4>Bias %</h4>
+                        <canvas id="sampleBar"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card chart-card mt-4 mt-md-0"">
+                    <div class="card-body">
+                        <h4>Frequent Topics</h4>
+                        <canvas class="d-block mx-auto" id="samplePie"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    chart1 = document.getElementById('sampleBar');
+    sampleBar = new Chart(chart1, {
+        type: 'bar',
+        data: {
+            labels: ["Left","Right","Unreliable","Unbiased"],
+            datasets: [{
+               label: "Percentage of Bias in News:",
+                data: [32,20,3,45]
+            }],
+        },
+    });
+
+    chart2 = document.getElementById('samplePie');
+    samplePie = new Chart(chart2, {
+        type: 'pie',
+        data: {
+            labels: ["Politics","Opinion","Kamala Harris","Gaza"],
+            datasets: [{
+               label: "Frequency in News, %",
+                data: [70,18,29,9],
+                backgroundColor: [
+                    'red'
+                ],
+            }],
+        },
+    });
+
+    chart3 = document.getElementById('sampleBar');
+    sampleBar = new Chart(chart3, {
+        type: 'bar',
+        data: {
+            labels: ["Left","Right","Unreliable","Unbiased"],
+            datasets: [{
+               label: "Percentage of Bias in News:",
+                data: [32,20,3,45]
+            }],
+        },
+    });
+
+</script>
+</body>
+</html>
+{% endblock %}
