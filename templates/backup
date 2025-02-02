@@ -1,0 +1,5 @@
+    {% if is_login %}
+        <a class="mybtn" href="{{url_for('logout')}}">Logout</a>
+    {% else %}
+        <a class="mybtn" href="{{url_for('login')}}">Login</a>
+    {% endif %}

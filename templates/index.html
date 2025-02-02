@@ -1,0 +1,212 @@
+{% extends "header.html" %}
+{% block index %}
+<head>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+    <style>
+        .hero {
+            position: relative;
+            background: url('../static/img/hero-bg.jpg') no-repeat center center;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 2;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 1;
+        }
+        .hero h1, .hero p, .hero .btn {
+            z-index: 4;
+        }
+        .hero h1 {
+            color: white;
+            font-size: 55px;
+            margin-bottom: 20px;
+        }
+        .hero p {
+            color: black;
+            font-size: 31px;
+            margin-bottom: 30px;
+        }
+        .hero .btn {
+            font-size: 20px;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 80px 0;
+            background: linear-gradient(135deg, #f8f9fa, #e3eaf3);
+        }
+        .features-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            justify-content: center;
+        }
+        .feature-box {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease-in-out;
+            position: relative;
+        }
+        .feature-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .feature-box i {
+            font-size: 40px;
+            color: #bb55d9;
+            margin-bottom: 15px;
+            display: block;
+        }
+        .feature-box h3 {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .feature-box p {
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* How to Use Section */
+        .how-to-use-section {
+            padding: 80px 0;
+            background: #ffffff;
+        }
+        .how-to-use-list {
+            position: relative;
+            counter-reset: step;
+        }
+        .step-item {
+            position: relative;
+            padding-left: 60px;
+            margin-bottom: 30px;
+        }
+        .step-item::before {
+            content: counter(step);
+            counter-increment: step;
+            position: absolute;
+            left: 15px;
+            top: 5px;
+            width: 40px;
+            height: 40px;
+            background: #007bff;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        .step-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #222;
+        }
+        .step-desc {
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero d-flex align-items-center justify-content-center text-center text-light" >
+        <div class="container">
+            <h1 class="display-3 fw-bold" data-aos="fade-up">Welcome to FairRead</h1>
+            <p class="lead" data-aos="fade-up">Your trusted platform for analyzing and validating news</p>
+            <a href="#features" class="btn btn-primary btn-lg mt-3" data-aos="fade-up">Discover Features</a>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-5 bg-light" data-aos="fade-right">
+        <div class="container text-center">
+            <div class="row">
+                <div class="col-md-6">
+                             <h2 class="fw-bold">About FairRead</h2>
+            <p class="mt-3">
+                Welcome to FairRead! FairRead is a minimalistic and simple platform where users can instantly copy and paste any news articles or submit them in PDF format, and get a quick overview of its political bias, analysis, and overall summary of the article using AI. Whether you are a political junkie, researcher, or student, FairRead can detect bias in articles of any length and topic. Additionally, FairRead stores your articles in a log, so you can access them later and analyze your political bias better.
+            </p>
+                </div>
+                                <div class="col-md-6">
+                                <img src="../static/img/hero-bg-2.png" class="img-fluid d-block mx-auto" style="width:95%;">
+
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features-section">
+        <div class="container text-center">
+            <h2 class="fw-bold mb-4" data-aos="fade-up">Features</h2>
+            <div class="features-container">
+                <div class="feature-box" data-aos="zoom-in">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <h3>Bias Verification</h3>
+                    <p>AI-powered news bias detection (left, center, right).</p>
+                </div>
+                <div class="feature-box" data-aos="zoom-in" data-aos-delay="200">
+                    <i class="fas fa-file-alt"></i>
+                    <h3>News Summary & Analysis</h3>
+                    <p>Reasoning for the bias and a summary of the article will aid your understanding of the news article.</p>
+                </div>
+                <div class="feature-box" data-aos="zoom-in" data-aos-delay="400">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <h3>User-based Analytics</h3>
+                    <p>Users can view their article history and their cumulative media bias leanings.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How to Use Section -->
+    <section id="how-to-use" class="how-to-use-section">
+        <div class="container">
+            <h2 class="fw-bold text-center mb-4" data-aos="fade-up">How to Use FairRead</h2>
+            <div class="how-to-use-list">
+                <div class="step-item" data-aos="fade-left">
+                    <h3 class="step-title">Sign Up or Log In</h3>
+                    <p class="step-desc">Create an account or log in to access the platform's features.</p>
+                </div>
+                <div class="step-item" data-aos="fade-left" data-aos-delay="200">
+                    <h3 class="step-title">Submit an Article</h3>
+                    <p class="step-desc">Upload the file or text of any news article into the input box.</p>
+                </div>
+                <div class="step-item" data-aos="fade-left" data-aos-delay="400">
+                    <h3 class="step-title">Validate News</h3>
+                    <p class="step-desc">Click "Send" to check the political bias, reasoning of the bias and summary of the article using AI-powered tools.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AOS Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 1000, // Animation duration
+            once: true // Animations happen once per page load
+        });
+    </script>
+</body>
+{% endblock %}

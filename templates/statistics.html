@@ -1,0 +1,257 @@
+{% extends "header.html" %}
+{% block statistics %}
+<head>
+    <meta charset="UTF-8">
+    <title>Statistics</title>
+    <style>
+            body{
+       background-color: #f0f2f5;
+    }
+        .chart-title {
+            font-size: 22px;
+        }
+        .stat-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 35px;
+        }
+        .stat-card .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #6872af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center mt-4 mb-5">Statistics</h2>
+  <div class="row">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3>Total Users</h3>
+                    <div class="stat-number" id="stat-total-users">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3>Active Users</h3>
+                    <div class="stat-number" id="stat-active-users">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3>Total News</h3>
+                    <div class="stat-number" id="stat-total-news">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <h3>Recent News</h3>
+                    <div class="stat-number" id="stat-recent-news">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card chart-card mt-4">
+                    <div class="card-body">
+                        <p class="text-center mb-4 chart-title">Frequencies of Using Our Chatbots in Recent 7 Days</p>
+                        <canvas id="sampleBar"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card chart-card mt-4">
+                    <div class="card-body">
+                        <p class="text-center mb-4 chart-title">Frequencies of Using Our Chatbots by Month</p>
+<canvas id="samplePie" style="max-width: 100%; max-height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-5">
+                <div class="card chart-card mt-4">
+                    <div class="card-body">
+                        <p class="text-center mb-4 chart-title">Average Bias Scores</p>
+<canvas id="biasChart" style="max-width: 100%; max-height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-5">
+                <div class="card chart-card mt-4">
+                    <div class="card-body">
+                        <p class="text-center mb-4 chart-title">User Growth Over Time</p>
+                        <canvas id="userGrowthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-5">
+                <div class="card chart-card mt-4">
+                    <div class="card-body">
+                        <p class="text-center mb-4 chart-title">Top Keywords Usage</p>
+                        <canvas id="keywordsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-5">
+                <div class="card chart-card mt-4">
+                    <div class="card-body">
+                        <p class="text-center mb-4 chart-title">Daily User Sessions</p>
+                        <canvas id="userSessionsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Mock data for chatbot usage (Last 7 Days)
+        var dates = ["2025-01-20", "2025-01-21", "2025-01-22", "2025-01-23", "2025-01-24", "2025-01-25", "2025-01-26"];
+        var counts = [15, 20, 30, 25, 40, 50, 45];
+
+        new Chart(document.getElementById('sampleBar').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Chatbot Usage',
+                    data: counts,
+                    backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    fill: true
+                }]
+            }
+        });
+
+        // Mock data for chatbot usage by month (Pie Chart)
+        var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+        var monthlyCounts = [200, 250, 300, 320, 280, 330];
+
+new Chart(document.getElementById('samplePie').getContext('2d'), {
+    type: 'pie',
+    data: {
+        labels: months,
+        datasets: [{
+            data: monthlyCounts,
+            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#8A2BE2', '#32CD32', '#FF4500']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+
+        // Mock data for Bias Scores (Doughnut Chart)
+        var biasLabels = ["Left", "Center", "Right"];
+        var biasData = [30, 50, 20];
+
+       new Chart(document.getElementById('biasChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+        labels: biasLabels,
+        datasets: [{
+            data: biasData,
+            backgroundColor: ['#007bff', '#28a745', '#dc3545']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+
+        // Mock data for User Growth Over Time (Bar Chart)
+        var userMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+        var userGrowthCounts = [100, 150, 200, 250, 300, 350];
+
+        new Chart(document.getElementById('userGrowthChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: userMonths,
+                datasets: [{
+                    label: 'User Growth',
+                    data: userGrowthCounts,
+                    backgroundColor: '#17a2b8'
+                }]
+            }
+        });
+
+        // Mock data for Top Keywords Usage (Bar Chart)
+        var keywordLabels = ["AI", "Politics", "Sports", "Technology", "Health", "Finance"];
+        var keywordCounts = [120, 90, 110, 80, 70, 50];
+
+        new Chart(document.getElementById('keywordsChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: keywordLabels,
+                datasets: [{
+                    label: 'Keyword Frequency',
+                    data: keywordCounts,
+                    backgroundColor: '#FF4500'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Mock data for Daily User Sessions (Line Chart)
+        var sessionDates = ["2025-01-20", "2025-01-21", "2025-01-22", "2025-01-23", "2025-01-24", "2025-01-25", "2025-01-26"];
+        var sessionCounts = [50, 60, 55, 70, 75, 80, 85];
+
+        new Chart(document.getElementById('userSessionsChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: sessionDates,
+                datasets: [{
+                    label: 'User Sessions',
+                    data: sessionCounts,
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    fill: true
+                }]
+            }
+        });
+                function incrementNumber(elementId, target) {
+            let count = 0;
+            const increment = Math.ceil(target / 100);
+            const interval = setInterval(() => {
+                count += increment;
+                if (count >= target) {
+                    count = target;
+                    clearInterval(interval);
+                }
+                document.getElementById(elementId).textContent = count;
+            }, 20);
+        }
+
+                incrementNumber('stat-total-users', 50);
+        incrementNumber('stat-active-users', 12);
+        incrementNumber('stat-total-news', 105);
+        incrementNumber('stat-recent-news', 40);
+
+    </script>
+</body>
+{% endblock %}

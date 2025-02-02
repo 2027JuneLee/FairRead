@@ -1,0 +1,312 @@
+{% extends "header.html" %}
+{% block chatbot %}
+<head>
+<style>
+    body{
+       background-color: #f0f2f5;
+    }
+    .chat-container {
+        max-width: 800px;
+        margin-top: 50px;
+        padding: 50px 40px;
+        border-radius: 10px;
+        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
+        background-color: #ffffff;
+    }
+
+    .chat-title {
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+
+    .chat-box {
+        background-color: #f9fdfe;
+        border: 1px solid #dcdcdc;
+        padding: 10px 10px;
+        height: 350px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .chat-message {
+        max-width: 70%;
+        border-radius: 12px;
+        color: white;
+        padding: 10px 15px;
+        background-color:#b02fbf;
+        margin: 8px 10px;
+        display: inline-block;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .user-input {
+        background-color: #3aa9ac;
+        align-self: flex-end;
+        text-align: right;
+    }
+
+    .bot-input {
+        align-self: flex-start;
+        text-align: left;
+    }
+
+    .chat-input {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .chat-input input[type="file"] {
+        display: none;
+    }
+    .chat-input label{
+        background-color:#b02fbf;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .chat-input label:hover{
+        background-color: #367a7c;
+    }
+
+
+    .chat-input input[type="text"] {
+        flex-grow: 1;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        font-size: 16px;
+        outline: none;
+        transition: border-color 0.3s ease;
+    }
+
+    .non-display {
+        display: none;
+    }
+
+    .chat-input button.upload-btn {
+        background-color:#b02fbf;
+        border: none;
+        color: white;
+        border-radius: 5px;
+        padding: 10px 15px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .chat-input button.upload-btn:hover {
+        background-color: #367a7c;
+    }
+
+    .chat-input button.send-btn {
+        background-color:#b02fbf;
+        border: none;
+        color: white;
+        border-radius: 5px;
+        padding: 10px 15px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .chat-input button.send-btn:hover {
+        background-color:
+    }
+
+    .chat-input input[type="text"]:focus {
+        border-color:#cb37dd;
+    }
+    .result-container{
+        margin-top: 50px;
+    }
+   .card {
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            background-color: #fff;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #343a40;
+        }
+        .card-text {
+            font-size: 1rem;
+            color: #6c757d;
+        }
+.placeholder-text {
+    color: #333;
+    font-weight: 500;
+}
+
+
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-6 px-5">
+                <div class="chat-container">
+                    <h3 class="chat-title">News Classifier</h3>
+                    <p class="text-center">We will classify the news for you!</p>
+                    <div class="chat-box" id="chat-box">
+                        <div class="chat-message bot-input">Hello! Please copy and paste the news or upload a PDF file. We'll display the analyzed results on the right side. </div>
+                    </div>
+                    <div class="chat-input">
+                        <label for="file-input"><i class="bi bi-paperclip"></i> Attach File</label>
+                        <input type="file" id="file-input" accept=".docx, .pdf" onchange="updateFileLabel()">
+                        <span id="file-name" style="margin-left: 10px; font-size: 14px; color: #555;"></span>
+                        <input id="user-input">
+                        <button onclick="uploadOrSendMessage()"><i class="bi bi-send-fill"></i></button>
+                    </div>
+
+                </div>
+            </div>
+            <div class="col-6 px-5">
+                <div class="result-container">
+                    <div class="card">
+                        <div class="card-title">Bias Classification</div>
+                        <p class="card-text">Bias Class: <span id="bias-class" class="placeholder-text">Not analyzed yet</span></p>
+                        <p class="card-text">Bias Scores:</p>
+                        <ul>
+                            <li>Left: <span id="left" class="placeholder-text">--%</span></li>
+                            <li>Center: <span id="center" class="placeholder-text">--%</span></li>
+                            <li>Right: <span id="right" class="placeholder-text">--%</span></li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Reason for Bias</div>
+                        <p class="card-text"><span id="bias-reason" class="placeholder-text">Analysis pending...</span></p>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">News Summary</div>
+                        <p class="card-text"><span id="news-summary" class="placeholder-text">Summary will appear here...</span></p>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Keywords</div>
+                        <p class="card-text"><span id="keywords" class="placeholder-text">Keywords will be shown here...</span></p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+<script>
+function uploadOrSendMessage() {
+    const fileInput = document.getElementById("file-input");
+    const userInput = document.getElementById("user-input").value.trim();
+    const chatBox = document.getElementById("chat-box");
+
+
+    if (fileInput.files.length > 0) {
+        showLoadingMessage(chatBox);
+        uploadFile(fileInput.files[0]);
+        fileInput.value = "";
+        document.getElementById("file-name").textContent = "";
+    }
+    else if (userInput) {
+        showLoadingMessage(chatBox);
+        sendMessage(userInput);
+        document.getElementById("user-input").value = '';
+    } else {
+        chatBox.innerHTML += "<div class='chat-message bot-input'>Please attach a file or enter a message.</div>";
+    }
+}
+
+    function showLoadingMessage(){
+        var chatbox = document.getElementById("chat-box");
+        chatbox.innerHTML +=
+        "<div class='chat-message bot-input'>Analyzing, please wait...</div>"
+    }
+
+    // for sending the pdf file to python to get the result of analysis
+    function uploadFile(file){
+        console.log("called");
+        formData = new FormData();
+        formData.append("pdf_file",file);
+
+        fetch("/upload_pdf",{
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+                var chatBox = document.getElementById("chat-box");
+                chatBox.innerHTML += "<div class='chat-message bot-input'>" + "Done Processing. Please check the right side." + "</div>";
+                updateResult(data)
+            });
+    }
+    function updateResult(data){
+        document.getElementById("bias-class").innerText = data.bias_class;
+//        document.getElementById("bias-scores").innerText = JSON.stringify(data.bias_score);
+        document.getElementById("left").innerText = data.left_score;
+        document.getElementById("center").innerText = data.center_score;
+        document.getElementById("right").innerText = data.right_score;
+        document.getElementById("bias-reason").innerText = data.reason;
+        document.getElementById("news-summary").innerText = data.summary;
+        document.getElementById("keywords").innerText = data.keywords;
+    }
+    function sendMessage(){
+        var userInput = document.getElementById("user-input").value.trim();
+        document.getElementById("user-input").value = '';
+
+        var chatBox = document.getElementById("chat-box");
+        chatBox.innerHTML += "<div class='chat-message user-input'>" + userInput + "</div>";
+
+        fetch("/get_response", {
+            method: "POST",
+            headers:{
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({message: userInput}),
+        })
+        .then(response => response.json())
+        .then(data => {
+            chatBox.innerHTML += "<div class='chat-message bot-input'>" + "Done Processing. Please check the right side." + "</div>";
+//            scrollToBottom();
+            updateResult(data);
+        })
+
+    }
+var user = document.getElementById("user-input");
+user.addEventListener('keypress', function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+
+        const fileInput = document.getElementById("file-input");
+
+        if (fileInput.files.length > 0) {
+            uploadFile(fileInput.files[0]);
+            fileInput.value = "";
+            document.getElementById("file-name").textContent = "";
+        } else {
+            sendMessage();
+        }
+    }
+});
+
+    function updateFileLabel() {
+    var fileInput = document.getElementById("file-input");
+    var fileNameDisplay = document.getElementById("file-name");
+
+    if (fileInput.files.length > 0) {
+        fileNameDisplay.textContent = fileInput.files[0].name;
+    } else {
+        fileNameDisplay.textContent = "";
+    }
+}
+
+</script>
+
+</body>
+{% endblock %}
