@@ -3,6 +3,8 @@
 <head>
 <style>
     body{
+                                                font-family: 'Playfair Display', serif;
+
        background-color: #f0f2f5;
     }
     .chat-container {
@@ -38,7 +40,7 @@
         border-radius: 12px;
         color: white;
         padding: 10px 15px;
-        background-color:#b02fbf;
+        background-color:#295F98;
         margin: 8px 10px;
         display: inline-block;
         font-size: 14px;
@@ -46,7 +48,7 @@
     }
 
     .user-input {
-        background-color: #3aa9ac;
+        background-color: #295F98;
         align-self: flex-end;
         text-align: right;
     }
@@ -65,7 +67,7 @@
         display: none;
     }
     .chat-input label{
-        background-color:#b02fbf;
+        background-color:#295F98;
         color: white;
         padding: 10px 15px;
         border-radius: 5px;
@@ -92,7 +94,7 @@
     }
 
     .chat-input button.upload-btn {
-        background-color:#b02fbf;
+        background-color:#295F98;
         border: none;
         color: white;
         border-radius: 5px;
@@ -107,7 +109,7 @@
     }
 
     .chat-input button.send-btn {
-        background-color:#b02fbf;
+        background-color:#295F98;
         border: none;
         color: white;
         border-radius: 5px;
@@ -154,7 +156,7 @@
 <body>
     <div class="container">
         <div class="row">
-            <div class="col-6 px-5">
+            <div class="col-md-6 px-5">
                 <div class="chat-container">
                     <h3 class="chat-title">News Classifier</h3>
                     <p class="text-center">We will classify the news for you!</p>
@@ -171,7 +173,7 @@
 
                 </div>
             </div>
-            <div class="col-6 px-5">
+            <div class="col-md-6 px-5">
                 <div class="result-container">
                     <div class="card">
                         <div class="card-title">Bias Classification</div>
@@ -215,7 +217,7 @@ function uploadOrSendMessage() {
         document.getElementById("file-name").textContent = "";
     }
     else if (userInput) {
-        showLoadingMessage(chatBox);
+//        showLoadingMessage(chatBox);
         sendMessage(userInput);
         document.getElementById("user-input").value = '';
     } else {
@@ -262,7 +264,7 @@ function uploadOrSendMessage() {
 
         var chatBox = document.getElementById("chat-box");
         chatBox.innerHTML += "<div class='chat-message user-input'>" + userInput + "</div>";
-
+ showLoadingMessage(chatBox);
         fetch("/get_response", {
             method: "POST",
             headers:{

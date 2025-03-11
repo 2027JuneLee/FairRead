@@ -4,6 +4,10 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
     <style>
+        body{
+                                    font-family: 'Playfair Display', serif;
+
+        }
         .hero {
             position: relative;
             background: url('../static/img/hero-bg.jpg') no-repeat center center;
@@ -29,18 +33,26 @@
         }
         .hero h1 {
             color: white;
-            font-size: 55px;
+            font-size: 65px;
             margin-bottom: 20px;
         }
         .hero p {
-            color: black;
-            font-size: 31px;
+            color: white;
+            font-size: 28px;
             margin-bottom: 30px;
         }
         .hero .btn {
+                        font-family: 'Playfair Display', serif;
+
             font-size: 20px;
             padding: 10px 20px;
+            background-color:#d6c278;
             border-radius: 5px;
+            color:white;
+            transition: 1s;
+        }
+        .hero .btn:hover {
+                 background-color:darkgoldenrod;
         }
 
         /* Features Section */
@@ -68,12 +80,13 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
         .feature-box i {
-            font-size: 40px;
-            color: #bb55d9;
+            font-size: 50px;
+            color: #d6c278;
             margin-bottom: 15px;
             display: block;
         }
         .feature-box h3 {
+            font-family: 'Playfair Display', serif;
             font-size: 22px;
             font-weight: bold;
             margin-bottom: 10px;
@@ -124,15 +137,25 @@
             font-size: 16px;
             color: #666;
         }
+        .custom-line {
+    width: 450px;
+    height: 2.7px;
+    background-color: white;
+    margin: 15px auto;
+    border-radius: 5px;
+}
+
     </style>
 </head>
 <body>
     <!-- Hero Section -->
     <section class="hero d-flex align-items-center justify-content-center text-center text-light" >
         <div class="container">
-            <h1 class="display-3 fw-bold" data-aos="fade-up">Welcome to FairRead</h1>
-            <p class="lead" data-aos="fade-up">Your trusted platform for analyzing and validating news</p>
-            <a href="#features" class="btn btn-primary btn-lg mt-3" data-aos="fade-up">Discover Features</a>
+            <h1 class="display-3" data-aos="fade-up" style="font-family: 'Playfair Display', serif; font-weight:400;">FairRead</h1>
+                                <div  data-aos="fade-up" class="custom-line"></div>
+
+            <p class="lead" data-aos="fade-up" style="font-family: 'Playfair Display', serif;">Your trusted platform for analyzing and validating news</p>
+            <a href="#features" class="btn btn-lg mt-3" data-aos="fade-up">Discover Features</a>
         </div>
     </section>
 
@@ -141,13 +164,13 @@
         <div class="container text-center">
             <div class="row">
                 <div class="col-md-6">
-                             <h2 class="fw-bold">About FairRead</h2>
-            <p class="mt-3">
+                             <h2 class="fw-bold mt-5">About FairRead</h2>
+            <p class="mt-3" style="text-align:justify;">
                 Welcome to FairRead! FairRead is a minimalistic and simple platform where users can instantly copy and paste any news articles or submit them in PDF format, and get a quick overview of its political bias, analysis, and overall summary of the article using AI. Whether you are a political junkie, researcher, or student, FairRead can detect bias in articles of any length and topic. Additionally, FairRead stores your articles in a log, so you can access them later and analyze your political bias better.
             </p>
                 </div>
                                 <div class="col-md-6">
-                                <img src="../static/img/hero-bg-2.png" class="img-fluid d-block mx-auto" style="width:95%;">
+                                <img style="width: 85%; height:400px; border-radius: 9px;" src="../static/img/herobg3.png" class="img-fluid d-block mx-auto" style="width:95%;">
 
                 </div>
             </div>
@@ -161,17 +184,17 @@
             <h2 class="fw-bold mb-4" data-aos="fade-up">Features</h2>
             <div class="features-container">
                 <div class="feature-box" data-aos="zoom-in">
-                    <i class="fa-solid fa-magnifying-glass"></i>
+<i class="bi bi-search"></i>
                     <h3>Bias Verification</h3>
                     <p>AI-powered news bias detection (left, center, right).</p>
                 </div>
                 <div class="feature-box" data-aos="zoom-in" data-aos-delay="200">
-                    <i class="fas fa-file-alt"></i>
+                <i class="bi bi-file-earmark-text"></i>
                     <h3>News Summary & Analysis</h3>
                     <p>Reasoning for the bias and a summary of the article will aid your understanding of the news article.</p>
                 </div>
                 <div class="feature-box" data-aos="zoom-in" data-aos-delay="400">
-                    <i class="fa-solid fa-chart-pie"></i>
+                <i class="bi bi-pie-chart"></i>
                     <h3>User-based Analytics</h3>
                     <p>Users can view their article history and their cumulative media bias leanings.</p>
                 </div>
@@ -196,9 +219,18 @@
                     <h3 class="step-title">Validate News</h3>
                     <p class="step-desc">Click "Send" to check the political bias, reasoning of the bias and summary of the article using AI-powered tools.</p>
                 </div>
+
+                            <a href="#features" class="mybtn mt-3 ms-md-4" data-aos="fade-up" data-aos-delay='900'>Analyze News</a>
+
             </div>
         </div>
     </section>
+    <!-- Footer Section -->
+    <footer class="footer bg-dark text-white py-4">
+        <div class="container text-center">
+            <p class="small mb-0">&copy; 2025 <strong>FairRead.</strong> All Rights Reserved.</p>
+        </div>
+    </footer>
 
     <!-- AOS Script -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
