@@ -110,24 +110,31 @@
             padding-left: 60px;
             margin-bottom: 30px;
         }
-        .step-item::before {
-            content: counter(step);
-            counter-increment: step;
-            position: absolute;
-            left: 15px;
-            top: 5px;
-            width: 40px;
-            height: 40px;
-            background: #007bff;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-        }
+.step-item {
+    position: relative;
+    padding-left: 60px;
+    margin-bottom: 30px;
+    counter-increment: step;
+}
+
+.step-item::before {
+    content: counter(step, upper-roman); /* this turns 1 → I, 2 → II, etc. */
+    position: absolute;
+    left: 10px;
+    top: 5px;
+    width: 40px;
+    height: 40px;
+    background: #007bff;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
         .step-title {
             font-size: 20px;
             font-weight: bold;

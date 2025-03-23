@@ -3,7 +3,7 @@
 <head>
     <style>
         body {
-            font-family: 'Roboto', sans-serif;
+                                    font-family: 'Playfair Display', serif;
             background-color: #f0f2f5;
         }
         .container {
@@ -172,7 +172,14 @@ pieBiasCanvas.height = 200;
                     }
                 },
                 scales: {
-                    x: { beginAtZero: true },
+    x: {
+        beginAtZero: true,
+        ticks: {
+            autoSkip: false,     // <-- Don't skip any labels
+            maxRotation: 0,     // <-- Optional: angle a bit for long labels
+            minRotation: 0,
+        }
+    },
                     y: { beginAtZero: true }
                 }
             }

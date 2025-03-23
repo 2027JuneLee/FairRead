@@ -63,6 +63,22 @@
         gap: 10px;
         align-items: center;
     }
+.input-wrapper {
+    flex-grow: 1;
+    min-width: 0;
+    position: relative;
+}
+
+#text-input-container,
+#placeholder {
+    width: 100%;
+    height: 42px; /* match your input's height */
+}
+
+#placeholder {
+    visibility: hidden;
+}
+
     .chat-input input[type="file"] {
         display: none;
     }
@@ -149,7 +165,46 @@
     color: #333;
     font-weight: 500;
 }
+#text-input-container {
+    flex-grow: 1;
+}
+#text-input-container input {
+    width: 100%;
+}
 
+.bias-distribution {
+    display: flex;
+    height: 20px;
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    background-color: #e0e0e0;
+}
+
+.bias-segment {
+    height: 100%;
+    transition: width 0.4s ease;
+}
+
+.left-segment {
+    background-color: #d9534f; /* red */
+}
+
+.center-segment {
+    background-color: #f0ad4e; /* orange */
+}
+
+.right-segment {
+    background-color: #337ab7; /* blue */
+}
+
+.bias-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #333;
+}
 
 </style>
 </head>
@@ -163,13 +218,22 @@
                     <div class="chat-box" id="chat-box">
                         <div class="chat-message bot-input">Hello! Please copy and paste the news or upload a PDF file. We'll display the analyzed results on the right side. </div>
                     </div>
-                    <div class="chat-input">
-                        <label for="file-input"><i class="bi bi-paperclip"></i> Attach File</label>
-                        <input type="file" id="file-input" accept=".docx, .pdf" onchange="updateFileLabel()">
-                        <span id="file-name" style="margin-left: 10px; font-size: 14px; color: #555;"></span>
-                        <input id="user-input">
-                        <button onclick="uploadOrSendMessage()"><i class="bi bi-send-fill"></i></button>
-                    </div>
+<div class="chat-input">
+    <label for="file-input"><i class="bi bi-paperclip"></i> Attach File</label>
+    <input type="file" id="file-input" accept=".docx, .pdf" onchange="updateFileLabel()">
+    <span id="file-name" style="margin-left: 10px; font-size: 14px; color: #555;"></span>
+
+<div class="input-wrapper">
+    <div id="text-input-container">
+        <input type="text" id="user-input">
+    </div>
+    <div id="placeholder" style="display: none;"></div>
+</div>
+
+
+    <button onclick="uploadOrSendMessage()" class="send-btn"><i class="bi bi-send-fill"></i></button>
+</div>
+
 
                 </div>
             </div>
@@ -178,12 +242,18 @@
                     <div class="card">
                         <div class="card-title">Bias Classification</div>
                         <p class="card-text">Bias Class: <span id="bias-class" class="placeholder-text">Not analyzed yet</span></p>
-                        <p class="card-text">Bias Scores:</p>
-                        <ul>
-                            <li>Left: <span id="left" class="placeholder-text">--%</span></li>
-                            <li>Center: <span id="center" class="placeholder-text">--%</span></li>
-                            <li>Right: <span id="right" class="placeholder-text">--%</span></li>
-                        </ul>
+<p class="card-text">Bias Scores:</p>
+<div class="bias-distribution">
+    <div id="left-bar" class="bias-segment left-segment"></div>
+    <div id="center-bar" class="bias-segment center-segment"></div>
+    <div id="right-bar" class="bias-segment right-segment"></div>
+</div>
+<div class="bias-labels">
+    <span>Left: <span id="left">--%</span></span>
+    <span>Center: <span id="center">--%</span></span>
+    <span>Right: <span id="right">--%</span></span>
+</div>
+
                     </div>
                     <div class="card">
                         <div class="card-title">Reason for Bias</div>
@@ -204,66 +274,93 @@
     </div>
 
 <script>
+    function scrollToBottom() {
+    const chatBox = document.getElementById("chat-box");
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
 function uploadOrSendMessage() {
     const fileInput = document.getElementById("file-input");
     const userInput = document.getElementById("user-input").value.trim();
     const chatBox = document.getElementById("chat-box");
+    const textInputContainer = document.getElementById("text-input-container");
 
+    // Always show input again when send button is clicked
+    textInputContainer.style.display = "block";
+document.getElementById("placeholder").style.display = "none";
 
     if (fileInput.files.length > 0) {
-        showLoadingMessage(chatBox);
+        const fileName = fileInput.files[0].name;
+        showLoadingMessage(`Analyzing "${fileName}", please wait...`);
         uploadFile(fileInput.files[0]);
         fileInput.value = "";
         document.getElementById("file-name").textContent = "";
-    }
-    else if (userInput) {
-//        showLoadingMessage(chatBox);
+    } else if (userInput) {
         sendMessage(userInput);
         document.getElementById("user-input").value = '';
     } else {
         chatBox.innerHTML += "<div class='chat-message bot-input'>Please attach a file or enter a message.</div>";
+        scrollToBottom();
     }
 }
 
-    function showLoadingMessage(){
-        var chatbox = document.getElementById("chat-box");
-        chatbox.innerHTML +=
-        "<div class='chat-message bot-input'>Analyzing, please wait...</div>"
-    }
+function showLoadingMessage(message = "Analyzing, please wait...") {
+    const chatbox = document.getElementById("chat-box");
+    chatbox.innerHTML += `<div class='chat-message bot-input'>${message}</div>`;
+    scrollToBottom();
+}
+
 
     // for sending the pdf file to python to get the result of analysis
-    function uploadFile(file){
-        console.log("called");
-        formData = new FormData();
-        formData.append("pdf_file",file);
+function uploadFile(file){
+    console.log("called");
+    formData = new FormData();
+    formData.append("pdf_file",file);
 
-        fetch("/upload_pdf",{
-            method: "POST",
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-                var chatBox = document.getElementById("chat-box");
-                chatBox.innerHTML += "<div class='chat-message bot-input'>" + "Done Processing. Please check the right side." + "</div>";
-                updateResult(data)
-            });
-    }
-    function updateResult(data){
-        document.getElementById("bias-class").innerText = data.bias_class;
-//        document.getElementById("bias-scores").innerText = JSON.stringify(data.bias_score);
-        document.getElementById("left").innerText = data.left_score;
-        document.getElementById("center").innerText = data.center_score;
-        document.getElementById("right").innerText = data.right_score;
-        document.getElementById("bias-reason").innerText = data.reason;
-        document.getElementById("news-summary").innerText = data.summary;
-        document.getElementById("keywords").innerText = data.keywords;
-    }
+    fetch("/upload_pdf",{
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        var chatBox = document.getElementById("chat-box");
+        chatBox.innerHTML += "<div class='chat-message bot-input'>" + "Done Processing. Please check the right side." + "</div>";
+        updateResult(data);
+        scrollToBottom();
+
+        // Show the input again
+        document.getElementById("text-input-container").style.display = "block";
+        document.getElementById("placeholder").style.display = "none";
+
+    });
+}
+
+function updateResult(data) {
+    document.getElementById("bias-class").innerText = data.bias_class;
+
+    // Update labels
+    document.getElementById("left").innerText = data.left_score + "%";
+    document.getElementById("center").innerText = data.center_score + "%";
+    document.getElementById("right").innerText = data.right_score + "%";
+
+    // Update segment widths
+    document.getElementById("left-bar").style.width = data.left_score + "%";
+    document.getElementById("center-bar").style.width = data.center_score + "%";
+    document.getElementById("right-bar").style.width = data.right_score + "%";
+
+    // Other updates
+    document.getElementById("bias-reason").innerText = data.reason;
+    document.getElementById("news-summary").innerText = data.summary;
+    document.getElementById("keywords").innerText = data.keywords;
+}
+
     function sendMessage(){
         var userInput = document.getElementById("user-input").value.trim();
         document.getElementById("user-input").value = '';
 
         var chatBox = document.getElementById("chat-box");
         chatBox.innerHTML += "<div class='chat-message user-input'>" + userInput + "</div>";
+        scrollToBottom();
  showLoadingMessage(chatBox);
         fetch("/get_response", {
             method: "POST",
@@ -275,38 +372,57 @@ function uploadOrSendMessage() {
         .then(response => response.json())
         .then(data => {
             chatBox.innerHTML += "<div class='chat-message bot-input'>" + "Done Processing. Please check the right side." + "</div>";
+            scrollToBottom();
 //            scrollToBottom();
             updateResult(data);
         })
 
     }
 var user = document.getElementById("user-input");
-user.addEventListener('keypress', function(event) {
-    if (event.key === "Enter") {
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        const fileInput = document.getElementById("file-input");
+        const userInput = document.getElementById("user-input");
+        const textInputContainer = document.getElementById("text-input-container");
+        const placeholder = document.getElementById("placeholder");
+
         event.preventDefault();
 
-        const fileInput = document.getElementById("file-input");
+        // Show text input again
+        textInputContainer.style.display = "block";
+        placeholder.style.display = "none";
 
         if (fileInput.files.length > 0) {
+            const fileName = fileInput.files[0].name;
+            showLoadingMessage(`Analyzing "${fileName}", please wait...`);
             uploadFile(fileInput.files[0]);
             fileInput.value = "";
             document.getElementById("file-name").textContent = "";
-        } else {
+        } else if (userInput && userInput.value.trim() !== "") {
             sendMessage();
         }
     }
 });
 
-    function updateFileLabel() {
+
+
+function updateFileLabel() {
     var fileInput = document.getElementById("file-input");
     var fileNameDisplay = document.getElementById("file-name");
+    var textInputContainer = document.getElementById("text-input-container");
+    var placeholder = document.getElementById("placeholder");
 
     if (fileInput.files.length > 0) {
         fileNameDisplay.textContent = fileInput.files[0].name;
+        textInputContainer.style.display = "none";
+        placeholder.style.display = "block";
     } else {
         fileNameDisplay.textContent = "";
+        textInputContainer.style.display = "block";
+        placeholder.style.display = "none";
     }
 }
+
 
 </script>
 
