@@ -296,7 +296,7 @@ document.getElementById("placeholder").style.display = "none";
         fileInput.value = "";
         document.getElementById("file-name").textContent = "";
     } else if (userInput) {
-        sendMessage(userInput);
+        sendMessage();
         document.getElementById("user-input").value = '';
     } else {
         chatBox.innerHTML += "<div class='chat-message bot-input'>Please attach a file or enter a message.</div>";
