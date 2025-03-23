@@ -361,7 +361,7 @@ function updateResult(data) {
         var chatBox = document.getElementById("chat-box");
         chatBox.innerHTML += "<div class='chat-message user-input'>" + userInput + "</div>";
         scrollToBottom();
- showLoadingMessage(chatBox);
+ showLoadingMessage();
         fetch("/get_response", {
             method: "POST",
             headers:{
