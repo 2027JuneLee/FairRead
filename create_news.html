@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create News Article</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f5f7fa;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .form-container {
+      max-width: 720px;
+      margin: 40px auto;
+      background: #ffffff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-title {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .btn-primary {
+      padding: 10px 20px;
+    }
+
+    .btn-outline-secondary {
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <div class="form-title">Add News Article</div>
+    <form method="POST">
+      <div class="mb-3">
+        <label for="title" class="form-label">Article Title</label>
+        <input name="title" type="text" class="form-control" id="title" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="link" class="form-label">Article Link</label>
+        <div class="d-flex">
+          <input name="link" type="text" class="form-control me-2" id="link" required>
+          <button type="button" class="btn btn-outline-secondary" onclick="extractText()">Extract Content</button>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="summary" class="form-label">Summary</label>
+        <textarea name="summary" class="form-control" id="summary" rows="4" required></textarea>
+      </div>
+
+      <div class="mb-4">
+        <label for="content" class="form-label">News Content</label>
+        <textarea name="content" class="form-control" id="content" rows="6" required></textarea>
+      </div>
+
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary">Submit News</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    function extractText() {
+      const link = document.getElementById('link').value;
+      fetch('/api/extract_text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ link: link })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById('content').value = data.content;
+        } else {
+          alert('Error: ' + data.error);
+        }
+      })
+      .catch(error => {
+        alert('Request failed');
+        console.error(error);
+      });
+      return false;
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

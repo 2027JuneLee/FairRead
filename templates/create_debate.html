@@ -1,0 +1,323 @@
+{% extends "header.html" %}
+{% block create_debate %}
+<head>
+  <meta charset="UTF-8">
+  <title>Create Debate</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root{
+      --brand:#d6c278;                /* gold accent */
+      --ink:#0f172a;                  /* headings */
+      --muted:#475569;                /* body */
+      --panel:rgba(255,255,255,.70);  /* glass panel */
+      --ring:linear-gradient(120deg, rgba(214,194,120,.8), rgba(255,255,255,.35));
+    }
+
+    body{
+      font-family:'Playfair Display',serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1400px 700px at 90% -10%, rgba(214,194,120,.14), transparent 40%),
+        radial-gradient(900px 500px at 0% 100%, rgba(214,194,120,.10), transparent 35%),
+        linear-gradient(180deg,#f7f8fc 0%,#eef2f7 100%);
+      min-height:100vh;
+    }
+
+    .page-wrap::before{
+      content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image:
+        linear-gradient(to right, rgba(15,23,42,.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15,23,42,.04) 1px, transparent 1px);
+      background-size:26px 26px;
+      mask-image: radial-gradient(1200px 650px at 60% 0%, #000 60%, transparent 100%);
+    }
+
+    .hero-card{
+      position:relative; z-index:1;
+      border-radius:20px;
+      padding:24px 22px;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border:1px solid rgba(15,23,42,.08);
+      box-shadow: 0 12px 28px rgba(15,23,42,.08);
+    }
+    .hero-card::before{
+      content:""; position:absolute; inset:-2px; border-radius:22px; padding:2px;
+      background: var(--ring);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite:xor; mask-composite: exclude;
+      pointer-events:none; opacity:.9;
+    }
+    .hero-title{ font-weight:800; letter-spacing:-.01em; font-size:clamp(26px,2.8vw,36px); margin:0 0 6px; }
+    .hero-sub{ color:var(--muted); font-size:15.5px; }
+
+    .create-wrap{
+      margin-top:14px;
+      display:grid; grid-template-columns:1fr auto; gap:10px;
+    }
+    .create-wrap input{
+      height:50px; border-radius:14px; border:1px solid rgba(15,23,42,.14);
+      background:#fff; color:var(--ink); padding:12px 14px; font-size:16px; outline:none;
+    }
+    .create-wrap input::placeholder{ color:#64748b; }
+    .btn-create{
+      height:50px; border-radius:14px; border:1px solid rgba(15,23,42,.08);
+      background:var(--ink); color:#fff; font-weight:700; padding:0 20px;
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .btn-create:hover{ transform:translateY(-2px); box-shadow:0 12px 22px rgba(15,23,42,.16); }
+
+    .section-title{
+      display:flex; align-items:center; gap:10px; margin:32px 0 14px;
+      font-size: clamp(18px,2vw,22px); font-weight:800; letter-spacing:-.01em;
+    }
+    .section-title .dot{
+      width:12px; height:12px; border-radius:50%;
+      background:linear-gradient(180deg, rgba(214,194,120,.8), rgba(214,194,120,.35));
+      box-shadow:0 0 0 6px rgba(214,194,120,.18);
+    }
+
+    .toolbar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:10px; }
+    .search{
+      flex:1; display:flex; align-items:center; gap:8px;
+      background:#fff; border:1px solid rgba(15,23,42,.12);
+      border-radius:12px; padding:8px 10px;
+    }
+    .search i{ color:#64748b; display:grid; place-items:center; }
+    .search input{ border:none; outline:none; background:transparent; width:100%; color:var(--ink); }
+    .sort-select{
+      border-radius:12px; border:1px solid rgba(15,23,42,.12);
+      background:#fff; color:var(--ink); padding:10px 12px;
+    }
+
+    .grid{ display:grid; gap:16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+    .debate-card{
+      position:relative; overflow:hidden;
+      border-radius:16px; background:#fff;
+      border:1px solid rgba(15,23,42,.10);
+      box-shadow:0 10px 22px rgba(15,23,42,.06);
+      transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    }
+    .debate-card:hover{ transform:translateY(-4px); box-shadow:0 18px 34px rgba(15,23,42,.10); border-color:rgba(214,194,120,.45); }
+    .glow-top{
+      position:absolute; top:-1px; left:0; right:0; height:4px;
+      background:linear-gradient(90deg, rgba(214,194,120,.85), rgba(214,194,120,.35));
+    }
+
+    .card-body{ padding:16px; }
+
+    .debate-title{ margin:10px 0 6px; font-weight:800; letter-spacing:-.01em; font-size:clamp(1.02rem,1.8vw,1.12rem); }
+    .debate-title a{ color:var(--ink); text-decoration:none; }
+    .debate-title a:hover{ text-decoration:underline; text-underline-offset:3px; }
+
+    .meta{ color:var(--muted); font-size:.92rem; display:flex; align-items:center; gap:10px; }
+    .divider{ height:1px; background:linear-gradient(90deg, transparent, rgba(15,23,42,.08), transparent); margin:10px 0; }
+
+    .btn-line{
+      border-radius:10px; border:1px solid rgba(15,23,42,.16);
+      background:#fff; color:var(--ink);
+      padding:8px 12px; font-weight:700;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    .btn-line:hover{ transform:translateY(-2px); border-color:rgba(214,194,120,.45); box-shadow:0 10px 18px rgba(15,23,42,.08); }
+
+    .card-actions{ position:absolute; top:8px; right:8px; display:flex; gap:8px; }
+    .icon-btn{
+      display:grid; place-items:center; width:36px; height:36px; border-radius:10px;
+      background:#fff; border:1px solid rgba(15,23,42,.12); color:#475569;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    .icon-btn:hover{ transform:translateY(-2px); border-color:rgba(214,194,120,.45); box-shadow:0 10px 18px rgba(214,194,120,.15); }
+
+    .tiny{ color:#64748b; font-size:.86rem; }
+  </style>
+</head>
+
+<body>
+<div class="page-wrap">
+  <div class="container py-5">
+
+    <!-- Create panel -->
+    <div class="row justify-content-center mb-4">
+      <div class="col-12 col-lg-10">
+        <div class="hero-card">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+              <h1 class="hero-title">Create a New Debate</h1>
+              <div class="hero-sub">Spark focused discussions with evidence and civility.</div>
+            </div>
+            {% if not is_admin %}
+              <span class="tiny">Only admin can create debates.</span>
+            {% endif %}
+          </div>
+
+          {% if is_admin %}
+          <form action="/create_debate" method="POST" class="create-wrap">
+            <input name="topic" type="text" class="form-control" placeholder="e.g., Should social media platforms be regulated like utilities?" required>
+            <button class="btn btn-create" type="submit"><i class="bi bi-plus-lg"></i> Create</button>
+          </form>
+          {% else %}
+          <div class="alert alert-warning mt-3 mb-0">Only admin can create debates.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Open Debates -->
+    <div class="d-flex align-items-center justify-content-between">
+      <div class="section-title">
+        <i class="bi bi-lightning-charge-fill text-warning"></i>
+        Open Debates
+      </div>
+      <div class="toolbar w-50">
+        <div class="search flex-grow-1">
+          <i class="bi bi-search"></i>
+          <input id="filterOpen" type="text" placeholder="Filter topics...">
+        </div>
+        <select id="sortOpen" class="sort-select">
+          <option value="new">Newest</option>
+          <option value="old">Oldest</option>
+          <option value="az">A → Z</option>
+          <option value="za">Z → A</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="openGrid" class="grid">
+      {% for id, topic, date in open_debates %}
+      <div class="debate-card" data-title="{{ topic|e }}" data-date="{{ date|e }}">
+        <span class="glow-top"></span>
+        <div class="card-actions">
+          <!-- View details -->
+          <a href="{{ url_for('debate_detail', debate_id=id) }}" class="icon-btn" title="View details" aria-label="View details">
+            <i class="bi bi-eye"></i>
+          </a>
+          {% if is_admin %}
+          <!-- Delete -->
+          <form action="{{ url_for('delete_debate', debate_id=id) }}" method="POST" onsubmit="return confirmDelete(event)">
+            <button type="submit" class="icon-btn" title="Delete debate" aria-label="Delete debate">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+
+        <div class="card-body">
+          <h5 class="debate-title mt-2">
+            <a href="{{ url_for('debate_detail', debate_id=id) }}">{{ topic }}</a>
+          </h5>
+          <div class="meta"><i class="bi bi-calendar-date"></i> <span>Created: {{ date }}</span></div>
+          <div class="divider"></div>
+          {% if is_admin %}
+          <form action="{{ url_for('close_debate', debate_id=id) }}" method="POST" class="mt-1">
+            <button class="btn btn-line btn-sm" type="submit"><i class="bi bi-lock"></i> Close Debate</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Closed Debates -->
+    <div class="d-flex align-items-center justify-content-between mt-4">
+      <div class="section-title">
+        <i class="bi bi-shield-lock-fill text-secondary"></i>
+        Closed Debates
+      </div>
+      <div class="toolbar w-50">
+        <div class="search flex-grow-1">
+          <i class="bi bi-search"></i>
+          <input id="filterClosed" type="text" placeholder="Filter topics...">
+        </div>
+        <select id="sortClosed" class="sort-select">
+          <option value="new">Newest</option>
+          <option value="old">Oldest</option>
+          <option value="az">A → Z</option>
+          <option value="za">Z → A</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="closedGrid" class="grid">
+      {% for id, topic, date in closed_debates %}
+      <div class="debate-card" data-title="{{ topic|e }}" data-date="{{ date|e }}">
+        <span class="glow-top"></span>
+        <div class="card-actions">
+          <!-- View details -->
+          <a href="{{ url_for('debate_detail', debate_id=id) }}" class="icon-btn" title="View details" aria-label="View details">
+            <i class="bi bi-eye"></i>
+          </a>
+          {% if is_admin %}
+          <!-- Delete -->
+          <form action="{{ url_for('delete_debate', debate_id=id) }}" method="POST" onsubmit="return confirmDelete(event)">
+            <button type="submit" class="icon-btn" title="Delete debate" aria-label="Delete debate">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+
+        <div class="card-body">
+          <h5 class="debate-title mt-2">
+            <a href="{{ url_for('debate_detail', debate_id=id) }}">{{ topic }}</a>
+          </h5>
+          <div class="meta"><i class="bi bi-calendar-date"></i> <span>Created: {{ date }}</span></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="tiny mt-3">Tip: Use the filters above to quickly find a topic.</div>
+
+  </div>
+</div>
+
+<script>
+  function confirmDelete(e){
+    if(!confirm("Delete this debate? This action cannot be undone.")){ e.preventDefault(); return false; }
+    return true;
+  }
+
+  const openGrid = document.getElementById('openGrid');
+  const filterOpen = document.getElementById('filterOpen');
+  const sortOpen = document.getElementById('sortOpen');
+
+  const closedGrid = document.getElementById('closedGrid');
+  const filterClosed = document.getElementById('filterClosed');
+  const sortClosed = document.getElementById('sortClosed');
+
+  function filterGrid(grid, query){
+    const q = (query||'').toLowerCase();
+    [...grid.children].forEach(card=>{
+      const title = (card.getAttribute('data-title')||'').toLowerCase();
+      card.style.display = title.includes(q) ? '' : 'none';
+    });
+  }
+  function sortGrid(grid, mode){
+    const cards = [...grid.children];
+    const parseDate = s => new Date(s.replace(/-/g,'/')).getTime() || 0;
+    cards.sort((a,b)=>{
+      const ta = a.getAttribute('data-title')||'';
+      const tb = b.getAttribute('data-title')||'';
+      const da = parseDate(a.getAttribute('data-date')||'');
+      const db = parseDate(b.getAttribute('data-date')||'');
+      if(mode==='az') return ta.localeCompare(tb);
+      if(mode==='za') return tb.localeCompare(ta);
+      if(mode==='old') return da - db;
+      return db - da;
+    });
+    cards.forEach(c=>grid.appendChild(c));
+  }
+
+  filterOpen?.addEventListener('input', e=> filterGrid(openGrid, e.target.value));
+  sortOpen?.addEventListener('change', e=> sortGrid(openGrid, e.target.value));
+  filterClosed?.addEventListener('input', e=> filterGrid(closedGrid, e.target.value));
+  sortClosed?.addEventListener('change', e=> sortGrid(closedGrid, e.target.value));
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+{% endblock %}

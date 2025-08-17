@@ -3,18 +3,19 @@ from textblob import TextBlob
 import requests
 from bs4 import BeautifulSoup
 from collections import Counter
-import torch # popular library for deep learning
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline # AutoTokenizer --> text preprocessing
+# import torch # popular library for deep learning
+# from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline # AutoTokenizer --> text preprocessing
 from docx import Document
 import pdfplumber
 import yake
 
+
 # API key is needed
 
-tokenizer = AutoTokenizer.from_pretrained("bucketresearch/politicalBiasBERT")
-model = AutoModelForSequenceClassification.from_pretrained("bucketresearch/politicalBiasBERT")
-
-summarizer = pipeline('summarization', model="facebook/bart-large-cnn")
+# tokenizer = AutoTokenizer.from_pretrained("bucketresearch/politicalBiasBERT")
+# model = AutoModelForSequenceClassification.from_pretrained("bucketresearch/politicalBiasBERT")
+#
+# summarizer = pipeline('summarization', model="facebook/bart-large-cnn")
 
 # function for summarizing text
 def summarize_text(text, max_length=1000, min_length=30):

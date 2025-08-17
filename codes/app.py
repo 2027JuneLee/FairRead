@@ -33,9 +33,6 @@ def extract_text_api():
 
 @app.route('/create_debate', methods=["GET","POST"])
 def create_debate():
-    is_login = False
-    if 'username' in session:
-        is_login = True
     if request.method == "POST": # When user request to create a debate
         topic = request.form.get("topic")
         today = date.today().isoformat()
@@ -54,7 +51,7 @@ def create_debate():
         closed_debates = cursor.fetchall()
     is_admin = session.get("username") == "testtest"
 
-    return render_template('create_debate.html',is_login=is_login, closed_debates=closed_debates,open_debates=open_debates,is_admin=is_admin)
+    return render_template('create_debate.html', closed_debates=closed_debates,open_debates=open_debates,is_admin=is_admin)
 
 @app.route('/delete_debate/<int:debate_id>', methods=['POST'])
 def delete_debate(debate_id):
@@ -65,55 +62,6 @@ def delete_debate(debate_id):
         cursor.execute('DELETE FROM debates WHERE id = ?', (debate_id,))
         conn.commit()
     return redirect(url_for('create_debate'))
-
-
-
-@app.route('/delete_post/<int:post_id>/<int:debate_id>', methods=['POST'])
-def delete_post(post_id, debate_id):
-    username = session.get('username')
-    if not username:
-        return redirect(url_for('login'))
-
-    with sqlite3.connect('static/database.db') as conn:
-        c = conn.cursor()
-        # Get author of the post
-        c.execute('SELECT username FROM posts WHERE id = ?', (post_id,))
-        row = c.fetchone()
-        if not row:
-            return redirect(url_for('debate_detail', debate_id=debate_id))
-        author = row[0]
-
-        is_admin = (username == 'testtest')
-        if not (is_admin or username == author):
-            abort(403)
-
-        # Delete dependent rows first, then the post
-        c.execute('DELETE FROM post_comments WHERE post_id = ?', (post_id,))
-        c.execute('DELETE FROM post_likes    WHERE post_id = ?', (post_id,))
-        c.execute('DELETE FROM posts         WHERE id = ?', (post_id,))
-        conn.commit()
-
-    return redirect(url_for('debate_detail', debate_id=debate_id))
-
-
-@app.route('/delete_news/<int:news_id>/<int:debate_id>', methods=['POST'])
-def delete_news(news_id, debate_id):
-    username = session.get('username')
-    if not username:
-        return redirect(url_for('login'))
-
-    # Only admin can delete news
-    if username != 'testtest':
-        abort(403)
-
-    with sqlite3.connect('static/database.db') as conn:
-        c = conn.cursor()
-        # Delete votes first, then the news row
-        c.execute('DELETE FROM news_votes WHERE news_id = ?', (news_id,))
-        c.execute('DELETE FROM news       WHERE id = ?', (news_id,))
-        conn.commit()
-
-    return redirect(url_for('debate_detail', debate_id=debate_id))
 
 @app.route('/close_debate/<int:debate_id>', methods=['POST'])
 def close_debate(debate_id):
@@ -179,27 +127,14 @@ def create_post(debate_id):
 @app.route('/debate/<int:debate_id>')
 def debate_detail(debate_id):
     user = session.get("username")
-    is_login = False
-    if 'username' in session:
-        is_login = True
+
     with sqlite3.connect('static/database.db') as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT id, topic, date, isClosed FROM debates WHERE id = ?', (debate_id,))
         debate = cursor.fetchone()
 
-        cursor.execute('SELECT id, username, content, timestamp FROM posts WHERE debate_id = ? ORDER BY timestamp DESC', (debate_id,))
+        cursor.execute('SELECT username, content, timestamp FROM posts WHERE debate_id = ? ORDER BY timestamp DESC', (debate_id,))
         posts = cursor.fetchall()
-
-        # Fetch likes per post
-        cursor.execute('SELECT post_id, COUNT(*) FROM post_likes GROUP BY post_id')
-        likes_dict = dict(cursor.fetchall())
-
-        # Fetch comments per post
-        cursor.execute('SELECT post_id,username,comment,timestamp FROM post_comments ORDER BY timestamp ASC')
-        all_comments = cursor.fetchall()
-        comments_dict = {}
-        for post_id, username, comment, timestamp in all_comments:
-            comments_dict.setdefault(post_id,[]).append((username, comment, timestamp))
 
         cursor.execute('''
             SELECT n.id, n.title, n.link, n.summary, n.classification, n.left, n.center, n.right,
@@ -212,58 +147,7 @@ def debate_detail(debate_id):
         ''', (user, debate_id))
         news = cursor.fetchall()
 
-    is_admin = (user == "testtest")
-    return render_template(
-        'debate_detail.html',
-        debate=debate,
-        posts=posts,
-        news=news,
-        likes_dict=likes_dict,
-        comments_dict=comments_dict,
-        current_user=user,
-        is_login=is_login,
-        is_admin=is_admin
-    )
-
-@app.route('/like_post/<int:post_id>', methods=['POST'])
-def like_post(post_id):
-    username = session.get('username')
-    if not username:
-        return redirect(url_for('login'))
-    with sqlite3.connect('static/database.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('SELECT 1 FROM post_likes WHERE post_id = ? AND username =?', (post_id, username))
-
-
-        if not cursor.fetchone():
-            cursor.execute('INSERT INTO post_likes (post_id, username, timestamp) VALUES (?, ?, ?)',
-                          (post_id, username, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-            conn.commit()
-        else:
-            cursor.execute('DELETE FROM post_likes WHERE post_id = ? AND username = ?', (post_id, username))
-            conn.commit()
-
-    cursor.execute('SELECT debate_id FROM posts WHERE id = ?', (post_id,)) # getting the current debate
-    debate_id = cursor.fetchone()[0]
-    return redirect(url_for('debate_detail', debate_id=debate_id))
-
-@app.route('/comment_post/<int:post_id>', methods=['POST'])
-def comment_post(post_id): # adding and saving comment into db
-    username = session.get('username')
-    if not username:
-        return redirect(url_for('login'))
-    comment = request.form.get('comment')
-    if comment:
-        with sqlite3.connect('static/database.db') as conn:
-            cursor = conn.cursor()
-            # Inserting what user wrote for comment into db.
-            cursor.execute('INSERT INTO post_comments  (post_id, username, comment, timestamp) VALUES (?, ?, ?, ?)',
-                           (post_id, username, comment, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-    cursor.execute('SELECT debate_id FROM posts WHERE id = ?', (post_id,)) # getting the current debate
-    debate_id = cursor.fetchone()[0]
-    return redirect(url_for('debate_detail', debate_id=debate_id)) # redirect the user to the current debate
-
-
+    return render_template('debate_detail.html', debate=debate, posts=posts, news=news)
 @app.route('/vote_news/<int:news_id>/<int:debate_id>', methods=["POST"])
 def vote_news(news_id, debate_id):
     username = session.get("username")
@@ -360,93 +244,66 @@ def profile():
 
 @app.route('/statistics')
 def statistics():
-    is_login = 'username' in session
+    is_login = False
+    if 'username' in session:
+        is_login = True
     conn = sqlite3.connect('static/database.db')
     cursor = conn.cursor()
 
+    # Fetch recent 7 days chatbot usage
     current_date = datetime.now()
     seven_days_ago = current_date - timedelta(days=7)
-
-    # Recent 7-day chatbot usage
     cursor.execute("""
-        SELECT Date(date), COUNT(*)
-        FROM Chatlog
-        WHERE Date(date) BETWEEN ? AND ?
-        GROUP BY Date(date)
+        SELECT Date(date), COUNT(*) 
+        FROM Chatlog 
+        WHERE Date(date) BETWEEN ? AND ? 
+        GROUP BY Date(date) 
         ORDER BY Date(date) ASC;
     """, (seven_days_ago.strftime('%Y-%m-%d'), current_date.strftime('%Y-%m-%d')))
     result = cursor.fetchall()
 
-    # Monthly usage
+    # Fetch chatbot usage by month
     cursor.execute("""
-        SELECT strftime('%Y-%m', date) AS month, COUNT(*)
-        FROM Chatlog
-        GROUP BY month
+        SELECT strftime('%Y-%m', date) AS month, COUNT(*) 
+        FROM Chatlog 
+        GROUP BY month 
         ORDER BY month ASC;
     """)
     monthly_result = cursor.fetchall()
 
-    # Totals
+    # Fetch total users
     cursor.execute("SELECT COUNT(*) FROM Users;")
     total_users = cursor.fetchone()[0]
 
+    # Fetch active users in the last 30 days
     thirty_days_ago = current_date - timedelta(days=30)
-    cursor.execute("SELECT COUNT(*) FROM Users WHERE recent_login >= ?",
-                   (thirty_days_ago.strftime('%Y-%m-%d %H:%M:%S'),))
+    cursor.execute("SELECT COUNT(*) FROM Users WHERE recent_login >= ?", (thirty_days_ago.strftime('%Y-%m-%d %H:%M:%S'),))
     active_users = cursor.fetchone()[0]
 
+    # Fetch total news and recent news
     cursor.execute("SELECT COUNT(*) FROM Chatlog;")
     total_news = cursor.fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM Chatlog WHERE date >= ?",
-                   (thirty_days_ago.strftime('%Y-%m-%d %H:%M:%S'),))
+    cursor.execute("SELECT COUNT(*) FROM Chatlog WHERE date >= ?", (thirty_days_ago.strftime('%Y-%m-%d %H:%M:%S'),))
     recent_news = cursor.fetchone()[0]
 
-    # --- Flatten and count keywords properly ---
-    cursor.execute("SELECT keywords FROM Chatlog;")
-    rows = cursor.fetchall()
-    counter = Counter()
-
-    for (kw_raw,) in rows:
-        if not kw_raw:
-            continue
-
-        # Try to parse list-likes first
-        items = None
-        if isinstance(kw_raw, (list, tuple, set)):
-            items = list(kw_raw)
-        else:
-            # kw_raw is likely a string
-            try:
-                parsed = ast.literal_eval(kw_raw)
-                if isinstance(parsed, (list, tuple, set)):
-                    items = list(parsed)
-                else:
-                    items = [str(parsed)]
-            except Exception:
-                # Fallback: comma-separated string
-                items = [s.strip() for s in str(kw_raw).split(',') if s.strip()]
-
-        # Items may themselves contain comma-separated chunks
-        flattened = []
-        for it in items:
-            if isinstance(it, str):
-                flattened.extend([s.strip() for s in it.split(',') if s.strip()])
-            # ignore non-strings silently
-
-        for token in flattened:
-            counter[token] += 1
-
-    top_keywords = counter.most_common(20)
-    keyword_labels = [k for k, _ in top_keywords]
-    keyword_counts = [v for _, v in top_keywords]
-
-    # Daily user sessions (past 7 days)
+    # Fetch top keywords usage
     cursor.execute("""
-        SELECT Date(recent_login), COUNT(*)
-        FROM Users
-        WHERE Date(recent_login) BETWEEN ? AND ?
-        GROUP BY Date(recent_login)
+        SELECT keywords, COUNT(*) FROM Chatlog 
+        GROUP BY keywords 
+        ORDER BY COUNT(*) DESC 
+        LIMIT 10;
+    """)
+    keyword_result = cursor.fetchall()
+    keyword_labels = [row[0] for row in keyword_result]
+    keyword_counts = [row[1] for row in keyword_result]
+
+    # Fetch daily user sessions (past 7 days)
+    cursor.execute("""
+        SELECT Date(recent_login), COUNT(*) 
+        FROM Users 
+        WHERE Date(recent_login) BETWEEN ? AND ? 
+        GROUP BY Date(recent_login) 
         ORDER BY Date(recent_login) ASC;
     """, (seven_days_ago.strftime('%Y-%m-%d'), current_date.strftime('%Y-%m-%d')))
     session_result = cursor.fetchall()
@@ -469,7 +326,6 @@ def statistics():
                            keyword_counts=keyword_counts,
                            session_dates=session_dates,
                            session_counts=session_counts)
-
 
 
 @app.route('/logout')

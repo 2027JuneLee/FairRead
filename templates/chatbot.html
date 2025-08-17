@@ -3,9 +3,8 @@
 <head>
 <style>
     body{
-                                                font-family: 'Playfair Display', serif;
-
-       background-color: #f0f2f5;
+        font-family: 'Playfair Display', serif;
+        background-color: #f0f2f5;
     }
     .chat-container {
         max-width: 800px;
@@ -14,14 +13,48 @@
         border-radius: 10px;
         box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
         background-color: #ffffff;
+        position: relative; /* for absolute-positioned button */
     }
-
     .chat-title {
         text-align: center;
         font-size: 24px;
         font-weight: bold;
         margin-bottom: 15px;
     }
+
+    /* NEW: Instructions button (top-right) */
+    .instr-btn{
+        position:absolute;
+        top:14px;
+        right:18px;
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        background:#295F98;
+        color:#fff;
+        border:none;
+        border-radius:8px;
+        padding:8px 12px;
+        font-size:14px;
+        cursor:pointer;
+        box-shadow:0 4px 10px rgba(0,0,0,.12);
+    }
+    .instr-btn:hover{ opacity:.92; }
+    .instr-btn i{ font-size:16px; }
+
+    /* link extractor bar (kept for future use if needed) */
+    .link-extractor{
+        display:flex; gap:10px; align-items:center;
+        margin-bottom:14px;
+    }
+    .link-extractor input{
+        flex:1; padding:10px 12px; border:1px solid #dcdcdc; border-radius:6px; font-size:14px;
+    }
+    .link-extractor button{
+        background-color:#295F98; color:#fff; border:none; border-radius:6px; padding:10px 14px; font-size:14px; cursor:pointer;
+        transition:opacity .2s ease;
+    }
+    .link-extractor button:disabled{ opacity:.6; cursor:not-allowed; }
 
     .chat-box {
         background-color: #f9fdfe;
@@ -34,7 +67,6 @@
         flex-direction: column;
         overflow-y: auto;
     }
-
     .chat-message {
         max-width: 70%;
         border-radius: 12px;
@@ -45,216 +77,106 @@
         display: inline-block;
         font-size: 14px;
         line-height: 1.4;
+        word-break: break-word;
     }
+    .user-input { background-color:#295F98; align-self:flex-end; text-align:right; }
+    .bot-input { align-self:flex-start; text-align:left; background:#3a7abf; }
 
-    .user-input {
-        background-color: #295F98;
-        align-self: flex-end;
-        text-align: right;
-    }
-
-    .bot-input {
-        align-self: flex-start;
-        text-align: left;
-    }
-
-    .chat-input {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-.input-wrapper {
-    flex-grow: 1;
-    min-width: 0;
-    position: relative;
-}
-
-#text-input-container,
-#placeholder {
-    width: 100%;
-    height: 42px; /* match your input's height */
-}
-
-#placeholder {
-    visibility: hidden;
-}
-
-    .chat-input input[type="file"] {
-        display: none;
-    }
+    .chat-input { display:flex; gap:10px; align-items:center; }
+    .input-wrapper { flex-grow:1; min-width:0; position:relative; }
+    #text-input-container, #placeholder { width:100%; height:42px; }
+    #placeholder { visibility:hidden; }
+    .chat-input input[type="file"] { display:none; }
     .chat-input label{
-        background-color:#295F98;
-        color: white;
-        padding: 10px 15px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
+        background-color:#295F98; color:#fff; padding:10px 15px; border-radius:5px; cursor:pointer; font-size:14px;
     }
-    .chat-input label:hover{
-        background-color: #367a7c;
+    .chat-input input[type="text"]{
+        flex-grow:1; border-radius:5px; border:1px solid #ccc; padding:10px; font-size:16px; outline:none;
+        transition:border-color .3s ease;
     }
-
-
-    .chat-input input[type="text"] {
-        flex-grow: 1;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        padding: 10px;
-        font-size: 16px;
-        outline: none;
-        transition: border-color 0.3s ease;
+    .chat-input input[type="text"]:focus{ border-color:#cb37dd; }
+    .chat-input button.upload-btn,
+    .chat-input button.send-btn{
+        background-color:#295F98; border:none; color:#fff; border-radius:5px; padding:10px 15px; font-size:14px; cursor:pointer;
     }
 
-    .non-display {
-        display: none;
+    .result-container{ margin-top:50px; }
+    .card{
+        border-radius:12px; box-shadow:0 6px 12px rgba(0,0,0,0.1); padding:20px; background:#fff; margin-bottom:20px;
     }
+    .card-title{ font-size:1.5rem; font-weight:bold; color:#343a40; }
+    .card-text{ font-size:1rem; color:#6c757d; }
+    .placeholder-text{ color:#333; font-weight:500; }
+    #text-input-container{ flex-grow:1; }
+    #text-input-container input{ width:100%; }
 
-    .chat-input button.upload-btn {
-        background-color:#295F98;
-        border: none;
-        color: white;
-        border-radius: 5px;
-        padding: 10px 15px;
-        font-size: 14px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
+    .bias-distribution{
+        display:flex; height:20px; width:100%; border-radius:10px; overflow:hidden; margin-bottom:10px; background:#e0e0e0;
     }
-
-    .chat-input button.upload-btn:hover {
-        background-color: #367a7c;
-    }
-
-    .chat-input button.send-btn {
-        background-color:#295F98;
-        border: none;
-        color: white;
-        border-radius: 5px;
-        padding: 10px 15px;
-        font-size: 14px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    .chat-input button.send-btn:hover {
-        background-color:
-    }
-
-    .chat-input input[type="text"]:focus {
-        border-color:#cb37dd;
-    }
-    .result-container{
-        margin-top: 50px;
-    }
-   .card {
-            border-radius: 12px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            background-color: #fff;
-            margin-bottom: 20px;
-        }
-        .card-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #343a40;
-        }
-        .card-text {
-            font-size: 1rem;
-            color: #6c757d;
-        }
-.placeholder-text {
-    color: #333;
-    font-weight: 500;
-}
-#text-input-container {
-    flex-grow: 1;
-}
-#text-input-container input {
-    width: 100%;
-}
-
-.bias-distribution {
-    display: flex;
-    height: 20px;
-    width: 100%;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 10px;
-    background-color: #e0e0e0;
-}
-
-.bias-segment {
-    height: 100%;
-    transition: width 0.4s ease;
-}
-
-.left-segment {
-    background-color: #d9534f; /* red */
-}
-
-.center-segment {
-    background-color: #f0ad4e; /* orange */
-}
-
-.right-segment {
-    background-color: #337ab7; /* blue */
-}
-
-.bias-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    color: #333;
-}
-
+    .bias-segment{ height:100%; transition:width .4s ease; }
+    .left-segment{ background:#d9534f; }   /* red */
+    .center-segment{ background:#f0ad4e; } /* orange */
+    .right-segment{ background:#337ab7; }  /* blue */
+    .bias-labels{ display:flex; justify-content:space-between; font-size:14px; color:#333; }
 </style>
 </head>
 <body>
     <div class="container">
         <div class="row">
+            <!-- CHAT SIDE -->
             <div class="col-md-6 px-5">
                 <div class="chat-container">
+                    <!-- NEW: Instructions button -->
+                    <button type="button" class="instr-btn" data-bs-toggle="modal" data-bs-target="#instructionsModal" aria-label="Open instructions">
+                        <i class="bi bi-info-circle"></i> How to use
+                    </button>
+
                     <h3 class="chat-title">News Classifier</h3>
                     <p class="text-center">We will classify the news for you!</p>
+
+                    <!-- Chat box -->
                     <div class="chat-box" id="chat-box">
-                        <div class="chat-message bot-input">Hello! Please copy and paste the news or upload a PDF file. We'll display the analyzed results on the right side. </div>
+                        <div class="chat-message bot-input">
+Hello! You can copy and paste the news text or link, or upload a PDF file. The analysis results will appear on the right.
+                        </div>
                     </div>
-<div class="chat-input">
-    <label for="file-input"><i class="bi bi-paperclip"></i> Attach File</label>
-    <input type="file" id="file-input" accept=".docx, .pdf" onchange="updateFileLabel()">
-    <span id="file-name" style="margin-left: 10px; font-size: 14px; color: #555;"></span>
 
-<div class="input-wrapper">
-    <div id="text-input-container">
-        <input type="text" id="user-input">
-    </div>
-    <div id="placeholder" style="display: none;"></div>
-</div>
+                    <!-- Input row -->
+                    <div class="chat-input">
+                        <label for="file-input"><i class="bi bi-paperclip"></i> Attach File</label>
+                        <input type="file" id="file-input" accept=".docx, .pdf" onchange="updateFileLabel()">
+                        <span id="file-name" style="margin-left: 10px; font-size: 14px; color: #555;"></span>
 
-
-    <button onclick="uploadOrSendMessage()" class="send-btn"><i class="bi bi-send-fill"></i></button>
-</div>
-
-
+                        <div class="input-wrapper">
+                            <div id="text-input-container">
+                                <input type="text" id="user-input" placeholder="Paste or type article text or notes here...">
+                            </div>
+                            <div id="placeholder" style="display: none;"></div>
+                        </div>
+                        <button onclick="uploadOrSendMessage()" class="send-btn"><i class="bi bi-send-fill"></i></button>
+                    </div>
                 </div>
             </div>
+
+            <!-- RESULTS SIDE -->
             <div class="col-md-6 px-5">
                 <div class="result-container">
                     <div class="card">
                         <div class="card-title">Bias Classification</div>
                         <p class="card-text">Bias Class: <span id="bias-class" class="placeholder-text">Not analyzed yet</span></p>
-<p class="card-text">Bias Scores:</p>
-<div class="bias-distribution">
-    <div id="left-bar" class="bias-segment left-segment"></div>
-    <div id="center-bar" class="bias-segment center-segment"></div>
-    <div id="right-bar" class="bias-segment right-segment"></div>
-</div>
-<div class="bias-labels">
-    <span>Left: <span id="left">--%</span></span>
-    <span>Center: <span id="center">--%</span></span>
-    <span>Right: <span id="right">--%</span></span>
-</div>
-
+                        <p class="card-text">Bias Scores:</p>
+                        <div class="bias-distribution">
+                            <div id="left-bar" class="bias-segment left-segment"></div>
+                            <div id="center-bar" class="bias-segment center-segment"></div>
+                            <div id="right-bar" class="bias-segment right-segment"></div>
+                        </div>
+                        <div class="bias-labels">
+                            <span>Left: <span id="left">--%</span></span>
+                            <span>Center: <span id="center">--%</span></span>
+                            <span>Right: <span id="right">--%</span></span>
+                        </div>
                     </div>
+
                     <div class="card">
                         <div class="card-title">Reason for Bias</div>
                         <p class="card-text"><span id="bias-reason" class="placeholder-text">Analysis pending...</span></p>
@@ -268,163 +190,177 @@
                         <p class="card-text"><span id="keywords" class="placeholder-text">Keywords will be shown here...</span></p>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
+<!-- NEW: Instructions Modal -->
+<div class="modal fade" id="instructionsModal" tabindex="-1" aria-labelledby="instructionsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:14px;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="instructionsLabel">How to use the News Classifier</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="color:#475569;">
+        <ol style="padding-left:18px; margin-bottom:12px;">
+          <li><strong>Paste text</strong> directly into the input, then click the send icon.</li>
+          <li><strong>Paste a link (URL)</strong> to a news article. We’ll fetch the content and analyze it.</li>
+          <li><strong>Upload a PDF</strong> (or DOCX). We’ll extract text and analyze it.</li>
+        </ol>
+        <p style="margin-bottom:8px;"><strong>What you’ll see on the right:</strong></p>
+        <ul style="padding-left:18px; margin-bottom:12px;">
+          <li><em>Bias Classification</em> with Left/Center/Right scores</li>
+          <li><em>Reason</em> explaining key signals</li>
+          <li><em>Summary</em> of the article</li>
+          <li><em>Keywords</em> detected</li>
+        </ul>
+        <p style="margin-bottom:8px;"><strong>Tips</strong></p>
+        <ul style="padding-left:18px;">
+          <li>For paywalled pages, paste the text or upload a PDF.</li>
+          <li>Very long documents may take longer to process.</li>
+          <li>If extraction fails, try another link or paste the text.</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" data-bs-dismiss="modal" style="background:#295F98;color:#fff;border-radius:8px;">Got it</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-    function scrollToBottom() {
-    const chatBox = document.getElementById("chat-box");
-    chatBox.scrollTop = chatBox.scrollHeight;
+/* ---------- helpers ---------- */
+function scrollToBottom() {
+  const chatBox = document.getElementById("chat-box");
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
-
-function uploadOrSendMessage() {
-    const fileInput = document.getElementById("file-input");
-    const userInput = document.getElementById("user-input").value.trim();
-    const chatBox = document.getElementById("chat-box");
-    const textInputContainer = document.getElementById("text-input-container");
-
-    // Always show input again when send button is clicked
-    textInputContainer.style.display = "block";
-document.getElementById("placeholder").style.display = "none";
-
-    if (fileInput.files.length > 0) {
-        const fileName = fileInput.files[0].name;
-        showLoadingMessage(`Analyzing "${fileName}", please wait...`);
-        uploadFile(fileInput.files[0]);
-        fileInput.value = "";
-        document.getElementById("file-name").textContent = "";
-    } else if (userInput) {
-        sendMessage();
-        document.getElementById("user-input").value = '';
-    } else {
-        chatBox.innerHTML += "<div class='chat-message bot-input'>Please attach a file or enter a message.</div>";
-        scrollToBottom();
-    }
-}
-
 function showLoadingMessage(message = "Analyzing, please wait...") {
-    const chatbox = document.getElementById("chat-box");
-    chatbox.innerHTML += `<div class='chat-message bot-input'>${message}</div>`;
-    scrollToBottom();
+  const chatbox = document.getElementById("chat-box");
+  chatbox.innerHTML += `<div class='chat-message bot-input'>${escapeHTML(message)}</div>`;
+  scrollToBottom();
+}
+function escapeHTML(str){
+  return String(str).replace(/[&<>"']/g, m =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])
+  );
 }
 
+/* ---------- existing flows (kept) ---------- */
+function uploadOrSendMessage() {
+  const fileInput = document.getElementById("file-input");
+  const userInput = document.getElementById("user-input").value.trim();
+  const chatBox = document.getElementById("chat-box");
+  const textInputContainer = document.getElementById("text-input-container");
 
-    // for sending the pdf file to python to get the result of analysis
+  textInputContainer.style.display = "block";
+  document.getElementById("placeholder").style.display = "none";
+
+  if (fileInput.files.length > 0) {
+      const fileName = fileInput.files[0].name;
+      showLoadingMessage(`Analyzing "${escapeHTML(fileName)}", please wait...`);
+      uploadFile(fileInput.files[0]);
+      fileInput.value = "";
+      document.getElementById("file-name").textContent = "";
+  } else if (userInput) {
+      sendMessage();
+      document.getElementById("user-input").value = '';
+  } else {
+      chatBox.innerHTML += "<div class='chat-message bot-input'>Please attach a file or enter a message.</div>";
+      scrollToBottom();
+  }
+}
+
 function uploadFile(file){
-    console.log("called");
-    formData = new FormData();
-    formData.append("pdf_file",file);
+  const formData = new FormData();
+  formData.append("pdf_file",file);
 
-    fetch("/upload_pdf",{
-        method: "POST",
-        body: formData
-    })
+  fetch("/upload_pdf",{ method:"POST", body:formData })
     .then(response => response.json())
     .then(data => {
-        var chatBox = document.getElementById("chat-box");
-        chatBox.innerHTML += "<div class='chat-message bot-input'>" + "Done Processing. Please check the right side." + "</div>";
-        updateResult(data);
-        scrollToBottom();
-
-        // Show the input again
-        document.getElementById("text-input-container").style.display = "block";
-        document.getElementById("placeholder").style.display = "none";
-
+      var chatBox = document.getElementById("chat-box");
+      chatBox.innerHTML += "<div class='chat-message bot-input'>Done Processing. Please check the right side.</div>";
+      updateResult(data);
+      scrollToBottom();
+      document.getElementById("text-input-container").style.display = "block";
+      document.getElementById("placeholder").style.display = "none";
     });
 }
 
 function updateResult(data) {
-    document.getElementById("bias-class").innerText = data.bias_class;
-
-    // Update labels
-    document.getElementById("left").innerText = data.left_score + "%";
-    document.getElementById("center").innerText = data.center_score + "%";
-    document.getElementById("right").innerText = data.right_score + "%";
-
-    // Update segment widths
-    document.getElementById("left-bar").style.width = data.left_score + "%";
-    document.getElementById("center-bar").style.width = data.center_score + "%";
-    document.getElementById("right-bar").style.width = data.right_score + "%";
-
-    // Other updates
-    document.getElementById("bias-reason").innerText = data.reason;
-    document.getElementById("news-summary").innerText = data.summary;
-    document.getElementById("keywords").innerText = data.keywords;
+  document.getElementById("bias-class").innerText = data.bias_class;
+  document.getElementById("left").innerText = data.left_score + "%";
+  document.getElementById("center").innerText = data.center_score + "%";
+  document.getElementById("right").innerText = data.right_score + "%";
+  document.getElementById("left-bar").style.width = data.left_score + "%";
+  document.getElementById("center-bar").style.width = data.center_score + "%";
+  document.getElementById("right-bar").style.width = data.right_score + "%";
+  document.getElementById("bias-reason").innerText = data.reason;
+  document.getElementById("news-summary").innerText = data.summary;
+  document.getElementById("keywords").innerText = data.keywords;
 }
 
-    function sendMessage(){
-        var userInput = document.getElementById("user-input").value.trim();
-        document.getElementById("user-input").value = '';
+function sendMessage(){
+  var userInput = document.getElementById("user-input").value.trim();
+  document.getElementById("user-input").value = '';
 
-        var chatBox = document.getElementById("chat-box");
-        chatBox.innerHTML += "<div class='chat-message user-input'>" + userInput + "</div>";
-        scrollToBottom();
- showLoadingMessage();
-        fetch("/get_response", {
-            method: "POST",
-            headers:{
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({message: userInput}),
-        })
-        .then(response => response.json())
-        .then(data => {
-            chatBox.innerHTML += "<div class='chat-message bot-input'>" + "Done Processing. Please check the right side." + "</div>";
-            scrollToBottom();
-//            scrollToBottom();
-            updateResult(data);
-        })
+  var chatBox = document.getElementById("chat-box");
+  chatBox.innerHTML += "<div class='chat-message user-input'>" + escapeHTML(userInput) + "</div>";
+  scrollToBottom();
+  showLoadingMessage();
 
-    }
-var user = document.getElementById("user-input");
+  fetch("/get_response", {
+      method: "POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({message: userInput}),
+  })
+  .then(response => response.json())
+  .then(data => {
+      chatBox.innerHTML += "<div class='chat-message bot-input'>Done Processing. Please check the right side.</div>";
+      scrollToBottom();
+      updateResult(data);
+  })
+}
+
 document.addEventListener('keydown', function (event) {
-    if (event.key === 'Enter') {
-        const fileInput = document.getElementById("file-input");
-        const userInput = document.getElementById("user-input");
-        const textInputContainer = document.getElementById("text-input-container");
-        const placeholder = document.getElementById("placeholder");
+  if (event.key === 'Enter') {
+      const fileInput = document.getElementById("file-input");
+      const userInput = document.getElementById("user-input");
+      const textInputContainer = document.getElementById("text-input-container");
+      const placeholder = document.getElementById("placeholder");
 
-        event.preventDefault();
+      event.preventDefault();
+      textInputContainer.style.display = "block";
+      placeholder.style.display = "none";
 
-        // Show text input again
-        textInputContainer.style.display = "block";
-        placeholder.style.display = "none";
-
-        if (fileInput.files.length > 0) {
-            const fileName = fileInput.files[0].name;
-            showLoadingMessage(`Analyzing "${fileName}", please wait...`);
-            uploadFile(fileInput.files[0]);
-            fileInput.value = "";
-            document.getElementById("file-name").textContent = "";
-        } else if (userInput && userInput.value.trim() !== "") {
-            sendMessage();
-        }
-    }
+      if (fileInput.files.length > 0) {
+          const fileName = fileInput.files[0].name;
+          showLoadingMessage(`Analyzing "${escapeHTML(fileName)}", please wait...`);
+          uploadFile(fileInput.files[0]);
+          fileInput.value = "";
+          document.getElementById("file-name").textContent = "";
+      } else if (userInput && userInput.value.trim() !== "") {
+          sendMessage();
+      }
+  }
 });
 
-
-
 function updateFileLabel() {
-    var fileInput = document.getElementById("file-input");
-    var fileNameDisplay = document.getElementById("file-name");
-    var textInputContainer = document.getElementById("text-input-container");
-    var placeholder = document.getElementById("placeholder");
+  var fileInput = document.getElementById("file-input");
+  var fileNameDisplay = document.getElementById("file-name");
+  var textInputContainer = document.getElementById("text-input-container");
+  var placeholder = document.getElementById("placeholder");
 
-    if (fileInput.files.length > 0) {
-        fileNameDisplay.textContent = fileInput.files[0].name;
-        textInputContainer.style.display = "none";
-        placeholder.style.display = "block";
-    } else {
-        fileNameDisplay.textContent = "";
-        textInputContainer.style.display = "block";
-        placeholder.style.display = "none";
-    }
+  if (fileInput.files.length > 0) {
+      fileNameDisplay.textContent = fileInput.files[0].name;
+      textInputContainer.style.display = "none";
+      placeholder.style.display = "block";
+  } else {
+      fileNameDisplay.textContent = "";
+      textInputContainer.style.display = "block";
+      placeholder.style.display = "none";
+  }
 }
-
-
 </script>
-
 </body>
 {% endblock %}

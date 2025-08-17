@@ -1,189 +1,241 @@
 {% extends "header.html" %}
 {% block profile %}
-<head>
-    <style>
-        body {
-                                    font-family: 'Playfair Display', serif;
-            background-color: #f0f2f5;
-        }
-        .container {
-            margin-top: 50px;
-        }
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            background-color: #fff;
-            margin-bottom: 20px;
-        }
-        .card-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #343a40;
-        }
-        .card-text {
-            font-size: 1rem;
-            color: #6c757d;
-        }
-        .carousel-control-next, .carousel-control-prev {
-            background-color: rgba(0, 0, 0, 0.5);
-            border-radius: 50%;
-            height: 40px;
-            width: 40px;
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        .carousel-control-prev {
-            left: -50px;
-        }
-        .carousel-control-next {
-            right: -50px;
-        }
-        .carousel-control-prev-icon,
-        .carousel-control-next-icon {
-            filter: invert(1);
-        }
-        .chart-container {
-            margin-top: 20px;
-        }
-        h2 {
-            font-size: 2rem;
-            color: #495057;
-        }
-        .carousel-buttons {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .carousel-buttons button {
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s;
-        }
-        .carousel-buttons button:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="row">
-            <!-- Profile Section -->
-            <div class="col-lg-6">
-                <h2 style="margin-bottom: 32px">Profile</h2>
-                <div class="card">
-                    <div class="card-title">User Details</div>
-                    <p class="card-text">Username: <strong>{{username}}</strong></p>
-                    <p class="card-text">Email: <strong>{{email}}</strong></p>
-                </div>
-                <div class="card">
-                    <div class="card-title">Personal Analysis</div>
-                    <p class="card-text">Total Articles: <strong>{{total_articles}}</strong></p>
-                    <div class="chart-container">
-                        <h5>Bias Distribution</h5>
-                        <canvas id="pieBias" style="width: 100px; height: auto;"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <h5>Top Topics</h5>
-                        <canvas id="barTopics"></canvas>
-                    </div>
-                </div>
-            </div>
-            <!-- Recent Classification Section -->
-            <div class="col-lg-6">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h2>Recent Classifications</h2>
-                    <div class="carousel-buttons">
-                        <button data-bs-target="#classificationCarousel" data-bs-slide="prev">Previous</button>
-                        <button data-bs-target="#classificationCarousel" data-bs-slide="next">Next</button>
-                    </div>
-                </div>
-                <div id="classificationCarousel" class="carousel slide mt-3" data-bs-ride="carousel">
-                    <div class="carousel-inner">
-                        {% for classification in recent_classification %}
-                        <div class="carousel-item {% if loop.first %}active{% endif %}">
-                            <div class="card">
-                                <div class="card-title">Bias Classification</div>
-                                <p class="card-text">Bias Class: <strong>{{classification[2]}}</strong></p>
-                                <p class="card-text">Left: <strong>{{bias_scores[loop.index0][0]}}%</strong></p>
-                                <p class="card-text">Center: <strong>{{bias_scores[loop.index0][1]}}%</strong></p>
-                                <p class="card-text">Right: <strong>{{bias_scores[loop.index0][2]}}%</strong></p>
-                            </div>
-                            <div class="card">
-                                <div class="card-title">Reason for Bias</div>
-                                <p class="card-text">{{classification[5]}}</p>
-                            </div>
-                            <div class="card">
-                                <div class="card-title">News Summary</div>
-                                <p class="card-text">{{classification[4]}}</p>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
+
+<style>
+  :root{
+    --ink:#0f172a;
+    --muted:#64748b;
+    --brand:#6366f1;      /* indigo accent */
+    --panel:rgba(255,255,255,.9);
+  }
+
+  body{
+    font-family:'Playfair Display',serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 90% -10%, rgba(99,102,241,.12), transparent 40%),
+      radial-gradient(900px 520px at 0% 100%, rgba(99,102,241,.10), transparent 35%),
+      linear-gradient(180deg,#f7f8fc 0%,#eef2f7 100%);
+    min-height:100vh;
+  }
+
+  .page-wrap{ padding: 28px 0 48px; }
+
+  /* Header / Hero */
+  .hero{
+    border-radius: 18px;
+    background: var(--panel);
+    border:1px solid rgba(15,23,42,.08);
+    box-shadow: 0 12px 28px rgba(15,23,42,.10);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    padding: 20px 22px;
+    margin-bottom: 18px;
+  }
+  .hero h1{
+    margin:0; font-weight:800; letter-spacing:-.01em;
+    font-size: clamp(22px,2.4vw,28px);
+  }
+  .hero-sub{ color:var(--muted); }
+
+  /* Stat chips */
+  .stat-chip{
+    display:flex; align-items:center; gap:10px;
+    border-radius: 14px; padding:10px 12px;
+    background:#fff; border:1px solid rgba(15,23,42,.10);
+    font-weight:700; color:#0f172a;
+  }
+  .stat-chip i{ color:var(--brand); }
+
+  /* Card */
+  .card-fr{
+    border-radius:18px; background:#fff; border:1px solid rgba(15,23,42,.08);
+    box-shadow:0 10px 24px rgba(15,23,42,.08); padding:16px 18px; margin-bottom:16px;
+  }
+  .card-head{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;
+  }
+  .card-title{
+    margin:0; font-size:1.1rem; font-weight:800; letter-spacing:-.01em;
+  }
+  .muted{ color:var(--muted); }
+
+  /* Chart sizing */
+  .chart-box{
+    position:relative; width:100%;
+    border:1px dashed rgba(15,23,42,.08);
+    border-radius:12px; padding:10px; background:#fbfcff;
+  }
+  .h-220{ height:220px; }
+  .h-260{ height:260px; }
+
+  /* Carousel controls (button-style) */
+  .carousel-controls .btn{
+    border-radius:12px; border:1px solid rgba(15,23,42,.16);
+    background:#fff; color:#0f172a; font-weight:600;
+  }
+  .carousel-controls .btn:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(15,23,42,.08);
+  }
+
+  /* Pills for bias numbers */
+  .pill{
+    display:inline-flex; align-items:center; gap:8px;
+    border-radius:999px; padding:6px 10px; font-weight:700; font-size:.9rem;
+    border:1px solid rgba(15,23,42,.12); background:#fff; color:#0f172a;
+  }
+
+  .divider{ height:1px; background:linear-gradient(90deg,transparent,rgba(15,23,42,.12),transparent); margin:10px 0; }
+</style>
+
+<div class="container page-wrap">
+
+
+
+  <div class="row g-3">
+    <!-- Left Column -->
+    <div class="col-lg-6">
+      <div class="card-fr">
+        <div class="card-head">
+          <h3 class="card-title"><i class="bi bi-activity me-2"></i>Bias Distribution</h3>
+          <span class="muted">Average across your submissions</span>
         </div>
+        <div class="chart-box h-220">
+          <canvas id="pieBias"></canvas>
+        </div>
+        <div class="mt-2 d-flex flex-wrap gap-2">
+          <span class="pill"><i class="bi bi-circle-half"></i> Left: {{ left_avg|round(1) }}%</span>
+          <span class="pill"><i class="bi bi-dash-circle"></i> Center: {{ center_avg|round(1) }}%</span>
+          <span class="pill"><i class="bi bi-bullseye"></i> Right: {{ right_avg|round(1) }}%</span>
+        </div>
+      </div>
+
+      <div class="card-fr">
+        <div class="card-head">
+          <h3 class="card-title"><i class="bi bi-tags me-2"></i>Top Topics</h3>
+          <span class="muted">Most frequent keywords</span>
+        </div>
+        <div class="chart-box h-260">
+          <canvas id="barTopics"></canvas>
+        </div>
+      </div>
     </div>
-    <script>
-        const leftAvg = {{left_avg}};
-        const centerAvg = {{center_avg}};
-        const rightAvg = {{right_avg}};
 
-        const pieBiasCanvas = document.getElementById('pieBias');
-pieBiasCanvas.width = 200;
-pieBiasCanvas.height = 200;
+    <!-- Right Column -->
+    <div class="col-lg-6">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h3 class="m-0 card-title"><i class="bi bi-clock-history me-2"></i>Recent Classifications</h3>
+        <div class="carousel-controls d-flex gap-2">
+          <button class="btn btn-sm" data-bs-target="#classificationCarousel" data-bs-slide="prev">
+            <i class="bi bi-chevron-left"></i> Prev
+          </button>
+          <button class="btn btn-sm" data-bs-target="#classificationCarousel" data-bs-slide="next">
+            Next <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
 
-        const ctx = document.getElementById('pieBias').getContext('2d');
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['Left Bias', 'Center Bias', 'Right Bias'],
-                datasets: [{
-                    data: [leftAvg, centerAvg, rightAvg],
-                    backgroundColor: ['#007bff', '#28a745', '#dc3545']
-                }]
-            }
-        });
+      <div id="classificationCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="7000">
+        <div class="carousel-inner">
+          {% for classification in recent_classification %}
+          <div class="carousel-item {% if loop.first %}active{% endif %}">
+            <div class="card-fr">
+              <div class="card-head">
+                <h4 class="card-title"><i class="bi bi-bullseye me-2"></i>Bias Classification</h4>
+                <span class="muted">{{ classification[0] }}</span>
+              </div>
+              <div class="mb-2">
+                <span class="pill"><i class="bi bi-check2-circle"></i> Class: <strong>{{ classification[2] }}</strong></span>
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <span class="pill">Left: <strong>{{ bias_scores[loop.index0][0] }}%</strong></span>
+                <span class="pill">Center: <strong>{{ bias_scores[loop.index0][1] }}%</strong></span>
+                <span class="pill">Right: <strong>{{ bias_scores[loop.index0][2] }}%</strong></span>
+              </div>
+              <div class="divider"></div>
+              <div class="mb-2">
+                <h6 class="mb-1"><i class="bi bi-lightbulb"></i> Reason</h6>
+                <div class="muted" style="white-space:pre-wrap">{{ classification[5] }}</div>
+              </div>
+              <div class="divider"></div>
+              <div>
+                <h6 class="mb-1"><i class="bi bi-journal-text"></i> Summary</h6>
+                <div class="muted" style="white-space:pre-wrap">{{ classification[4] }}</div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
 
-        const topTopics = ['Donald Trump', 'Joe Biden', 'Podcast', 'Presidential Campaign', 'Fight'];
-        const topicData = [30, 20, 10, 5, 2];
-        const ctx2 = document.getElementById('barTopics').getContext('2d');
-        new Chart(ctx2, {
-            type: 'bar',
-            data: {
-                labels: topTopics,
-                datasets: [{
-                    data: topicData,
-                    backgroundColor: '#17a2b8'
-                }]
-            },
-            options: {
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-    x: {
-        beginAtZero: true,
-        ticks: {
-            autoSkip: false,     // <-- Don't skip any labels
-            maxRotation: 0,     // <-- Optional: angle a bit for long labels
-            minRotation: 0,
-        }
+    </div>
+  </div>
+</div>
+
+<script>
+  // Inputs from server
+  const leftAvg   = {{ left_avg }};
+  const centerAvg = {{ center_avg }};
+  const rightAvg  = {{ right_avg }};
+
+  // --- PIE (Bias Distribution) ---
+  const pieCtx = document.getElementById('pieBias').getContext('2d');
+  new Chart(pieCtx, {
+    type: 'pie',
+    data: {
+      labels: ['Left', 'Center', 'Right'],
+      datasets: [{
+        data: [leftAvg, centerAvg, rightAvg],
+        backgroundColor: ['#3b82f6','#f59e0b','#ef4444'],
+        borderColor: '#ffffff',
+        borderWidth: 2
+      }]
     },
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-    </script>
-</body>
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,  // <-- honors the .h-220 height
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 14 } },
+        tooltip: { mode: 'index', intersect: false }
+      }
+    }
+  });
+
+  // --- BAR (Top Topics) ---
+  // Replace with your real top keywords if you have them available in template
+  const topTopics = ['Donald Trump', 'Joe Biden', 'Podcast', 'Presidential Campaign', 'Fight'];
+  const topicData = [30, 20, 10, 5, 2];
+
+  const barCtx = document.getElementById('barTopics').getContext('2d');
+  new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: topTopics,
+      datasets: [{
+        label: 'Mentions',
+        data: topicData,
+        backgroundColor: '#10b981'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,   // <-- honors the .h-260 height
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        x: {
+          ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 },
+          grid: { display:false }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color:'rgba(15,23,42,.08)' }
+        }
+      }
+    }
+  });
+</script>
+
 {% endblock %}

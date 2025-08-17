@@ -1,0 +1,116 @@
+{% extends "header.html" %}
+{% block create_debate %}
+<head>
+  <meta charset="UTF-8">
+  <title>Create Debate</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+  body {
+    background-color: #f4f6f8;
+    font-family: 'Inter', sans-serif;
+  }
+  .section-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 10px;
+    margin-top: 40px;
+    margin-bottom: 20px;
+  }
+  .debate-card {
+    border-left: 4px solid #0d6efd;
+    background-color: #fff;
+    transition: box-shadow 0.3s;
+    position: relative;
+    z-index: 1;
+  }
+  .debate-card:hover {
+    box-shadow: 0 0 0.75rem rgba(0, 0, 0, 0.1);
+  }
+  .closed-card {
+    border-left-color: #6c757d;
+  }
+  .form-control::placeholder {
+    color: #adb5bd;
+  }
+  .btn-close {
+    z-index: 10;
+    position: relative;
+  }
+
+  </style>
+</head>
+<body>
+<!-- Inside body container -->
+<div class="container py-5">
+
+  <div class="row justify-content-center mb-4">
+    <div class="col-lg-8">
+      <h1 class="text-center fw-bold mb-3">Create a New Debate</h1>
+      {% if is_admin %}
+      <form action="/create_debate" method="POST" class="d-flex gap-3">
+        <input name="topic" type="text" class="form-control shadow-sm" placeholder="Enter debate topic..." required>
+        <button class="btn btn-dark px-4" type="submit">Create</button>
+      </form>
+      {% else %}
+      <div class="alert alert-warning text-center">Only admin can create debates.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="section-title">Open Debates</div>
+  <div class="row g-4">
+    {% for id, topic, date in open_debates %}
+<div class="col-md-6">
+  <div class="card debate-card shadow-sm p-3 position-relative">
+    {% if is_admin %}
+    <form action="{{ url_for('delete_debate', debate_id=id) }}" method="POST" class="position-absolute top-0 end-0 mt-2 me-2">
+      <button type="submit" class="btn-close" aria-label="Delete"></button>
+    </form>
+    {% endif %}
+    <h5 class="fw-semibold mb-2">
+      <a href="{{ url_for('debate_detail', debate_id=id) }}" class="text-decoration-none text-dark">
+        {{ topic }}
+      </a>
+    </h5>
+    <div class="text-muted small mb-3">Created: {{ date }}</div>
+    {% if is_admin %}
+    <form action="{{ url_for('close_debate', debate_id=id) }}" method="POST">
+      <button class="btn btn-outline-secondary btn-sm">Close Debate</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+    {% endfor %}
+  </div>
+
+  <div class="section-title">Closed Debates</div>
+  <div class="row g-4">
+    {% for id, topic, date in closed_debates %}
+<div class="col-md-6">
+  <div class="card debate-card shadow-sm p-3 position-relative">
+    {% if is_admin %}
+    <form action="{{ url_for('delete_debate', debate_id=id) }}" method="POST" class="position-absolute top-0 end-0 mt-2 me-2">
+      <button type="submit" class="btn-close" aria-label="Delete"></button>
+    </form>
+    {% endif %}
+    <h5 class="fw-semibold mb-2">
+      <a href="{{ url_for('debate_detail', debate_id=id) }}" class="text-decoration-none text-dark">
+        {{ topic }}
+      </a>
+    </h5>
+    <div class="text-muted small mb-3">Created: {{ date }}</div>
+
+  </div>
+</div>
+
+    {% endfor %}
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+{% endblock %}

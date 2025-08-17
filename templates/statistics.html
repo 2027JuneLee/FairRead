@@ -1,262 +1,277 @@
 {% extends "header.html" %}
 {% block statistics %}
-<head>
-    <meta charset="UTF-8">
-    <title>Statistics</title>
-    <style>
-            body{
-                                        font-family: 'Playfair Display', serif;
 
-       background-color: #f0f2f5;
-    }
-        .chart-title {
-            font-size: 22px;
-        }
-            .stat-card h3{
-                font-size:23px;
-            }
-        .stat-card {
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 35px;
-        }
-        .stat-card .stat-number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #6872af;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2 class="text-center mt-4 mb-5">Statistics</h2>
-  <div class="row">
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <h3>Total Users</h3>
-                    <div class="stat-number" id="stat-total-users">0</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <h3>Active Users</h3>
-                    <div class="stat-number" id="stat-active-users">0</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <h3>Total News</h3>
-                    <div class="stat-number" id="stat-total-news">0</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <h3>Recent News</h3>
-                    <div class="stat-number" id="stat-recent-news">0</div>
-                </div>
-            </div>
-        </div>
+<style>
+  :root{
+    --ink:#0f172a;
+    --muted:#64748b;
+    --brand:#6366f1;         /* indigo accent */
+    --panel:rgba(255,255,255,.9);
+  }
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card chart-card mt-4">
-                    <div class="card-body">
-                        <p class="text-center mb-4 chart-title">Frequencies of Using Chatbots in Recent 7 Days</p>
-                        <canvas id="sampleBar"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card chart-card mt-4">
-                    <div class="card-body">
-                        <p class="text-center mb-4 chart-title">Frequencies of Using Our Chatbots by Month</p>
-<canvas id="samplePie" style="max-width: 100%; max-height: 300px;"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 mt-5">
-                <div class="card chart-card mt-4">
-                    <div class="card-body">
-                        <p class="text-center mb-4 chart-title">Average Bias Scores</p>
-<canvas id="biasChart" style="max-width: 100%; max-height: 300px;"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 mt-5">
-                <div class="card chart-card mt-4">
-                    <div class="card-body">
-                        <p class="text-center mb-4 chart-title">User Growth Over Time</p>
-                        <canvas id="userGrowthChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 mt-5 mb-5">
-                <div class="card chart-card mt-4">
-                    <div class="card-body">
-                        <p class="text-center mb-4 chart-title">Top Keywords Usage</p>
-                        <canvas id="keywordsChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 mt-5 mb-5">
-                <div class="card chart-card mt-4">
-                    <div class="card-body">
-                        <p class="text-center mb-4 chart-title">Daily User Sessions</p>
-                        <canvas id="userSessionsChart"></canvas>
-                    </div>
-                </div>
-            </div>
+  body{
+    font-family:'Playfair Display',serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 90% -10%, rgba(99,102,241,.10), transparent 40%),
+      radial-gradient(900px 520px at 0% 100%, rgba(99,102,241,.08), transparent 35%),
+      linear-gradient(180deg,#f7f8fc 0%,#eef2f7 100%);
+    min-height:100vh;
+  }
+
+  .page-wrap{ padding:28px 0 48px; }
+  .hero{
+    border-radius:18px; background:var(--panel);
+    border:1px solid rgba(15,23,42,.08);
+    box-shadow:0 12px 28px rgba(15,23,42,.10);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    padding:20px 22px; margin-bottom:18px;
+  }
+  .hero h1{ margin:0; font-weight:800; letter-spacing:-.01em; font-size:clamp(22px,2.6vw,30px); }
+  .hero-sub{ color:var(--muted); }
+
+  .kpi{
+    display:flex; align-items:center; gap:12px;
+    border-radius:16px; padding:16px; background:#fff;
+    border:1px solid rgba(15,23,42,.08);
+    box-shadow:0 10px 24px rgba(15,23,42,.08);
+  }
+  .kpi i{
+    display:grid; place-items:center; width:42px; height:42px; border-radius:12px;
+    background:linear-gradient(180deg, rgba(99,102,241,.16), rgba(99,102,241,.06));
+    color:var(--brand);
+    border:1px solid rgba(99,102,241,.35);
+  }
+  .kpi .label{ color:var(--muted); font-weight:600; font-size:.96rem; }
+  .kpi .number{ font-size:1.6rem; font-weight:800; letter-spacing:-.01em; }
+
+  .card-fr{
+    border-radius:18px; background:#fff; border:1px solid rgba(15,23,42,.08);
+    box-shadow:0 10px 24px rgba(15,23,42,.08); padding:16px 18px; margin-bottom:16px;
+  }
+  .card-head{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;
+  }
+  .card-title{ margin:0; font-size:1.06rem; font-weight:800; letter-spacing:-.01em; }
+  .muted{ color:var(--muted); }
+
+  .chart-box{
+    position:relative; width:100%;
+    border:1px dashed rgba(15,23,42,.08);
+    border-radius:12px; padding:10px; background:#fbfcff;
+  }
+  .h-240{ height:240px; }
+  .h-260{ height:260px; }
+  .h-280{ height:280px; }
+  .divider{ height:1px; background:linear-gradient(90deg,transparent,rgba(15,23,42,.12),transparent); margin:10px 0; }
+</style>
+
+<div class="container page-wrap">
+
+  <!-- KPIs -->
+  <div class="row g-3 mb-2">
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="kpi">
+        <i class="bi bi-people-fill"></i>
+        <div>
+          <div class="label">Total Users</div>
+          <div class="number" id="stat-total-users">0</div>
         </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="kpi">
+        <i class="bi bi-person-check-fill"></i>
+        <div>
+          <div class="label">Active Users (30d)</div>
+          <div class="number" id="stat-active-users">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="kpi">
+        <i class="bi bi-newspaper"></i>
+        <div>
+          <div class="label">Total News</div>
+          <div class="number" id="stat-total-news">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="kpi">
+        <i class="bi bi-lightning-charge-fill"></i>
+        <div>
+          <div class="label">Recent News (30d)</div>
+          <div class="number" id="stat-recent-news">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card-fr">
+        <div class="card-head">
+          <h3 class="card-title"><i class="bi bi-bar-chart-line me-2"></i>Chatbot Usage (Last 7 Days)</h3>
+          <span class="muted">Daily requests</span>
+        </div>
+        <div class="chart-box h-260">
+          <canvas id="usage7d"></canvas>
+        </div>
+      </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // Mock data for chatbot usage (Last 7 Days)
-        var dates = ["2025-01-20", "2025-01-21", "2025-01-22", "2025-01-23", "2025-01-24", "2025-01-25", "2025-01-26"];
-        var counts = [15, 20, 30, 25, 40, 50, 45];
+    <div class="col-lg-6">
+      <div class="card-fr">
+        <div class="card-head">
+          <h3 class="card-title"><i class="bi bi-pie-chart me-2"></i>Monthly Chatbot Usage</h3>
+          <span class="muted">By month</span>
+        </div>
+        <div class="chart-box h-260">
+          <canvas id="usageMonthly"></canvas>
+        </div>
+      </div>
+    </div>
 
-        new Chart(document.getElementById('sampleBar').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [{
-                    label: 'Chatbot Usage',
-                    data: counts,
-                    backgroundColor: 'rgba(0, 123, 255, 0.5)',
-                    borderColor: 'rgba(0, 123, 255, 1)',
-                    fill: true
-                }]
-            }
-        });
+    <div class="col-lg-6">
+      <div class="card-fr">
+        <div class="card-head">
+          <h3 class="card-title"><i class="bi bi-graph-up-arrow me-2"></i>User Growth</h3>
+          <span class="muted">Accounts over time</span>
+        </div>
+        <div class="chart-box h-280">
+          <canvas id="userGrowthChart"></canvas>
+        </div>
+      </div>
+    </div>
 
-        // Mock data for chatbot usage by month (Pie Chart)
-        var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-        var monthlyCounts = [200, 250, 300, 320, 280, 330];
+    <div class="col-lg-6">
+      <div class="card-fr">
+        <div class="card-head">
+          <h3 class="card-title"><i class="bi bi-tags me-2"></i>Top Keywords</h3>
+          <span class="muted">Most frequent</span>
+        </div>
+        <div class="chart-box h-280">
+          <canvas id="keywordsChart"></canvas>
+        </div>
+      </div>
+    </div>
 
-new Chart(document.getElementById('samplePie').getContext('2d'), {
+    <div class="col-lg-6">
+      <div class="card-fr">
+        <div class="card-head">
+          <h3 class="card-title"><i class="bi bi-activity me-2"></i>Daily User Sessions</h3>
+          <span class="muted">Last 7 days</span>
+        </div>
+        <div class="chart-box h-240">
+          <canvas id="userSessionsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card-fr">
+        <div class="card-head">
+          <h3 class="card-title"><i class="bi bi-bullseye me-2"></i>Average Bias Scores</h3>
+          <span class="muted">Distribution</span>
+        </div>
+        <div class="chart-box h-240">
+          <canvas id="biasChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const totalUsers   = {{ total_users }};
+  const activeUsers  = {{ active_users }};
+  const totalNews    = {{ total_news }};
+  const recentNews   = {{ recent_news }};
+
+  const dates        = {{ dates|tojson }};
+  const counts       = {{ counts|tojson }};
+
+  const months       = {{ months|tojson }};
+  const monthlyCounts= {{ monthly_counts|tojson }};
+
+  const keywordLabels= {{ keyword_labels|tojson }};
+  const keywordCounts= {{ keyword_counts|tojson }};
+
+  const sessionDates = {{ session_dates|tojson }};
+  const sessionCounts= {{ session_counts|tojson }};
+
+  function countUp(elId, target, duration=900){
+    const el = document.getElementById(elId);
+    const startTime = performance.now();
+    function tick(now){
+      const p = Math.min((now - startTime)/duration, 1);
+      const val = Math.floor(target * p);
+      el.textContent = val.toLocaleString();
+      if(p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  countUp('stat-total-users',  totalUsers);
+  countUp('stat-active-users', activeUsers);
+  countUp('stat-total-news',   totalNews);
+  countUp('stat-recent-news',  recentNews);
+
+  const cIndigo='#6366f1', cBlue='#3b82f6', cTeal='#14b8a6', cAmber='#f59e0b', cRed='#ef4444', cEmerald='#10b981';
+
+  new Chart(document.getElementById('usage7d').getContext('2d'), {
+    type: 'line',
+    data: { labels: dates, datasets: [{ label: 'Chatbot Usage', data: counts, borderColor: cIndigo, backgroundColor: 'rgba(99,102,241,.18)', fill:true, tension:.35, pointRadius:2.5 }]},
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false } }, y:{ beginAtZero:true, grid:{ color:'rgba(15,23,42,.08)' } } } }
+  });
+
+  new Chart(document.getElementById('usageMonthly').getContext('2d'), {
     type: 'pie',
-    data: {
-        labels: months,
-        datasets: [{
-            data: monthlyCounts,
-            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#8A2BE2', '#32CD32', '#FF4500']
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-});
+    data:{ labels: months, datasets:[{ data: monthlyCounts, backgroundColor:[cIndigo,cBlue,cTeal,cAmber,cRed,cEmerald], borderColor:'#fff', borderWidth:2 }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:14 } } } }
+  });
 
+  new Chart(document.getElementById('userGrowthChart').getContext('2d'), {
+    type:'bar',
+    data:{ labels: months, datasets:[{ label:'Users', data: monthlyCounts, backgroundColor:'rgba(20,184,166,.35)', borderColor:cTeal, borderWidth:1.5 }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false }}, y:{ beginAtZero:true, grid:{ color:'rgba(15,23,42,.08)' } } } }
+  });
 
-        // Mock data for Bias Scores (Doughnut Chart)
-        var biasLabels = ["Left", "Center", "Right"];
-        var biasData = [30, 50, 20];
+  // --- Top Keywords: horizontal, sorted, truncated labels with full tooltip ---
+  (function(){
+    const pairs = keywordLabels.map((l,i)=>({label:l, value: keywordCounts[i] || 0}))
+                               .filter(p=>p.label && p.label.trim() !== '')
+                               .sort((a,b)=>b.value-a.value)
+                               .slice(0,10);
+    const trunc = s => s.length>22 ? s.slice(0,21)+'…' : s;
+    const labels = pairs.map(p=>trunc(p.label));
+    const fullLabels = pairs.map(p=>p.label);
+    const values = pairs.map(p=>p.value);
 
-       new Chart(document.getElementById('biasChart').getContext('2d'), {
-    type: 'doughnut',
-    data: {
-        labels: biasLabels,
-        datasets: [{
-            data: biasData,
-            backgroundColor: ['#007bff', '#28a745', '#dc3545']
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-});
+    new Chart(document.getElementById('keywordsChart').getContext('2d'), {
+      type:'bar',
+      data:{ labels, datasets:[{ label:'Mentions', data:values, backgroundColor:'rgba(59,130,246,.35)', borderColor:cBlue, borderWidth:1.5, barThickness:20, maxBarThickness:24 }] },
+      options:{
+        indexAxis:'y',
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ title:(items)=>items.map(i=>fullLabels[i.dataIndex]), label:(ctx)=>` Mentions: ${ctx.parsed.x}` } } },
+        scales:{ x:{ beginAtZero:true, grid:{ color:'rgba(15,23,42,.08)'} }, y:{ grid:{ display:false } } }
+      }
+    });
+  })();
 
+  new Chart(document.getElementById('userSessionsChart').getContext('2d'), {
+    type:'line',
+    data:{ labels: sessionDates, datasets:[{ label:'Sessions', data: sessionCounts, borderColor:cTeal, backgroundColor:'rgba(20,184,166,.18)', fill:true, tension:.35, pointRadius:2.5 }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false } }, y:{ beginAtZero:true, grid:{ color:'rgba(15,23,42,.08)' } } } }
+  });
 
-        // Mock data for User Growth Over Time (Bar Chart)
-        var userMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-        var userGrowthCounts = [100, 150, 200, 250, 300, 350];
+  new Chart(document.getElementById('biasChart').getContext('2d'), {
+    type:'doughnut',
+    data:{ labels:['Left','Center','Right'], datasets:[{ data:[35,45,20], backgroundColor:[cBlue,cAmber,cRed], borderColor:'#fff', borderWidth:2 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:14 } } } }
+  });
+</script>
 
-        new Chart(document.getElementById('userGrowthChart').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: userMonths,
-                datasets: [{
-                    label: 'User Growth',
-                    data: userGrowthCounts,
-                    backgroundColor: '#17a2b8'
-                }]
-            }
-        });
-
-        // Mock data for Top Keywords Usage (Bar Chart)
-        var keywordLabels = ["AI", "Politics", "Sports", "Technology", "Health", "Finance"];
-        var keywordCounts = [120, 90, 110, 80, 70, 50];
-
-        new Chart(document.getElementById('keywordsChart').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: keywordLabels,
-                datasets: [{
-                    label: 'Keyword Frequency',
-                    data: keywordCounts,
-                    backgroundColor: '#FF4500'
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        // Mock data for Daily User Sessions (Line Chart)
-        var sessionDates = ["2025-01-20", "2025-01-21", "2025-01-22", "2025-01-23", "2025-01-24", "2025-01-25", "2025-01-26"];
-        var sessionCounts = [50, 60, 55, 70, 75, 80, 85];
-
-        new Chart(document.getElementById('userSessionsChart').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: sessionDates,
-                datasets: [{
-                    label: 'User Sessions',
-                    data: sessionCounts,
-                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    fill: true
-                }]
-            }
-        });
-                function incrementNumber(elementId, target) {
-            let count = 0;
-            const increment = Math.ceil(target / 100);
-            const interval = setInterval(() => {
-                count += increment;
-                if (count >= target) {
-                    count = target;
-                    clearInterval(interval);
-                }
-                document.getElementById(elementId).textContent = count;
-            }, 20);
-        }
-
-                incrementNumber('stat-total-users', 50);
-        incrementNumber('stat-active-users', 12);
-        incrementNumber('stat-total-news', 105);
-        incrementNumber('stat-recent-news', 40);
-
-    </script>
-</body>
 {% endblock %}

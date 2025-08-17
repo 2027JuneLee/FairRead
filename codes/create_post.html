@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Post</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f4f6f9;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .form-container {
+      max-width: 700px;
+      margin: 50px auto;
+      background: #ffffff;
+      padding: 35px 40px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 25px;
+    }
+
+    label {
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .btn-primary {
+      padding: 10px 24px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <div class="form-title">Share Your Thoughts</div>
+    <form method="POST">
+      <div class="mb-4">
+        <label for="content" class="form-label">Your Post</label>
+        <textarea name="content" id="content" class="form-control" rows="6" required></textarea>
+      </div>
+      <div class="text-end">
+        <button type="submit" class="btn btn-primary">Submit Post</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
