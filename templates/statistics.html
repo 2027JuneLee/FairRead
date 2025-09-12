@@ -64,6 +64,11 @@
   .h-260{ height:260px; }
   .h-280{ height:280px; }
   .divider{ height:1px; background:linear-gradient(90deg,transparent,rgba(15,23,42,.12),transparent); margin:10px 0; }
+
+  /* Chips for bias toggle */
+  #biasToggle .btn{
+    max-width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
 </style>
 
 <div class="container page-wrap">
@@ -173,8 +178,16 @@
     <div class="col-lg-6">
       <div class="card-fr">
         <div class="card-head">
-          <h3 class="card-title"><i class="bi bi-bullseye me-2"></i>Average Bias Scores</h3>
-          <span class="muted">Distribution</span>
+          <h3 class="card-title">
+            <i class="bi bi-bullseye me-2"></i>Average Bias Scores
+          </h3>
+          <!-- Toggle: All + Top 5 keywords -->
+          <div class="btn-group btn-group-sm" id="biasToggle">
+            <button type="button" class="btn btn-outline-secondary active" data-mode="all">All</button>
+            {% for kw in keyword_labels[:5] %}
+              <button type="button" class="btn btn-outline-secondary" data-kw="{{ kw }}">{{ kw }}</button>
+            {% endfor %}
+          </div>
         </div>
         <div class="chart-box h-240">
           <canvas id="biasChart"></canvas>
@@ -202,6 +215,10 @@
   const sessionDates = {{ session_dates|tojson }};
   const sessionCounts= {{ session_counts|tojson }};
 
+  // Bias aggregates from server
+  const BIAS_ALL     = {{ bias_all|tojson }};          // [L,C,R]
+  const BIAS_BY_KW   = {{ bias_by_keyword|tojson }};   // { "keyword": [L,C,R] }
+
   function countUp(elId, target, duration=900){
     const el = document.getElementById(elId);
     const startTime = performance.now();
@@ -223,7 +240,20 @@
   new Chart(document.getElementById('usage7d').getContext('2d'), {
     type: 'line',
     data: { labels: dates, datasets: [{ label: 'Chatbot Usage', data: counts, borderColor: cIndigo, backgroundColor: 'rgba(99,102,241,.18)', fill:true, tension:.35, pointRadius:2.5 }]},
-    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false } }, y:{ beginAtZero:true, grid:{ color:'rgba(15,23,42,.08)' } } } }
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ grid:{ display:false } },
+        y:{
+          beginAtZero:true,
+          grid:{ color:'rgba(15,23,42,.08)' },
+          ticks:{
+            callback: (v) => Number.isInteger(v) ? v : '',
+          }
+        }
+      }
+    }
   });
 
   new Chart(document.getElementById('usageMonthly').getContext('2d'), {
@@ -238,7 +268,7 @@
     options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false }}, y:{ beginAtZero:true, grid:{ color:'rgba(15,23,42,.08)' } } } }
   });
 
-  // --- Top Keywords: horizontal, sorted, truncated labels with full tooltip ---
+  // --- Top Keywords (horizontal) ---
   (function(){
     const pairs = keywordLabels.map((l,i)=>({label:l, value: keywordCounts[i] || 0}))
                                .filter(p=>p.label && p.label.trim() !== '')
@@ -264,13 +294,37 @@
   new Chart(document.getElementById('userSessionsChart').getContext('2d'), {
     type:'line',
     data:{ labels: sessionDates, datasets:[{ label:'Sessions', data: sessionCounts, borderColor:cTeal, backgroundColor:'rgba(20,184,166,.18)', fill:true, tension:.35, pointRadius:2.5 }]},
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false } }, y:{ beginAtZero:true, grid:{ color:'rgba(15,23,42,.08)' } } } }
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ grid:{ display:false } },
+        y:{
+          beginAtZero:true,
+          grid:{ color:'rgba(15,23,42,.08)' },
+          ticks:{ callback: (v) => Number.isInteger(v) ? v : '' }
+        }
+      }
+    }
   });
 
-  new Chart(document.getElementById('biasChart').getContext('2d'), {
+  // --- Bias chart with toggle (All / Top-5 keywords) ---
+  const biasCtx = document.getElementById('biasChart').getContext('2d');
+  const biasChart = new Chart(biasCtx, {
     type:'doughnut',
-    data:{ labels:['Left','Center','Right'], datasets:[{ data:[35,45,20], backgroundColor:[cBlue,cAmber,cRed], borderColor:'#fff', borderWidth:2 }] },
+    data:{ labels:['Left','Center','Right'], datasets:[{ data: BIAS_ALL, backgroundColor:[cBlue,cAmber,cRed], borderColor:'#fff', borderWidth:2 }] },
     options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:14 } } } }
+  });
+
+  document.getElementById('biasToggle').addEventListener('click', (e)=>{
+    const btn = e.target.closest('button'); if(!btn) return;
+    [...e.currentTarget.querySelectorAll('button')].forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const kw = btn.dataset.kw;
+    const data = kw ? (BIAS_BY_KW[kw] || [0,0,0]) : BIAS_ALL;
+    biasChart.data.datasets[0].data = data;
+    biasChart.update();
   });
 </script>
 

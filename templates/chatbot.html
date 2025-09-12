@@ -60,13 +60,18 @@
         background-color: #f9fdfe;
         border: 1px solid #dcdcdc;
         padding: 10px 10px;
-        height: 350px;
+        height: 340px;
         border-radius: 5px;
         margin-bottom: 10px;
         display: flex;
         flex-direction: column;
         overflow-y: auto;
     }
+    @media (min-width: 1524px) {
+    .chat-box {
+        height: 500px; /* Taller on desktop */
+    }
+}
     .chat-message {
         max-width: 70%;
         border-radius: 12px;
@@ -118,6 +123,51 @@
     .center-segment{ background:#f0ad4e; } /* orange */
     .right-segment{ background:#337ab7; }  /* blue */
     .bias-labels{ display:flex; justify-content:space-between; font-size:14px; color:#333; }
+      .modal-modern{
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  }
+  .modal-modern .section-title{
+    font-size:.9rem; text-transform:uppercase; letter-spacing:.06em;
+    color:#6b7280; margin:0 0 .5rem; font-weight:700;
+  }
+  .modal-modern .feature{
+    border:1px solid #e5e7eb; background:#f9fafb; border-radius:12px;
+    padding:12px; height:100%;
+  }
+  .modal-modern .feature i{
+    font-size:1.2rem; color:#295F98; margin-right:.4rem;
+  }
+  .modal-modern .feature h6{
+    margin:.25rem 0 .25rem; font-weight:700; font-size:1rem; color:#0f172a;
+  }
+  .modal-modern .feature p{
+    margin:0; font-size:.92rem; color:#475569;
+  }
+  .modal-modern .hr-soft{
+    height:1px; border:0; background:linear-gradient(90deg,transparent,#e5e7eb,transparent); margin:12px 0;
+  }
+  .modal-modern .mini{
+    font-size:.9rem; color:#475569;
+  }
+  .modal-modern .badge-soft{
+    display:inline-block; padding:.25rem .5rem; border-radius:999px;
+    background:#eef2ff; color:#3730a3; font-weight:600; font-size:.75rem;
+    border:1px solid #e0e7ff; margin-right:.35rem;
+  }
+  .modal-modern .tip-list{
+    padding-left:1rem; margin:0;
+  }
+  .modal-modern .tip-list li{
+    margin:.25rem 0; color:#374151; font-size:.92rem;
+  }
+  .modal-modern kbd{
+    background:#f3f4f6; border:1px solid #e5e7eb; border-bottom-width:2px;
+    padding:.1rem .35rem; border-radius:6px; font-size:.85rem;
+  }
+  .modal-modern .btn-brand{
+    background:#295F98; color:#fff; border:none; border-radius:8px;
+  }
+  .modal-modern .btn-brand:hover{ opacity:.92; }
 </style>
 </head>
 <body>
@@ -194,40 +244,81 @@ Hello! You can copy and paste the news text or link, or upload a PDF file. The a
         </div>
     </div>
 
-<!-- NEW: Instructions Modal -->
+<!-- Modern, organized Instructions Modal -->
 <div class="modal fade" id="instructionsModal" tabindex="-1" aria-labelledby="instructionsLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-scrollable">
-    <div class="modal-content" style="border-radius:14px;">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content modal-modern">
       <div class="modal-header">
         <h5 class="modal-title" id="instructionsLabel">How to use the News Classifier</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" style="color:#475569;">
-        <ol style="padding-left:18px; margin-bottom:12px;">
-          <li><strong>Paste text</strong> directly into the input, then click the send icon.</li>
-          <li><strong>Paste a link (URL)</strong> to a news article. We’ll fetch the content and analyze it.</li>
-          <li><strong>Upload a PDF</strong> (or DOCX). We’ll extract text and analyze it.</li>
-        </ol>
-        <p style="margin-bottom:8px;"><strong>What you’ll see on the right:</strong></p>
-        <ul style="padding-left:18px; margin-bottom:12px;">
-          <li><em>Bias Classification</em> with Left/Center/Right scores</li>
-          <li><em>Reason</em> explaining key signals</li>
-          <li><em>Summary</em> of the article</li>
-          <li><em>Keywords</em> detected</li>
+
+      <div class="modal-body">
+        <!-- Ways to submit -->
+        <div class="section-title">Ways to submit</div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="feature">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-clipboard-plus"></i><h6 class="m-0">Paste text</h6>
+              </div>
+              <p>Paste any article text or your notes, then press <kbd  style="color: black;">Enter</kbd> or click the send icon.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="feature">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-link-45deg"></i><h6 class="m-0">Paste a link</h6>
+              </div>
+              <p>Drop an article URL. We’ll fetch its content when possible and analyze it.</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="feature">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-paperclip"></i><h6 class="m-0">Upload a file</h6>
+              </div>
+              <p>PDF or DOCX supported. If a file is attached, it takes priority over typed text.</p>
+            </div>
+          </div>
+        </div>
+
+        <hr class="hr-soft">
+
+        <!-- What you'll see -->
+        <div class="section-title">What you’ll see</div>
+        <p class="mini mb-2">
+          <span class="badge-soft">Bias Class</span>
+          <span class="badge-soft">Left / Center / Right Scores</span>
+          <span class="badge-soft">Reason</span>
+          <span class="badge-soft">Summary</span>
+          <span class="badge-soft">Keywords</span>
+        </p>
+
+        <hr class="hr-soft">
+
+        <!-- Tips & limits -->
+        <div class="section-title">Tips & limits</div>
+        <ul class="tip-list">
+          <li><strong>Filenames should be English letters/numbers only</strong> (no special or non-English characters). Example: <code>news_article_2025.pdf</code></li>
+          <li>For paywalled pages, paste the article text or upload a PDF.</li>
+          <li>Very long documents can take longer to process.</li>
+          <li>If content extraction fails, try another link or paste the text directly.</li>
         </ul>
-        <p style="margin-bottom:8px;"><strong>Tips</strong></p>
-        <ul style="padding-left:18px;">
-          <li>For paywalled pages, paste the text or upload a PDF.</li>
-          <li>Very long documents may take longer to process.</li>
-          <li>If extraction fails, try another link or paste the text.</li>
-        </ul>
+
+        <hr class="hr-soft">
+
+
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn" data-bs-dismiss="modal" style="background:#295F98;color:#fff;border-radius:8px;">Got it</button>
+
+      <div class="modal-footer d-flex justify-content-between align-items-center">
+        <span class="mini text-muted"><i class="bi bi-info-circle me-1"></i>We analyze your input and show results on the right.</span>
+        <button type="button" class="btn btn-brand" data-bs-dismiss="modal">Got it</button>
       </div>
     </div>
   </div>
 </div>
+
 
 <script>
 /* ---------- helpers ---------- */
@@ -246,7 +337,10 @@ function escapeHTML(str){
   );
 }
 
-/* ---------- existing flows (kept) ---------- */
+function isValidFilename(name){
+  return /^[A-Za-z0-9 _\-.]+$/.test(name);
+}
+
 function uploadOrSendMessage() {
   const fileInput = document.getElementById("file-input");
   const userInput = document.getElementById("user-input").value.trim();
@@ -257,9 +351,18 @@ function uploadOrSendMessage() {
   document.getElementById("placeholder").style.display = "none";
 
   if (fileInput.files.length > 0) {
-      const fileName = fileInput.files[0].name;
+      const file = fileInput.files[0];
+      const fileName = file.name;
+
+      // NEW: filename validation
+      if (!isValidFilename(fileName)) {
+        chatBox.innerHTML += "<div class='chat-message bot-input'>Please rename the file using only English letters, numbers, spaces, underscores, hyphens, and dots (e.g., <code>news_article_2025.pdf</code>).</div>";
+        scrollToBottom();
+        return; // stop here
+      }
+
       showLoadingMessage(`Analyzing "${escapeHTML(fileName)}", please wait...`);
-      uploadFile(fileInput.files[0]);
+      uploadFile(file);
       fileInput.value = "";
       document.getElementById("file-name").textContent = "";
   } else if (userInput) {
@@ -350,9 +453,20 @@ function updateFileLabel() {
   var fileNameDisplay = document.getElementById("file-name");
   var textInputContainer = document.getElementById("text-input-container");
   var placeholder = document.getElementById("placeholder");
+  var chatBox = document.getElementById("chat-box");
 
   if (fileInput.files.length > 0) {
-      fileNameDisplay.textContent = fileInput.files[0].name;
+      const name = fileInput.files[0].name;
+      if (!isValidFilename(name)) {
+        fileNameDisplay.textContent = "";
+        fileInput.value = ""; // reset
+        chatBox.innerHTML += "<div class='chat-message bot-input'>Filename not allowed. Use only English letters, numbers, spaces, underscores, hyphens, and dots.</div>";
+        scrollToBottom();
+        textInputContainer.style.display = "block";
+        placeholder.style.display = "none";
+        return;
+      }
+      fileNameDisplay.textContent = name;
       textInputContainer.style.display = "none";
       placeholder.style.display = "block";
   } else {

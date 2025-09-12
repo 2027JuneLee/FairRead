@@ -84,6 +84,31 @@
     border-radius:999px; padding:6px 10px; font-weight:700; font-size:.9rem;
     border:1px solid rgba(15,23,42,.12); background:#fff; color:#0f172a;
   }
+/* Minimal empty state (no card box) */
+.empty-state{
+  border:1px dashed rgba(15,23,42,.18);
+  background: linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.35));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius:14px;
+  padding:22px 18px;
+  text-align:center;
+}
+.empty-state .icon{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:52px; height:52px; border-radius:999px;
+  background: radial-gradient(60% 60% at 50% 50%, rgba(99,102,241,.18), transparent);
+  border:1px solid rgba(99,102,241,.25);
+  margin-bottom:8px; font-size:24px; color:#6366f1;
+}
+.empty-title{ font-weight:800; letter-spacing:-.01em; margin:2px 0 4px; }
+.empty-text{ color:var(--muted); margin:0 0 10px; }
+.empty-cta{
+  display:inline-flex; gap:8px; align-items:center; justify-content:center;
+  border:1px solid rgba(15,23,42,.12); padding:8px 12px; border-radius:10px;
+  background:#fff; color:#0f172a; font-weight:600; text-decoration:none;
+}
+.empty-cta:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(15,23,42,.08); }
 
   .divider{ height:1px; background:linear-gradient(90deg,transparent,rgba(15,23,42,.12),transparent); margin:10px 0; }
 </style>
@@ -94,81 +119,109 @@
 
   <div class="row g-3">
     <!-- Left Column -->
-    <div class="col-lg-6">
-      <div class="card-fr">
-        <div class="card-head">
-          <h3 class="card-title"><i class="bi bi-activity me-2"></i>Bias Distribution</h3>
-          <span class="muted">Average across your submissions</span>
-        </div>
-        <div class="chart-box h-220">
-          <canvas id="pieBias"></canvas>
-        </div>
-        <div class="mt-2 d-flex flex-wrap gap-2">
-          <span class="pill"><i class="bi bi-circle-half"></i> Left: {{ left_avg|round(1) }}%</span>
-          <span class="pill"><i class="bi bi-dash-circle"></i> Center: {{ center_avg|round(1) }}%</span>
-          <span class="pill"><i class="bi bi-bullseye"></i> Right: {{ right_avg|round(1) }}%</span>
-        </div>
+   <div class="col-lg-6">
+     <h3 class="m-0 card-title ms-2"><i class="bi bi-bar-chart-line me-2 mb-2"></i>My Data</h3>
+  {% if total_articles == 0 %}
+    <div class="empty-state mt-2">
+      <div class="icon"><i class="bi bi-graph-up"></i></div>
+      <div class="empty-title">No data yet</div>
+      <p class="empty-text">Classify your first article to see bias distribution and topics here.</p>
+      <a class="empty-cta" href="{{ url_for('chatbot') }}">
+        <i class="bi bi-plus-circle"></i> Start classifying
+      </a>
+    </div>
+  {% else %}
+    <div class="card-fr mt-3">
+      <div class="card-head">
+        <h3 class="card-title"><i class="bi bi-activity me-2"></i>Bias Distribution</h3>
+        <span class="muted">Average across your submissions</span>
       </div>
-
-      <div class="card-fr">
-        <div class="card-head">
-          <h3 class="card-title"><i class="bi bi-tags me-2"></i>Top Topics</h3>
-          <span class="muted">Most frequent keywords</span>
-        </div>
-        <div class="chart-box h-260">
-          <canvas id="barTopics"></canvas>
-        </div>
+      <div class="chart-box h-220">
+        <canvas id="pieBias"></canvas>
+      </div>
+      <div class="mt-2 d-flex flex-wrap gap-2">
+        <span class="pill"><i class="bi bi-circle-half"></i> Left: {{ left_avg|round(1) }}%</span>
+        <span class="pill"><i class="bi bi-dash-circle"></i> Center: {{ center_avg|round(1) }}%</span>
+        <span class="pill"><i class="bi bi-bullseye"></i> Right: {{ right_avg|round(1) }}%</span>
       </div>
     </div>
+
+    <div class="card-fr">
+      <div class="card-head">
+        <h3 class="card-title"><i class="bi bi-tags me-2"></i>Top Topics</h3>
+        <span class="muted">Most frequent keywords</span>
+      </div>
+      <div class="chart-box h-260">
+        <canvas id="barTopics"></canvas>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
 
     <!-- Right Column -->
-    <div class="col-lg-6">
-      <div class="d-flex align-items-center justify-content-between mb-2">
-        <h3 class="m-0 card-title"><i class="bi bi-clock-history me-2"></i>Recent Classifications</h3>
-        <div class="carousel-controls d-flex gap-2">
-          <button class="btn btn-sm" data-bs-target="#classificationCarousel" data-bs-slide="prev">
-            <i class="bi bi-chevron-left"></i> Prev
-          </button>
-          <button class="btn btn-sm" data-bs-target="#classificationCarousel" data-bs-slide="next">
-            Next <i class="bi bi-chevron-right"></i>
-          </button>
-        </div>
-      </div>
+<!-- Right Column -->
+<div class="col-lg-6">
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <h3 class="m-0 card-title ms-2"><i class="bi bi-clock-history me-2 mb-2"></i>Recent Classifications</h3>
 
-      <div id="classificationCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="7000">
-        <div class="carousel-inner">
-          {% for classification in recent_classification %}
-          <div class="carousel-item {% if loop.first %}active{% endif %}">
-            <div class="card-fr">
-              <div class="card-head">
-                <h4 class="card-title"><i class="bi bi-bullseye me-2"></i>Bias Classification</h4>
-                <span class="muted">{{ classification[0] }}</span>
-              </div>
-              <div class="mb-2">
-                <span class="pill"><i class="bi bi-check2-circle"></i> Class: <strong>{{ classification[2] }}</strong></span>
-              </div>
-              <div class="d-flex flex-wrap gap-2">
-                <span class="pill">Left: <strong>{{ bias_scores[loop.index0][0] }}%</strong></span>
-                <span class="pill">Center: <strong>{{ bias_scores[loop.index0][1] }}%</strong></span>
-                <span class="pill">Right: <strong>{{ bias_scores[loop.index0][2] }}%</strong></span>
-              </div>
-              <div class="divider"></div>
-              <div class="mb-2">
-                <h6 class="mb-1"><i class="bi bi-lightbulb"></i> Reason</h6>
-                <div class="muted" style="white-space:pre-wrap">{{ classification[5] }}</div>
-              </div>
-              <div class="divider"></div>
-              <div>
-                <h6 class="mb-1"><i class="bi bi-journal-text"></i> Summary</h6>
-                <div class="muted" style="white-space:pre-wrap">{{ classification[4] }}</div>
-              </div>
+    {% if recent_classification|length > 0 %}
+    <div class="carousel-controls d-flex gap-2">
+      <button class="btn btn-sm" data-bs-target="#classificationCarousel" data-bs-slide="prev">
+        <i class="bi bi-chevron-left"></i> Prev
+      </button>
+      <button class="btn btn-sm" data-bs-target="#classificationCarousel" data-bs-slide="next">
+        Next <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+{% if recent_classification|length == 0 %}
+  <div class="empty-state">
+    <div class="icon"><i class="bi bi-inbox"></i></div>
+    <div class="empty-title">No recent items</div>
+    <p class="empty-text">Your latest classifications will appear here after you analyze an article.</p>
+    <a class="empty-cta" href="{{ url_for('chatbot') }}">
+      <i class="bi bi-newspaper"></i> Analyze an article
+    </a>
+  </div>
+  {% else %}
+    <div id="classificationCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="7000">
+      <div class="carousel-inner">
+        {% for classification in recent_classification %}
+        <div class="carousel-item {% if loop.first %}active{% endif %}">
+          <div class="card-fr" >
+            <div class="card-head">
+              <h4 class="card-title"><i class="bi bi-bullseye me-2"></i>Bias Classification</h4>
+              <span class="muted">{{ classification[0] }}</span>
+            </div>
+            <div class="mb-2">
+              <span class="pill"><i class="bi bi-check2-circle"></i> Class: <strong>{{ classification[2] }}</strong></span>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="pill">Left: <strong>{{ bias_scores[loop.index0][0] }}%</strong></span>
+              <span class="pill">Center: <strong>{{ bias_scores[loop.index0][1] }}%</strong></span>
+              <span class="pill">Right: <strong>{{ bias_scores[loop.index0][2] }}%</strong></span>
+            </div>
+            <div class="divider"></div>
+            <div class="mb-2">
+              <h6 class="mb-1"><i class="bi bi-lightbulb"></i> Reason</h6>
+              <div class="muted" style="white-space:pre-wrap">{{ classification[5] }}</div>
+            </div>
+            <div class="divider"></div>
+            <div>
+              <h6 class="mb-1"><i class="bi bi-journal-text"></i> Summary</h6>
+              <div class="muted" style="white-space:pre-wrap">{{ classification[4] }}</div>
             </div>
           </div>
-          {% endfor %}
         </div>
+        {% endfor %}
       </div>
-
     </div>
+  {% endif %}
+</div>
+
   </div>
 </div>
 

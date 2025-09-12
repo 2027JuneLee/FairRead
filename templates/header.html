@@ -72,6 +72,11 @@
           transform: translateY(-2px);
           box-shadow: 0 8px 20px rgba(15,23,42,.15);
         }
+          .nav-link.active { color: #d6c278; }
+  .nav-link.active::after { width: 100%; }
+
+  /* Optional: make keyboard focus match too */
+  .nav-link:focus { color: #d6c278; outline: none; }
     </style>
 </head>
 <body>
@@ -85,33 +90,69 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div id="navbarNav" class="collapse navbar-collapse">
-                    <ul class="navbar-nav d-flex align-items-center ms-auto">
-                        <li class="nav-item">
-                           <a href="{{url_for('index')}}" class="nav-link">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{url_for('chatbot')}}" class="nav-link">News</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{url_for('statistics')}}" class="nav-link">Statistics</a>
-                        </li>
-                        <li class="nav-item">
-                                <a class="nav-link" href="{{url_for('create_debate')}}">Debate</a>
-                        </li>
-                        <li class="nav-item">
-                            {% if is_login %}
-                                <a class="nav-link" href="{{url_for('profile')}}">Profile</a>
-                            {% endif %}
-                        </li>
+                   {% set ep = request.endpoint or '' %}
+<ul class="navbar-nav d-flex align-items-center ms-auto">
+  <li class="nav-item">
+    <a href="{{ url_for('index') }}"
+       class="nav-link {{ 'active' if ep == 'index' else '' }}"
+       {% if ep == 'index' %}aria-current="page"{% endif %}>
+       Home
+    </a>
+  </li>
 
-                        <li class="nav-item">
-                            {% if is_login %}
-                                <a class="mybtn ms-3" href="{{url_for('logout')}}">Logout</a>
-                            {% else %}
-                                <a class="mybtn ms-3" href="{{url_for('login')}}">Login</a>
-                            {% endif %}
-                        </li>
-                    </ul>
+  <li class="nav-item">
+    <a href="{{ url_for('chatbot') }}"
+       class="nav-link {{ 'active' if ep == 'chatbot' else '' }}"
+       {% if ep == 'chatbot' %}aria-current="page"{% endif %}>
+       News
+    </a>
+  </li>
+
+<li class="nav-item">
+  {% if is_admin %}
+    <a href="{{ url_for('statistics') }}"
+       class="nav-link {{ 'active' if ep == 'statistics' else '' }}"
+       {% if ep == 'statistics' %}aria-current="page"{% endif %}>
+       Statistics
+    </a>
+  {% endif %}
+</li>
+
+
+  <li class="nav-item">
+    {% set debate_active =
+        (ep == 'create_debate') or
+        ep.startswith('debate_') or
+        (ep in ['create_post', 'create_news']) %}
+    <a class="nav-link {{ 'active' if debate_active else '' }}"
+       href="{{ url_for('create_debate') }}"
+       {% if debate_active %}aria-current="page"{% endif %}>
+       Debate
+    </a>
+  </li>
+
+  <li class="nav-item">
+    {% if is_login %}
+      <a class="nav-link {{ 'active' if ep == 'profile' else '' }}"
+         href="{{ url_for('profile') }}"
+         {% if ep == 'profile' %}aria-current="page"{% endif %}>
+         Profile
+      </a>
+    {% endif %}
+  </li>
+
+  <li class="nav-item">
+    {% if is_login %}
+      <a class="mybtn ms-3" href="{{ url_for('logout') }}">Logout</a>
+    {% else %}
+      <a class="mybtn ms-3 {{ 'active' if ep == 'login' else '' }}"
+         href="{{ url_for('login') }}">
+         Login
+      </a>
+    {% endif %}
+  </li>
+</ul>
+
                 </div>
             </div>
         </nav>
@@ -133,5 +174,22 @@
     document.querySelector(".navbar").classList.toggle("scrolled", window.scrollY > 30);
   });
 </script>
+<script>
+  (function setTzOnce(){
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone; // "Europe/Berlin", etc.
+      const offsetMin = new Date().getTimezoneOffset(); // minutes from UTC (e.g., -120 for UTC+2)
+      // only ping server if we don't have it yet (optional optimization)
+      if (!sessionStorage.getItem('tz_set')) {
+        fetch('/set_tz', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ tz, offset_min: offsetMin })
+        }).then(()=> sessionStorage.setItem('tz_set','1')).catch(()=>{});
+      }
+    } catch(e){}
+  })();
+</script>
+
 </body>
 </html>

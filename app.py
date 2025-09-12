@@ -1,24 +1,32 @@
 import ast
+from collections import Counter
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session,jsonify
-import sqlite3 # Standard library which allows you to connect DB in python
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort
+import sqlite3
 from chatbot import *
 from datetime import datetime, timedelta, date
 from werkzeug.utils import secure_filename
 from helper import extract_news_content
-
+from zoneinfo import ZoneInfo
 import time
 
 app = Flask(__name__)
+app.config['APP_TZ'] = ZoneInfo("Asia/Seoul")
 app.secret_key = "abc"
 
+def now_kst():
+    return datetime.now(app.config['APP_TZ'])
+
+def current_user():
+    return session.get("username")
+
+def is_admin_user():
+    return current_user() == "testtest"
 
 @app.route('/')
 def index():
-    is_login = False
-    if 'username' in session:
-        is_login = True
-    return render_template('index.html', is_login = is_login)
+    is_login = 'username' in session
+    return render_template('index.html', is_login=is_login, is_admin=is_admin_user())
 
 @app.route('/api/extract_text', methods=['POST'])
 def extract_text_api():
@@ -30,43 +38,42 @@ def extract_text_api():
     else:
         return jsonify({'success': False, 'error': 'Failed to extract content' })
 
-
 @app.route('/create_debate', methods=["GET","POST"])
 def create_debate():
-    is_login = False
-    if 'username' in session:
-        is_login = True
-    if request.method == "POST": # When user request to create a debate
+    is_login = 'username' in session
+    if request.method == "POST":
         topic = request.form.get("topic")
-        today = date.today().isoformat()
+        today = now_kst().date().isoformat()
         with sqlite3.connect('static/database.db') as conn:
             cursor = conn.cursor()
-            cursor.execute('''
-                INSERT INTO debates (topic, date, isClosed) VALUES (?,?,?)
-            ''',(topic,today,False))
+            cursor.execute('INSERT INTO debates (topic, date, isClosed) VALUES (?,?,?)',
+                           (topic, today, False))
             conn.commit()
         return redirect(url_for('create_debate'))
+
     with sqlite3.connect('static/database.db') as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT id, topic, date FROM debates WHERE isClosed = 0 ORDER BY date DESC')
         open_debates = cursor.fetchall()
         cursor.execute('SELECT id, topic, date FROM debates WHERE isClosed = 1 ORDER BY date DESC')
         closed_debates = cursor.fetchall()
-    is_admin = session.get("username") == "testtest"
 
-    return render_template('create_debate.html',is_login=is_login, closed_debates=closed_debates,open_debates=open_debates,is_admin=is_admin)
+    is_admin = session.get("username") == "testtest"
+    return render_template('create_debate.html',
+                           is_login=is_login,
+                           closed_debates=closed_debates,
+                           open_debates=open_debates,
+                           is_admin=is_admin)
 
 @app.route('/delete_debate/<int:debate_id>', methods=['POST'])
 def delete_debate(debate_id):
     if session.get('username') != 'testtest':
         return redirect(url_for('create_debate'))
-    with sqlite3.connect('static/database.db') as conn: # Connectin to DB
+    with sqlite3.connect('static/database.db') as conn:
         cursor = conn.cursor()
         cursor.execute('DELETE FROM debates WHERE id = ?', (debate_id,))
         conn.commit()
     return redirect(url_for('create_debate'))
-
-
 
 @app.route('/delete_post/<int:post_id>/<int:debate_id>', methods=['POST'])
 def delete_post(post_id, debate_id):
@@ -76,7 +83,6 @@ def delete_post(post_id, debate_id):
 
     with sqlite3.connect('static/database.db') as conn:
         c = conn.cursor()
-        # Get author of the post
         c.execute('SELECT username FROM posts WHERE id = ?', (post_id,))
         row = c.fetchone()
         if not row:
@@ -87,7 +93,6 @@ def delete_post(post_id, debate_id):
         if not (is_admin or username == author):
             abort(403)
 
-        # Delete dependent rows first, then the post
         c.execute('DELETE FROM post_comments WHERE post_id = ?', (post_id,))
         c.execute('DELETE FROM post_likes    WHERE post_id = ?', (post_id,))
         c.execute('DELETE FROM posts         WHERE id = ?', (post_id,))
@@ -95,20 +100,16 @@ def delete_post(post_id, debate_id):
 
     return redirect(url_for('debate_detail', debate_id=debate_id))
 
-
 @app.route('/delete_news/<int:news_id>/<int:debate_id>', methods=['POST'])
 def delete_news(news_id, debate_id):
     username = session.get('username')
     if not username:
         return redirect(url_for('login'))
-
-    # Only admin can delete news
     if username != 'testtest':
         abort(403)
 
     with sqlite3.connect('static/database.db') as conn:
         c = conn.cursor()
-        # Delete votes first, then the news row
         c.execute('DELETE FROM news_votes WHERE news_id = ?', (news_id,))
         c.execute('DELETE FROM news       WHERE id = ?', (news_id,))
         conn.commit()
@@ -125,25 +126,22 @@ def close_debate(debate_id):
 
 @app.route('/create_news/<int:debate_id>', methods=['GET','POST'])
 def create_news(debate_id):
+    is_login = 'username' in session
     with sqlite3.connect('static/database.db') as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT id, topic, date, isClosed FROM debates WHERE id = ?', (debate_id,))
         debate = cursor.fetchone()
-    if request.method == "POST":  # Adding your news to the db with the summary
-        summary = request.form.get('summary')
-        link =request.form.get('link')
-        title = request.form.get('title')
 
+    if request.method == "POST":
+        summary = request.form.get('summary')
+        link = request.form.get('link')
+        title = request.form.get('title')
         content = request.form.get('content')
 
         classification, percentages, bias_scores = get_bias_classification(content)
-        left = bias_scores[0]
-        center = bias_scores[1]
-        right = bias_scores[2]
+        left, center, right = bias_scores
 
-
-
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = now_kst().strftime('%Y-%m-%d %H:%M:%S')
         with sqlite3.connect('static/database.db') as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -153,18 +151,22 @@ def create_news(debate_id):
             conn.commit()
         return redirect(url_for('debate_detail', debate_id=debate_id))
 
-    return render_template('create_news.html', debate=debate)
-
+    return render_template('create_news.html',
+                           is_login=is_login,
+                           is_admin=is_admin_user(),
+                           debate=debate)
 
 @app.route('/create_post/<int:debate_id>', methods=['GET','POST'])
 def create_post(debate_id):
+    is_login = 'username' in session
     with sqlite3.connect('static/database.db') as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT id, topic, date, isClosed FROM debates WHERE id = ?', (debate_id,))
         debate = cursor.fetchone()
-    if request.method == "POST": # User request to create a post
+
+    if request.method == "POST":
         content = request.form.get('content')
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = now_kst().strftime('%Y-%m-%d %H:%M:%S')
         with sqlite3.connect('static/database.db') as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -174,14 +176,15 @@ def create_post(debate_id):
             conn.commit()
         return redirect(url_for('debate_detail', debate_id=debate_id))
 
-    return render_template('create_post.html', debate=debate)
+    return render_template('create_post.html',
+                           is_login=is_login,
+                           is_admin=is_admin_user(),
+                           debate=debate)
 
 @app.route('/debate/<int:debate_id>')
 def debate_detail(debate_id):
     user = session.get("username")
-    is_login = False
-    if 'username' in session:
-        is_login = True
+    is_login = 'username' in session
     with sqlite3.connect('static/database.db') as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT id, topic, date, isClosed FROM debates WHERE id = ?', (debate_id,))
@@ -190,16 +193,14 @@ def debate_detail(debate_id):
         cursor.execute('SELECT id, username, content, timestamp FROM posts WHERE debate_id = ? ORDER BY timestamp DESC', (debate_id,))
         posts = cursor.fetchall()
 
-        # Fetch likes per post
         cursor.execute('SELECT post_id, COUNT(*) FROM post_likes GROUP BY post_id')
         likes_dict = dict(cursor.fetchall())
 
-        # Fetch comments per post
         cursor.execute('SELECT post_id,username,comment,timestamp FROM post_comments ORDER BY timestamp ASC')
         all_comments = cursor.fetchall()
         comments_dict = {}
         for post_id, username, comment, timestamp in all_comments:
-            comments_dict.setdefault(post_id,[]).append((username, comment, timestamp))
+            comments_dict.setdefault(post_id, []).append((username, comment, timestamp))
 
         cursor.execute('''
             SELECT n.id, n.title, n.link, n.summary, n.classification, n.left, n.center, n.right,
@@ -213,17 +214,15 @@ def debate_detail(debate_id):
         news = cursor.fetchall()
 
     is_admin = (user == "testtest")
-    return render_template(
-        'debate_detail.html',
-        debate=debate,
-        posts=posts,
-        news=news,
-        likes_dict=likes_dict,
-        comments_dict=comments_dict,
-        current_user=user,
-        is_login=is_login,
-        is_admin=is_admin
-    )
+    return render_template('debate_detail.html',
+                           debate=debate,
+                           posts=posts,
+                           news=news,
+                           likes_dict=likes_dict,
+                           comments_dict=comments_dict,
+                           current_user=user,
+                           is_login=is_login,
+                           is_admin=is_admin)
 
 @app.route('/like_post/<int:post_id>', methods=['POST'])
 def like_post(post_id):
@@ -232,23 +231,21 @@ def like_post(post_id):
         return redirect(url_for('login'))
     with sqlite3.connect('static/database.db') as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT 1 FROM post_likes WHERE post_id = ? AND username =?', (post_id, username))
-
-
+        cursor.execute('SELECT 1 FROM post_likes WHERE post_id = ? AND username = ?', (post_id, username))
         if not cursor.fetchone():
             cursor.execute('INSERT INTO post_likes (post_id, username, timestamp) VALUES (?, ?, ?)',
-                          (post_id, username, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                           (post_id, username, now_kst().strftime('%Y-%m-%d %H:%M:%S')))
             conn.commit()
         else:
             cursor.execute('DELETE FROM post_likes WHERE post_id = ? AND username = ?', (post_id, username))
             conn.commit()
 
-    cursor.execute('SELECT debate_id FROM posts WHERE id = ?', (post_id,)) # getting the current debate
-    debate_id = cursor.fetchone()[0]
+        cursor.execute('SELECT debate_id FROM posts WHERE id = ?', (post_id,))
+        debate_id = cursor.fetchone()[0]
     return redirect(url_for('debate_detail', debate_id=debate_id))
 
 @app.route('/comment_post/<int:post_id>', methods=['POST'])
-def comment_post(post_id): # adding and saving comment into db
+def comment_post(post_id):
     username = session.get('username')
     if not username:
         return redirect(url_for('login'))
@@ -256,13 +253,11 @@ def comment_post(post_id): # adding and saving comment into db
     if comment:
         with sqlite3.connect('static/database.db') as conn:
             cursor = conn.cursor()
-            # Inserting what user wrote for comment into db.
-            cursor.execute('INSERT INTO post_comments  (post_id, username, comment, timestamp) VALUES (?, ?, ?, ?)',
-                           (post_id, username, comment, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
-    cursor.execute('SELECT debate_id FROM posts WHERE id = ?', (post_id,)) # getting the current debate
-    debate_id = cursor.fetchone()[0]
-    return redirect(url_for('debate_detail', debate_id=debate_id)) # redirect the user to the current debate
-
+            cursor.execute('INSERT INTO post_comments (post_id, username, comment, timestamp) VALUES (?, ?, ?, ?)',
+                           (post_id, username, comment, now_kst().strftime('%Y-%m-%d %H:%M:%S')))
+            cursor.execute('SELECT debate_id FROM posts WHERE id = ?', (post_id,))
+            debate_id = cursor.fetchone()[0]
+    return redirect(url_for('debate_detail', debate_id=debate_id))
 
 @app.route('/vote_news/<int:news_id>/<int:debate_id>', methods=["POST"])
 def vote_news(news_id, debate_id):
@@ -272,99 +267,98 @@ def vote_news(news_id, debate_id):
 
     with sqlite3.connect('static/database.db') as conn:
         cursor = conn.cursor()
-
-        # Avoid duplicate votes
         cursor.execute('SELECT 1 FROM news_votes WHERE username = ? AND news_id = ?', (username, news_id))
         if not cursor.fetchone():
-            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            cursor.execute('INSERT INTO news_votes (username, news_id, voted_at) VALUES (?, ?, ?)', (username, news_id, now))
+            now = now_kst().strftime('%Y-%m-%d %H:%M:%S')
+            cursor.execute('INSERT INTO news_votes (username, news_id, voted_at) VALUES (?, ?, ?)',
+                           (username, news_id, now))
             conn.commit()
 
     return redirect(url_for('debate_detail', debate_id=debate_id))
 
-
 @app.route('/chatbot')
 def chatbot():
-    is_login = False
-    if 'username' in session:
-        is_login = True
-    if is_login == False:
+    is_login = 'username' in session
+    if not is_login:
         return redirect(url_for('login'))
-    return render_template('chatbot.html', is_login = is_login)
+    return render_template('chatbot.html', is_login=is_login, is_admin=is_admin_user())
 
 @app.route('/profile')
 def profile():
-    page = 1
-    total_pages = 5
-    is_login = False
-    if 'username' in session:
-        is_login = True
-    if is_login == False:
+    is_login = 'username' in session
+    if not is_login:
         return redirect(url_for('login'))
+
     conn = sqlite3.connect("static/database.db")
     cursor = conn.cursor()
-    command = "SELECT date, question, bias_class, bias_percentage, summary, reason FROM Chatlog where username = ? ORDER BY date DESC LIMIT 5;"
-    cursor.execute(command, (session["username"],) )
-    recent_classification = cursor.fetchall() # get the results from the above line
 
-    command = "SELECT email FROM Users where username = ?"
-    cursor.execute(command, (session["username"], ))
-    result = cursor.fetchone() # ("scott@logncoding.com", )
-    email = result[0] # "scott@logncoding.com"
+    cursor.execute("""
+        SELECT date, question, bias_class, bias_percentage, summary, reason
+        FROM Chatlog
+        WHERE username = ?
+        ORDER BY date DESC
+        LIMIT 5;
+    """, (session["username"],))
+    recent_classification = cursor.fetchall()
 
-    # get all rows
-    command = "SELECT * FROM Chatlog where username = ?" # We select every chat(row) from Chatlog
-    cursor.execute(command, (session["username"],))
-    result = cursor.fetchall()
+    cursor.execute("SELECT email FROM Users WHERE username = ?;", (session["username"],))
+    email_row = cursor.fetchone()
+    email = email_row[0] if email_row and email_row[0] else ""
 
-
-    total_articles = len(result) # The number of articles that user asked to classify.
-
-    print("Result: ", result) # [ (username,date,question,...keywords), (username,date,question,...keywords), () ]
-    keywords = []
-    for row in result:
-        keywords.append(row[-1])
-    print(keywords)
-
-    left_sum = 0
-    center_sum = 0
-    right_sum = 0
-    import ast
-    for row in result: # (username, content, X, ,X, bias_class)
-        # print(row)
-        lst = ast.literal_eval(row[4]) # evealuate string and change it to the list
-        left_sum += lst[0]
-        center_sum += lst[1]
-        right_sum += lst[2]
-
-    left_avg = left_sum  / len(result)
-    center_avg = center_sum / len(result)
-    right_avg = right_sum / len(result)
-    # print(left_avg)
-    # print(center_avg)
-    # print(right_avg)
-
-
-
-    bias_scores = []
-    for classification in recent_classification:
-        scores = ast.literal_eval(classification[3]) # [20,30,50]
-        bias_scores.append(scores)
-    print("BIAS SCORE:" , bias_scores)
-
-
+    cursor.execute("SELECT * FROM Chatlog WHERE username = ?;", (session["username"],))
+    rows = cursor.fetchall()
     conn.close()
-    # recent_classification = [ (2025, "news", "right") }, {},{} ]
-    return render_template('profile.html',bias_scores=bias_scores,left_avg=left_avg, center_avg=center_avg, right_avg=right_avg, total_articles=total_articles, username = session["username"], is_login = is_login, email=email, recent_classification=recent_classification)
 
+    total_articles = len(rows)
+    left_avg = center_avg = right_avg = 0.0
+    bias_scores = []
+
+    def safe_parse_scores(x):
+        try:
+            val = ast.literal_eval(x) if isinstance(x, str) else x
+            if isinstance(val, (list, tuple)) and len(val) == 3 and all(isinstance(n, (int, float)) for n in val):
+                return [float(val[0]), float(val[1]), float(val[2])]
+        except Exception:
+            pass
+        return None
+
+    if total_articles > 0:
+        L = C = R = 0.0
+        valid_count = 0
+        for row in rows:
+            scores = safe_parse_scores(row[4])
+            if scores:
+                L += scores[0]; C += scores[1]; R += scores[2]
+                valid_count += 1
+        if valid_count > 0:
+            left_avg = L / valid_count
+            center_avg = C / valid_count
+            right_avg = R / valid_count
+
+    for classification in recent_classification:
+        scores = safe_parse_scores(classification[3])
+        bias_scores.append(scores if scores else [0, 0, 0])
+
+    return render_template('profile.html',
+                           bias_scores=bias_scores,
+                           left_avg=left_avg, center_avg=center_avg, right_avg=right_avg,
+                           total_articles=total_articles,
+                           username=session["username"],
+                           is_login=is_login,
+                           is_admin=is_admin_user(),
+                           email=email,
+                           recent_classification=recent_classification)
 
 @app.route('/statistics')
 def statistics():
+    if not is_admin_user():
+        return redirect(url_for('index'))
     is_login = 'username' in session
+
     conn = sqlite3.connect('static/database.db')
     cursor = conn.cursor()
 
-    current_date = datetime.now()
+    current_date = now_kst()
     seven_days_ago = current_date - timedelta(days=7)
 
     # Recent 7-day chatbot usage
@@ -402,38 +396,21 @@ def statistics():
                    (thirty_days_ago.strftime('%Y-%m-%d %H:%M:%S'),))
     recent_news = cursor.fetchone()[0]
 
-    # --- Flatten and count keywords properly ---
+    # --- Top keywords (frequency only) ---
     cursor.execute("SELECT keywords FROM Chatlog;")
     rows = cursor.fetchall()
     counter = Counter()
-
     for (kw_raw,) in rows:
-        if not kw_raw:
-            continue
-
-        # Try to parse list-likes first
-        items = None
-        if isinstance(kw_raw, (list, tuple, set)):
-            items = list(kw_raw)
-        else:
-            # kw_raw is likely a string
-            try:
-                parsed = ast.literal_eval(kw_raw)
-                if isinstance(parsed, (list, tuple, set)):
-                    items = list(parsed)
-                else:
-                    items = [str(parsed)]
-            except Exception:
-                # Fallback: comma-separated string
-                items = [s.strip() for s in str(kw_raw).split(',') if s.strip()]
-
-        # Items may themselves contain comma-separated chunks
+        if not kw_raw: continue
+        try:
+            parsed = ast.literal_eval(kw_raw) if isinstance(kw_raw, str) else kw_raw
+            items = list(parsed) if isinstance(parsed, (list, tuple, set)) else [str(parsed)]
+        except Exception:
+            items = [str(kw_raw)]
         flattened = []
         for it in items:
             if isinstance(it, str):
                 flattened.extend([s.strip() for s in it.split(',') if s.strip()])
-            # ignore non-strings silently
-
         for token in flattened:
             counter[token] += 1
 
@@ -441,7 +418,59 @@ def statistics():
     keyword_labels = [k for k, _ in top_keywords]
     keyword_counts = [v for _, v in top_keywords]
 
-    # Daily user sessions (past 7 days)
+    # --- Bias aggregates: overall + per keyword (for toggle) ---
+    cursor.execute("SELECT bias_percentage, keywords FROM Chatlog;")
+    bias_rows = cursor.fetchall()
+
+    def parse_scores(x):
+        try:
+            v = ast.literal_eval(x) if isinstance(x, str) else x
+            if isinstance(v, (list, tuple)) and len(v) == 3:
+                return float(v[0]), float(v[1]), float(v[2])
+        except Exception:
+            pass
+        return None
+
+    def tokenize_keywords(kw_raw):
+        if not kw_raw:
+            return []
+        try:
+            parsed = ast.literal_eval(kw_raw) if isinstance(kw_raw, str) else kw_raw
+            items = list(parsed) if isinstance(parsed, (list, tuple, set)) else [str(parsed)]
+        except Exception:
+            items = [str(kw_raw)]
+        tokens = []
+        for it in items:
+            if isinstance(it, str):
+                tokens.extend([s.strip() for s in it.split(',') if s.strip()])
+        return tokens
+
+    tl = tc = tr = 0.0
+    n = 0
+    by_kw = {}  # kw -> [sumL, sumC, sumR, count]
+
+    for bias_raw, kw_raw in bias_rows:
+        s = parse_scores(bias_raw)
+        if not s:
+            continue
+        l, c, r = s
+        tl += l; tc += c; tr += r; n += 1
+
+        for tok in set(tokenize_keywords(kw_raw)):
+            agg = by_kw.setdefault(tok, [0.0, 0.0, 0.0, 0])
+            agg[0] += l; agg[1] += c; agg[2] += r; agg[3] += 1
+
+    bias_all = [
+        round(tl / n, 2) if n else 0.0,
+        round(tc / n, 2) if n else 0.0,
+        round(tr / n, 2) if n else 0.0,
+    ]
+    bias_by_keyword = {
+        k: [ round(s[0]/s[3], 2), round(s[1]/s[3], 2), round(s[2]/s[3], 2) ]
+        for k, s in by_kw.items() if s[3] > 0
+    }
+
+    # Sessions (past 7 days)
     cursor.execute("""
         SELECT Date(recent_login), COUNT(*)
         FROM Users
@@ -457,6 +486,7 @@ def statistics():
 
     return render_template('statistics.html',
                            is_login=is_login,
+                           is_admin=is_admin_user(),
                            recent_news=recent_news,
                            total_news=total_news,
                            active_users=active_users,
@@ -468,15 +498,14 @@ def statistics():
                            keyword_labels=keyword_labels,
                            keyword_counts=keyword_counts,
                            session_dates=session_dates,
-                           session_counts=session_counts)
-
-
+                           session_counts=session_counts,
+                           bias_all=bias_all,
+                           bias_by_keyword=bias_by_keyword)
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
-
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
@@ -486,31 +515,28 @@ def register():
         email = request.form["email"]
         gender = request.form["gender"]
         age = request.form["age"]
-        politics = request.form["politics-side"]
-        # country = request.form["country"]
-        # race = request.form["race"]
-        # religion = request.form["religion"]
-
 
         conn = sqlite3.connect('static/database.db')
         cursor = conn.cursor()
 
-        command = "SELECT * FROM Users WHERE username = ?;"
-        cursor.execute(command, (username, ))
-        result = cursor.fetchone() # (testest,123,adf@gmail.com.)
-        if result is None:
-            command = "INSERT INTO Users (username, password,email, gender, age,country, race, religion, politics ) VALUES (?,?,?,?,?,?,?,?,?)"
-            cursor.execute(command, (username,password,email,gender,age,country,race,religion,politics))
-            conn.commit()
+        cursor.execute("SELECT 1 FROM Users WHERE username = ?;", (username,))
+        exists = cursor.fetchone()
+        if exists:
             conn.close()
-        else: # when user fail to register
             flash('username already exists')
             return render_template('signup.html')
 
+        cursor.execute(
+            "INSERT INTO Users (username, password, email, gender, age) VALUES (?,?,?,?,?)",
+            (username, password, email, gender, age)
+        )
+        conn.commit()
+        conn.close()
 
-        return redirect(url_for('login'))
-    else:
-        return render_template('signup.html')
+        return redirect(url_for('register', registered=1))
+
+    registered = request.args.get('registered') == '1'
+    return render_template('signup.html', registered=registered)
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
@@ -519,9 +545,8 @@ def login():
         password = request.form["password"]
         conn = sqlite3.connect('static/database.db')
         cursor = conn.cursor()
-        command = "SELECT password FROM Users WHERE username = ?;"
-        cursor.execute(command, (username, ))
-        result = cursor.fetchone() # (123, )
+        cursor.execute("SELECT password FROM Users WHERE username = ?;", (username,))
+        result = cursor.fetchone()
         if result is None:
             flash('Username or password is wrong')
             return render_template('login.html')
@@ -529,9 +554,9 @@ def login():
             password_db = result[0]
             if password == password_db:
                 session["username"] = username
-                current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                update_command = "UPDATE Users SET recent_login =? WHERE username =?;"
-                cursor.execute(update_command, (current_time, username))
+                current_time = now_kst().strftime('%Y-%m-%d %H:%M:%S')
+                cursor.execute("UPDATE Users SET recent_login = ? WHERE username = ?;",
+                               (current_time, username))
                 conn.commit()
                 conn.close()
                 return redirect(url_for('index'))
@@ -541,34 +566,26 @@ def login():
     else:
         return render_template('login.html')
 
-@app.route('/upload_pdf', methods = ["POST"])
+@app.route('/upload_pdf', methods=["POST"])
 def read_file():
     file = request.files["pdf_file"]
-
     filename = secure_filename(file.filename)
     if filename.endswith('.pdf'):
-        print("Calling read_pdf")
         text = read_pdf(file)
     else:
-        print("Calling docs")
         text = read_docs(file)
 
-    print("Calling get_bias_classification")
     bias_class, bias_score, score_lst = get_bias_classification(text)
-    print("Calling reason_news")
     reason = reason_news(text, bias_class)
-
     summary = summarize_news(text)
-
     keywords = get_keywords(text)
-    #keywords = ",".join(keywords)
-
 
     conn = sqlite3.connect('static/database.db')
     cursor = conn.cursor()
-    command = "INSERT INTO Chatlog(username, date, question, bias_class, bias_percentage, summary, reason, keywords) Values(?,?,?,?,?,?,?,?)"
-    current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    cursor.execute(command, (session["username"], current_date, text, bias_class,str(bias_score), summary, reason,keywords ))
+    command = ("INSERT INTO Chatlog(username, date, question, bias_class, bias_percentage, summary, reason, keywords) "
+               "Values(?,?,?,?,?,?,?,?)")
+    current_date = now_kst().strftime('%Y-%m-%d %H:%M:%S')
+    cursor.execute(command, (session["username"], current_date, text, bias_class, str(bias_score), summary, reason, keywords))
     conn.commit()
     conn.close()
 
@@ -581,26 +598,23 @@ def read_file():
         "reason": reason,
         "summary": summary
     })
-@app.route('/get_response', methods = ["POST"])
+
+@app.route('/get_response', methods=["POST"])
 def get_chatbot_response():
     data = request.json
     text = data["message"]
-    # response = classify_news(user_input)
 
     bias_class, bias_score, score_lst = get_bias_classification(text)
-    # [left_score, center_score, right_score]
     reason = reason_news(text, bias_class)
     summary = summarize_news(text)
-
     keywords = get_keywords(text)
-    print("ABC", keywords)
-    # keywords = ",".join(keywords)
 
     conn = sqlite3.connect('static/database.db')
     cursor = conn.cursor()
-    command = "INSERT INTO Chatlog(username, date, question, bias_class, bias_percentage, summary, reason, keywords) Values(?,?,?,?,?,?,?,?)"
-    current_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    cursor.execute(command, (session["username"], current_date, text, bias_class,bias_score, summary, reason,keywords ))
+    command = ("INSERT INTO Chatlog(username, date, question, bias_class, bias_percentage, summary, reason, keywords) "
+               "Values(?,?,?,?,?,?,?,?)")
+    current_date = now_kst().strftime('%Y-%m-%d %H:%M:%S')
+    cursor.execute(command, (session["username"], current_date, text, bias_class, bias_score, summary, reason, keywords))
     conn.commit()
     conn.close()
 
@@ -614,5 +628,5 @@ def get_chatbot_response():
         "summary": summary
     })
 
-if __name__ =="__main__":
-    app.run(debug=True, port = 8080)
+if __name__ == "__main__":
+    app.run(debug=True, port=8080)

@@ -4,7 +4,7 @@
 <style>
   :root{
     --brand:#d6c278; --ink:#0f172a; --muted:#475569;
-    --panel:rgba(255,255,255,.75);
+    --panel: #ffffff !important;
     --ring:linear-gradient(120deg, rgba(214,194,120,.8), rgba(255,255,255,.35));
   }
 
@@ -36,9 +36,10 @@
   .action-bar{ display:flex; gap:10px; flex-wrap:wrap; }
   .btn-fr{
     text-decoration:none; border-radius:12px; border:1px solid rgba(15,23,42,.1);
-    background:#fff; color:var(--ink); font-weight:700;
+    background:#fff !important; color:var(--ink); font-weight:700;
     padding:10px 14px; display:inline-flex; align-items:center; gap:8px;
     transition:transform .2s, box-shadow .2s, border-color .2s;
+      opacity: 1 !important; /* ensure it's fully opaque */
   }
   .btn-fr:hover{ transform:translateY(-2px); border-color:rgba(214,194,120,.45); box-shadow:0 10px 18px rgba(15,23,42,.08); }
 
@@ -71,7 +72,15 @@
 
   .sidebar{ border-radius:16px; background:#fff; border:1px solid rgba(15,23,42,.08); box-shadow:0 10px 22px rgba(15,23,42,.06); padding:18px; }
   .side-title{ display:flex; align-items:center; gap:10px; margin:4px 0 14px; font-size:clamp(16px,2.1vw,20px); font-weight:800; }
-
+      .news-card{
+    background-color:#fff !important;   /* solid white */
+    backdrop-filter:none !important;     /* no glass/blur */
+    -webkit-backdrop-filter:none !important;
+  }
+  /* If you also want the sidebar to be solid, keep this (already in your CSS): */
+  .sidebar{
+    background-color:#fff !important;
+  }
   .news-card{
     border:1px solid rgba(15,23,42,.10); border-radius:14px; background:#fbfcff;
     box-shadow:0 8px 18px rgba(15,23,42,.06); transition:transform .2s, box-shadow .2s, border-color .2s; margin-bottom:14px;
@@ -126,12 +135,17 @@
         <div class="meta-info"><i class="bi bi-calendar3 me-1"></i> Created on {{ debate[2] }}</div>
       </div>
       <div class="action-bar">
+          <a class="btn-fr" href="{{ url_for('create_debate') }}">
+          <i class="bi bi-arrow-left-circle"></i> Back to Debates
+        </a>
         <a class="btn-fr" href="{{ url_for('create_post', debate_id=debate[0]) }}">
           <i class="bi bi-pencil-square"></i> Create Post
         </a>
+        {% if is_admin %}
         <a class="btn-fr" href="{{ url_for('create_news', debate_id=debate[0]) }}">
           <i class="bi bi-newspaper"></i> Add Related News
         </a>
+        {% endif %}
       </div>
     </div>
 

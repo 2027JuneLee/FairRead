@@ -6,7 +6,7 @@
     --ink:#0f172a;
     --muted:#64748b;
     --brand:#6366f1;         /* indigo accent */
-    --panel:rgba(255,255,255,.88);
+    --panel:rgba(255,255,255,.95);
   }
 
   body{
@@ -80,32 +80,62 @@
 
   /* loading spinner area in the extract button */
   .spinner-border.spinner-border-sm{ --bs-spinner-border-width: .18em; }
+
+    /* Back (ghost) button */
+  .btn-back{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 12px;
+    background:#fff;
+    border:1px solid rgba(15,23,42,.12);
+    border-radius: 10px;
+    color:var(--ink); font-weight:700; text-decoration:none;
+    transition:transform .2s, box-shadow .2s, border-color .2s, background .2s;
+  }
+  .btn-back:hover{
+    transform:translateY(-2px);
+    border-color:rgba(99,102,241,.35); /* or var(--brand) tone */
+    box-shadow:0 10px 18px rgba(15,23,42,.08);
+    background:#ffffff;
+  }
+  .btn-back:focus-visible{
+    outline:none;
+    box-shadow:0 0 0 3px rgba(99,102,241,.22);
+    border-color: var(--brand);
+  }
+
+  /* Make header layout comfortable when back button is present */
+  .head-left{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .title-wrap{ display:flex; flex-direction:column; }
+  .back-label{ display:inline; }
+  @media (max-width: 576px){
+    .back-label{ display:none; } /* icon-only on small screens */
+  }
 </style>
 
 <div class="page-wrap container">
 
-  <div class="mb-3">
-    <a href="{{ url_for('debate_detail', debate_id=debate[0]) }}"
-       class="btn btn-outline-secondary d-inline-flex align-items-center">
-      <i class="bi bi-arrow-left me-2"></i>
-      <span>Back to Debate</span>
-    </a>
-  </div>
 
   <div class="card-wrap">
-    <div class="card-head">
-      <div>
+  <div class="card-head">
+    <div class="head-left">
+
+      <div class="title-wrap">
         <h1 class="title">Add News Article</h1>
         <div class="subtitle">Attach a credible source, summarize clearly, and keep it civil.</div>
       </div>
-      <div class="d-flex gap-2">
-        <span class="note d-flex align-items-center gap-2">
-          <i class="bi bi-shield-check"></i>
-          <span>We store title, link, summary & content to compute bias scores.</span>
-        </span>
-      </div>
-    </div>
 
+    </div>
+      <a href="{{ url_for('debate_detail', debate_id=debate[0]) }}" class="btn-back">
+        <i class="bi bi-arrow-left"></i>
+        <span class="back-label">Back to Debate</span>
+      </a>
+    <div class="d-flex gap-2">
+      <span class="note d-flex align-items-center gap-2">
+        <i class="bi bi-shield-check"></i>
+        <span>We store title, link, summary & content to compute bias scores.</span>
+      </span>
+    </div>
+  </div>
     <div class="card-body">
       <form method="POST" onsubmit="lockSubmit()">
         <!-- Title -->
