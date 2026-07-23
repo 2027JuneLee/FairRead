@@ -8,8 +8,11 @@ from collections import Counter
 from docx import Document
 import pdfplumber
 import yake
+import os
+from dotenv import load_dotenv
 
-
+load_dotenv()
+api_key = os.getenv('OPENAI_API_KEY')
 client = OpenAI(api_key=api_key)
 
 # tokenizer = AutoTokenizer.from_pretrained("bucketresearch/politicalBiasBERT")
