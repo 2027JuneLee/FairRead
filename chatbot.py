@@ -9,7 +9,7 @@ from docx import Document
 import pdfplumber
 import yake
 
-api_key = "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"
+
 client = OpenAI(api_key=api_key)
 
 # tokenizer = AutoTokenizer.from_pretrained("bucketresearch/politicalBiasBERT")
