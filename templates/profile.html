@@ -111,6 +111,61 @@
 .empty-cta:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(15,23,42,.08); }
 
   .divider{ height:1px; background:linear-gradient(90deg,transparent,rgba(15,23,42,.12),transparent); margin:10px 0; }
+
+  .term-review-card{
+    border-radius:18px; background:#fff; border:1px solid rgba(15,23,42,.08);
+    box-shadow:0 10px 24px rgba(15,23,42,.08); padding:16px 18px; margin-top:16px;
+  }
+  .term-filter .btn{
+    border-radius:10px; border:1px solid rgba(15,23,42,.16);
+    background:#fff; color:#0f172a; font-weight:600;
+  }
+  .term-filter .btn.active{
+    background:#0f172a; color:#fff; border-color:#0f172a;
+  }
+  .term-page-size{
+    min-width: 120px;
+    max-width: 140px;
+    border-radius: 10px;
+    border:1px solid rgba(15,23,42,.16);
+    font-weight:600;
+  }
+  .term-pager .btn{
+    border-radius:10px; border:1px solid rgba(15,23,42,.16);
+    background:#fff; color:#0f172a; font-weight:600;
+  }
+  .term-group{
+    border:1px solid rgba(15,23,42,.08);
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:12px;
+    background:#fbfcff;
+  }
+  .term-group-title{
+    font-weight:800;
+    margin-bottom:8px;
+  }
+  .term-item-row{
+    border-top:1px solid rgba(15,23,42,.08);
+    padding-top:10px;
+    margin-top:10px;
+  }
+  .term-item-row:first-child{
+    border-top:none;
+    padding-top:0;
+    margin-top:0;
+  }
+  .term-badge{
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    margin-left:8px;
+  }
+  .term-badge.vocabulary{ background:#dbeafe; color:#1e40af; }
+  .term-badge.idiom{ background:#dcfce7; color:#166534; }
+  .term-badge.grammar{ background:#e9d5ff; color:#6b21a8; }
 </style>
 
 <div class="container page-wrap">
@@ -120,36 +175,36 @@
   <div class="row g-3">
     <!-- Left Column -->
    <div class="col-lg-6">
-     <h3 class="m-0 card-title ms-2"><i class="bi bi-bar-chart-line me-2 mb-2"></i>My Data</h3>
+     <h3 class="m-0 card-title ms-2"><i class="bi bi-bar-chart-line me-2 mb-2"></i>{{ translate_ui("My Data", current_language) }}</h3>
   {% if total_articles == 0 %}
     <div class="empty-state mt-2">
       <div class="icon"><i class="bi bi-graph-up"></i></div>
-      <div class="empty-title">No data yet</div>
-      <p class="empty-text">Classify your first article to see bias distribution and topics here.</p>
+     <div class="empty-title">{{ translate_ui("No data yet", current_language) }}</div>
+     <p class="empty-text">{{ translate_ui("Classify your first article to see bias distribution and topics here.", current_language) }}</p>
       <a class="empty-cta" href="{{ url_for('chatbot') }}">
-        <i class="bi bi-plus-circle"></i> Start classifying
+       <i class="bi bi-plus-circle"></i> {{ translate_ui("Start classifying", current_language) }}
       </a>
     </div>
   {% else %}
     <div class="card-fr mt-3">
       <div class="card-head">
-        <h3 class="card-title"><i class="bi bi-activity me-2"></i>Bias Distribution</h3>
-        <span class="muted">Average across your submissions</span>
+       <h3 class="card-title"><i class="bi bi-activity me-2"></i>{{ translate_ui("Bias Distribution", current_language) }}</h3>
+       <span class="muted">{{ translate_ui("Average across your submissions", current_language) }}</span>
       </div>
       <div class="chart-box h-220">
         <canvas id="pieBias"></canvas>
       </div>
       <div class="mt-2 d-flex flex-wrap gap-2">
-        <span class="pill"><i class="bi bi-circle-half"></i> Left: {{ left_avg|round(1) }}%</span>
-        <span class="pill"><i class="bi bi-dash-circle"></i> Center: {{ center_avg|round(1) }}%</span>
-        <span class="pill"><i class="bi bi-bullseye"></i> Right: {{ right_avg|round(1) }}%</span>
+       <span class="pill"><i class="bi bi-circle-half"></i> {{ translate_ui("Left", current_language) }}: {{ left_avg|round(1) }}%</span>
+       <span class="pill"><i class="bi bi-dash-circle"></i> {{ translate_ui("Center", current_language) }}: {{ center_avg|round(1) }}%</span>
+       <span class="pill"><i class="bi bi-bullseye"></i> {{ translate_ui("Right", current_language) }}: {{ right_avg|round(1) }}%</span>
       </div>
     </div>
 
     <div class="card-fr">
       <div class="card-head">
-        <h3 class="card-title"><i class="bi bi-tags me-2"></i>Top Topics</h3>
-        <span class="muted">Most frequent keywords</span>
+       <h3 class="card-title"><i class="bi bi-tags me-2"></i>{{ translate_ui("Top Topics", current_language) }}</h3>
+       <span class="muted">{{ translate_ui("Most frequent keywords", current_language) }}</span>
       </div>
       <div class="chart-box h-260">
         <canvas id="barTopics"></canvas>
@@ -163,15 +218,15 @@
 <!-- Right Column -->
 <div class="col-lg-6">
   <div class="d-flex align-items-center justify-content-between mb-2">
-    <h3 class="m-0 card-title ms-2"><i class="bi bi-clock-history me-2 mb-2"></i>Recent Classifications</h3>
+    <h3 class="m-0 card-title ms-2"><i class="bi bi-clock-history me-2 mb-2"></i>{{ translate_ui("Recent Classifications", current_language) }}</h3>
 
     {% if recent_classification|length > 0 %}
     <div class="carousel-controls d-flex gap-2">
       <button class="btn btn-sm" data-bs-target="#classificationCarousel" data-bs-slide="prev">
-        <i class="bi bi-chevron-left"></i> Prev
+        <i class="bi bi-chevron-left"></i> {{ translate_ui("Prev", current_language) }}
       </button>
       <button class="btn btn-sm" data-bs-target="#classificationCarousel" data-bs-slide="next">
-        Next <i class="bi bi-chevron-right"></i>
+        {{ translate_ui("Next", current_language) }} <i class="bi bi-chevron-right"></i>
       </button>
     </div>
     {% endif %}
@@ -180,10 +235,10 @@
 {% if recent_classification|length == 0 %}
   <div class="empty-state">
     <div class="icon"><i class="bi bi-inbox"></i></div>
-    <div class="empty-title">No recent items</div>
-    <p class="empty-text">Your latest classifications will appear here after you analyze an article.</p>
+    <div class="empty-title">{{ translate_ui("No recent items", current_language) }}</div>
+    <p class="empty-text">{{ translate_ui("Your latest classifications will appear here after you analyze an article.", current_language) }}</p>
     <a class="empty-cta" href="{{ url_for('chatbot') }}">
-      <i class="bi bi-newspaper"></i> Analyze an article
+      <i class="bi bi-newspaper"></i> {{ translate_ui("Analyze an article", current_language) }}
     </a>
   </div>
   {% else %}
@@ -193,26 +248,31 @@
         <div class="carousel-item {% if loop.first %}active{% endif %}">
           <div class="card-fr" >
             <div class="card-head">
-              <h4 class="card-title"><i class="bi bi-bullseye me-2"></i>Bias Classification</h4>
-              <span class="muted">{{ classification[0] }}</span>
+              <h4 class="card-title"><i class="bi bi-bullseye me-2"></i>{{ translate_ui("Bias Classification", current_language) }}</h4>
+              <span class="muted">{{ classification[1] }}</span>
             </div>
             <div class="mb-2">
-              <span class="pill"><i class="bi bi-check2-circle"></i> Class: <strong>{{ classification[2] }}</strong></span>
+             <span class="pill"><i class="bi bi-check2-circle"></i> {{ translate_ui("Class", current_language) }}: <strong>{{ translate_bias_label(classification[3], current_language) }}</strong></span>
             </div>
             <div class="d-flex flex-wrap gap-2">
-              <span class="pill">Left: <strong>{{ bias_scores[loop.index0][0] }}%</strong></span>
-              <span class="pill">Center: <strong>{{ bias_scores[loop.index0][1] }}%</strong></span>
-              <span class="pill">Right: <strong>{{ bias_scores[loop.index0][2] }}%</strong></span>
+              <span class="pill">{{ translate_ui("Left", current_language) }}: <strong>{{ bias_scores[loop.index0][0] }}%</strong></span>
+              <span class="pill">{{ translate_ui("Center", current_language) }}: <strong>{{ bias_scores[loop.index0][1] }}%</strong></span>
+              <span class="pill">{{ translate_ui("Right", current_language) }}: <strong>{{ bias_scores[loop.index0][2] }}%</strong></span>
             </div>
             <div class="divider"></div>
             <div class="mb-2">
-              <h6 class="mb-1"><i class="bi bi-lightbulb"></i> Reason</h6>
-              <div class="muted" style="white-space:pre-wrap">{{ classification[5] }}</div>
+              <h6 class="mb-1"><i class="bi bi-lightbulb"></i> {{ translate_ui("Reason", current_language) }}</h6>
+              <div class="muted" style="white-space:pre-wrap">{{ classification[6] }}</div>
             </div>
             <div class="divider"></div>
-            <div>
-              <h6 class="mb-1"><i class="bi bi-journal-text"></i> Summary</h6>
-              <div class="muted" style="white-space:pre-wrap">{{ classification[4] }}</div>
+            <div class="mb-3">
+              <h6 class="mb-1"><i class="bi bi-journal-text"></i> {{ translate_ui("Summary", current_language) }}</h6>
+              <div class="muted" style="white-space:pre-wrap">{{ classification[5] }}</div>
+            </div>
+            <div class="d-flex gap-2">
+              <a href="{{ url_for('learn_from_article', article_id=classification[0]) }}" class="btn btn-sm btn-primary" style="flex: 1;">
+                <i class="bi bi-book"></i> {{ translate_ui("Learn from this article", current_language) }}
+              </a>
             </div>
           </div>
         </div>
@@ -222,10 +282,167 @@
   {% endif %}
 </div>
 
+  <div class="col-12">
+  <div class="term-review-card">
+    <div class="card-head">
+      <h3 class="card-title"><i class="bi bi-book-half me-2"></i>{{ translate_ui("Learning Term Review", current_language) }}</h3>
+      <span class="muted">{{ translate_ui("Review extracted terms by timeframe.", current_language) }}</span>
+    </div>
+
+    <div class="term-filter d-flex flex-wrap gap-2 mb-3">
+      <button type="button" class="btn btn-sm term-range-btn" data-range="day">{{ translate_ui("Day", current_language) }}</button>
+      <button type="button" class="btn btn-sm term-range-btn" data-range="week">{{ translate_ui("Week", current_language) }}</button>
+      <button type="button" class="btn btn-sm term-range-btn" data-range="month">{{ translate_ui("Month", current_language) }}</button>
+      <button type="button" class="btn btn-sm term-range-btn" data-range="all">{{ translate_ui("All", current_language) }}</button>
+      <select id="term-page-size" class="form-select form-select-sm term-page-size ms-auto">
+        <option value="5">5</option>
+        <option value="10">10</option>
+      </select>
+    </div>
+
+    {% if term_total_count == 0 %}
+      <div class="empty-state">
+        <div class="icon"><i class="bi bi-journal-x"></i></div>
+        <div class="empty-title">{{ translate_ui("No learning terms yet", current_language) }}</div>
+        <p class="empty-text">{{ translate_ui("Terms from your learned articles will appear here.", current_language) }}</p>
+      </div>
+    {% else %}
+      <div id="term-groups-container"></div>
+      <div class="term-pager d-flex align-items-center justify-content-between mt-2">
+        <button type="button" class="btn btn-sm" id="term-prev-btn"><i class="bi bi-chevron-left"></i> {{ translate_ui("Prev", current_language) }}</button>
+        <span id="term-page-label" class="muted"></span>
+        <button type="button" class="btn btn-sm" id="term-next-btn">{{ translate_ui("Next", current_language) }} <i class="bi bi-chevron-right"></i></button>
+      </div>
+    {% endif %}
+  </div>
   </div>
 </div>
 
 <script>
+  // Translation dictionaries for JavaScript
+  const UI_LABELS_JS = {
+    'en': { 'Mentions': 'Mentions' },
+    'es': { 'Mentions': 'Menciones' },
+    'zh': { 'Mentions': '提及' },
+    'ko': { 'Mentions': '언급' }
+  };
+
+  function getCurrentLanguage() {
+    return document.getElementById('langSelector')?.value || 'en';
+  }
+
+  function getUITextJS(key, language) {
+    return UI_LABELS_JS[language]?.[key] || UI_LABELS_JS['en'][key] || key;
+  }
+
+  const termGroupsByRange = {{ term_groups_by_range | tojson }};
+  let currentTermRange = "{{ initial_term_range }}";
+  let currentTermPage = 1;
+  let termPageSize = 5;
+  const languageNames = { en: 'English', es: 'Spanish', zh: 'Chinese', ko: 'Korean' };
+
+  function esc(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function renderTermGroups() {
+    const groups = termGroupsByRange[currentTermRange] || [];
+    const container = document.getElementById('term-groups-container');
+    const pageLabel = document.getElementById('term-page-label');
+    const prevBtn = document.getElementById('term-prev-btn');
+    const nextBtn = document.getElementById('term-next-btn');
+    if (!container || !pageLabel || !prevBtn || !nextBtn) return;
+
+    const flatTerms = [];
+    for (const group of groups) {
+      for (const item of group.items) {
+        flatTerms.push({ groupLabel: group.label, ...item });
+      }
+    }
+
+    const totalPages = Math.max(1, Math.ceil(flatTerms.length / termPageSize));
+    if (currentTermPage > totalPages) currentTermPage = totalPages;
+    if (currentTermPage < 1) currentTermPage = 1;
+
+    const start = (currentTermPage - 1) * termPageSize;
+    const end = start + termPageSize;
+    const pageTerms = flatTerms.slice(start, end);
+
+    const groupedPage = {};
+    for (const term of pageTerms) {
+      if (!groupedPage[term.groupLabel]) groupedPage[term.groupLabel] = [];
+      groupedPage[term.groupLabel].push(term);
+    }
+
+    let html = '';
+    for (const label of Object.keys(groupedPage)) {
+      html += `<div class="term-group"><div class="term-group-title">${esc(label)}</div>`;
+      for (const term of groupedPage[label]) {
+        const typeLabel = term.type === 'vocabulary'
+          ? "{{ translate_ui('Vocabulary', current_language) }}"
+          : term.type === 'idiom'
+            ? "{{ translate_ui('Idiom', current_language) }}"
+            : "{{ translate_ui('Grammar', current_language) }}";
+        html += `
+          <div class="term-item-row">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <strong>${esc(term.term)}</strong>
+                <span class="term-badge ${esc(term.type)}">${esc(typeLabel)}</span>
+              </div>
+              <span class="muted">${esc(term.date)}</span>
+            </div>
+            <div class="muted mt-1">${esc(term.difficulty)}</div>
+            <div class="mt-1" style="white-space:pre-wrap;"><strong>English (EN):</strong> ${esc(term.definition_en || term.definition || '')}</div>
+            <div class="mt-1" style="white-space:pre-wrap;"><strong>${esc(languageNames[term.definition_target_lang] || 'Target')} (${esc((term.definition_target_lang || '').toUpperCase())}):</strong> ${esc(term.definition_target || term.definition || '')}</div>
+          </div>`;
+      }
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+    pageLabel.textContent = `${currentTermPage} / ${totalPages}`;
+    prevBtn.disabled = currentTermPage <= 1;
+    nextBtn.disabled = currentTermPage >= totalPages;
+  }
+
+  document.querySelectorAll('.term-range-btn').forEach((btn) => {
+    if (btn.dataset.range === currentTermRange) btn.classList.add('active');
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.term-range-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTermRange = btn.dataset.range;
+      currentTermPage = 1;
+      renderTermGroups();
+    });
+  });
+
+  document.getElementById('term-page-size')?.addEventListener('change', (e) => {
+    termPageSize = parseInt(e.target.value, 10) || 5;
+    currentTermPage = 1;
+    renderTermGroups();
+  });
+
+  document.getElementById('term-prev-btn')?.addEventListener('click', () => {
+    currentTermPage -= 1;
+    renderTermGroups();
+  });
+
+  document.getElementById('term-next-btn')?.addEventListener('click', () => {
+    currentTermPage += 1;
+    renderTermGroups();
+  });
+
+  if (document.getElementById('term-groups-container')) {
+    document.getElementById('term-page-size').value = String(termPageSize);
+    renderTermGroups();
+  }
+
   // Inputs from server
   const leftAvg   = {{ left_avg }};
   const centerAvg = {{ center_avg }};
@@ -236,7 +453,7 @@
   new Chart(pieCtx, {
     type: 'pie',
     data: {
-      labels: ['Left', 'Center', 'Right'],
+      labels: ['{{ translate_ui("Left", current_language) }}', '{{ translate_ui("Center", current_language) }}', '{{ translate_ui("Right", current_language) }}'],
       datasets: [{
         data: [leftAvg, centerAvg, rightAvg],
         backgroundColor: ['#3b82f6','#f59e0b','#ef4444'],
@@ -265,7 +482,7 @@
     data: {
       labels: topTopics,
       datasets: [{
-        label: 'Mentions',
+        label: getUITextJS('Mentions', getCurrentLanguage()),
         data: topicData,
         backgroundColor: '#10b981'
       }]

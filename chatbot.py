@@ -15,13 +15,26 @@ load_dotenv()
 api_key = os.getenv('OPENAI_API_KEY')
 client = OpenAI(api_key=api_key)
 
+# Language code to full name mapping for GPT prompts
+LANGUAGE_NAMES = {
+    'en': 'English',
+    'es': 'Spanish',
+    'zh': 'Chinese',
+    'ko': 'Korean'
+}
+
+def get_language_instruction(language_code='en'):
+    """Returns language instruction for GPT prompts. Always respond in the selected language."""
+    lang_name = LANGUAGE_NAMES.get(language_code, 'English')
+    return f"Respond entirely in {lang_name}."
+
 # tokenizer = AutoTokenizer.from_pretrained("bucketresearch/politicalBiasBERT")
 # model = AutoModelForSequenceClassification.from_pretrained("bucketresearch/politicalBiasBERT")
 #
 # summarizer = pipeline('summarization', model="facebook/bart-large-cnn")
 
 # function for summarizing text
-def summarize_text(text, max_length=1000, min_length=30):
+def summarize_text(text, language_code="en"):
     summary = summarizer(text, max_length=max_length, min_length=min_length, do_sample=False)
     return summary[0]['summary_text']
 
@@ -47,7 +60,7 @@ def is_news(text):
     return
 
 
-def get_bias_classification(text):
+def get_bias_classification(text, language='en'):
     classification_prompt = (
         "Classify the following news whether it is bias toward certain wing as 'Left', 'Center', or 'Right'. "
         "Provide the classification and the probability for each class as percentages. "
@@ -69,13 +82,15 @@ def get_bias_classification(text):
     percentages = [value for key, value in percentages.items()] # [70,10,20]
     bias_scores = percentages
 
-    classification = percentages.index(max(percentages))
-    if classification == 0:
-        classification = "Left"
-    elif classification == 1:
-        classification = "Center"
-    else:
-        classification = "Right"
+    classification_index = percentages.index(max(percentages))
+    classification_names = {
+        'en': ['Left', 'Center', 'Right'],
+        'es': ['Izquierda', 'Centro', 'Derecha'],
+        'zh': ['左翼', '中立', '右翼'],
+        'ko': ['좌파', '중도', '우파']
+    }
+    lang_labels = classification_names.get(language, classification_names['en'])
+    classification = lang_labels[classification_index]
 
     for i in range(len(percentages)):
         percentages[i] = str(percentages[i])
@@ -105,19 +120,28 @@ def read_pdf(file_path):
 #     for keyword, score in keywords:
 #         keywords_lst.append(keyword)
 #     return keywords_lst
-def get_keywords(text):
+def get_keywords(text, language='en'):
     classification_prompt = (
-        "Classify the news article into 3 to 5 main topics, issues, or keywords. For example, focus on the place the news takes place in, who it mainly involve, which topic the news is about, and the event of the news, such as 'politics', 'Cuba', 'Donald Trump', and 'assassination.' Put quotation marks like '' for each keyword: "
-        "Provide the keywords as a comma-separated list."
-        "Example format: 'keyword1', 'keyword2', 'keyword3', 'keyword4', 'keyword5'\n\n"
-        f"Text: {text}\n\n"
-        "Output:"
-    )
-    classification_prompt = (
-        "Classify the news article into 3 to 5 main topics, issues, or keywords. For example, focus on the place the news takes place in, who it mainly involve, which topic the news is about, and the event of the news, such as 'politics', 'Cuba', 'Donald Trump', and 'assassination': \n"
+        "Extract 3-5 broad topic categories or key entities from this news article. "
+        "Focus on general themes, not specific details or events.\n\n"
+        "Rules:\n"
+        "- Extract main ENTITIES: important people, countries, cities, organizations (e.g., 'Donald Trump', 'United States', 'New York', 'Democratic Party', 'United Nations')\n"
+        "- Extract main TOPICS: broad subject areas (e.g., 'Politics', 'Economics', 'Sports', 'Technology', 'Climate', 'Healthcare')\n"
+        "- Avoid: specific events, dates, very detailed phrases\n"
+        "- Avoid: actions or verbs (e.g., DON'T say 'election campaign' → SAY 'Politics')\n"
+        "- Keep it simple: use general names, not descriptions\n\n"
+        "Examples of GOOD keywords:\n"
+        "  Article about Trump's speech in New York → Trump, New York, Politics\n"
+        "  Article about France's economic policy → France, Economics, European Union\n"
+        "  Article about climate summit in Glasgow → Climate, United Nations, Scotland\n\n"
+        "Examples of BAD keywords (too specific):\n"
+        "  ✗ 'Democratic Party Strategy' → Use 'Democratic Party' instead\n"
+        "  ✗ 'New York City mayoral election' → Use 'New York' and 'Politics' instead\n"
+        "  ✗ 'global warming conference proceedings' → Use 'Climate' and the location instead\n\n"
         "Article: {news_content} \n\n "
-        "Keywords: "
-    ).format(news_content = text)
+        "{lang_instruction}"
+        "Keywords (comma-separated, broad categories only): "
+    ).format(news_content=text, lang_instruction=get_language_instruction(language))
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": classification_prompt}],
@@ -151,32 +175,189 @@ def classify_news(news_content): # news_content = "today, trumps ~~~~~"
     final_classification = Counter(responses).most_common(1)[0][0]
     return final_classification
 
-def summarize_news(news_content): # news_content = "today, trumps ~~~~~"
+def summarize_news(news_content, language='en'):
     classification_prompt = (
         "Simplify and summarize the news for an easy-to-read, shorter, and overall more convenient article. Don't cut too many points or words, preserve style, major viewpoints, theses, and ideas, but summarize it for people who may not understand or have time to read the full article:\n"
         "Article: {news_content} \n\n "
-    ).format(news_content = news_content)
+        "{lang_instruction}"
+    ).format(news_content=news_content, lang_instruction=get_language_instruction(language))
 
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": classification_prompt}],
-        temperature=0  # Low temperature creates deterministic response
+        temperature=0
     )
     return response.choices[0].message.content.strip()
 
-def reason_news(news_content, bias_class): # news_content = "today, trumps ~~~~~"
+def reason_news(news_content, bias_class, language='en'):
     classification_prompt = (
-        "Following news article seems to have a {bias_class} bias politically. Write a maximum of 3 sentences on why this is the case/ \n"
+        "Following news article seems to have a {bias_class} bias politically. Write a maximum of 3 sentences on why this is the case.\n"
         "Article: {news_content} \n\n "
-    ).format(news_content = news_content, bias_class = bias_class)
+        "{lang_instruction}"
+    ).format(news_content=news_content, bias_class=bias_class, lang_instruction=get_language_instruction(language))
 
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": classification_prompt}],
-        temperature=0  # Low temperature creates deterministic response
+        temperature=0
     )
     return response.choices[0].message.content.strip()
 
+
+
+def detect_article_language(text):
+    """Detect if article is primarily in English, Spanish, Chinese, or Korean."""
+    try:
+        sample = text[:500]
+        
+        # Chinese - check for CJK characters
+        if any(ord(c) >= 0x4e00 and ord(c) <= 0x9fff for c in sample):
+            return "zh"
+        
+        # Korean - check for Hangul characters
+        if any(ord(c) >= 0xac00 and ord(c) <= 0xd7af for c in sample):
+            return "ko"
+        
+        # English/Spanish - default to English
+        return "en"
+    except:
+        return "en"
+
+def clean_article_content(article_text):
+    """
+    Use AI to clean article text by removing ads, navigation, and noise.
+    Preserves article content, images, and context.
+    """
+    clean_prompt = f"""
+    Clean this article text by removing:
+    - Ads and promotional content
+    - Navigation/menu text
+    - Copyright/footer boilerplate
+    - "Click to read more" type phrases
+    - Social media buttons
+    - Duplicate content
+    
+    Keep:
+    - Main article content
+    - Relevant paragraphs
+    - Image descriptions (marked with [IMAGE: ...])
+    - Headers and structure
+    - Important context
+    
+    Return only the cleaned article text, maintaining proper formatting and line breaks.
+    Do NOT add explanations or metadata.
+    
+    Article to clean:
+    ---
+    {article_text}
+    ---
+    
+    Cleaned article:
+    """
+    
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": clean_prompt}],
+        temperature=0
+    )
+    return response.choices[0].message.content.strip()
+
+def extract_learning_points(article_text, article_language='en', ui_language='en'):
+    """
+    Extract vocabulary, idioms, and grammar patterns from article for language learning.
+    Returns list of dictionaries with learning annotations.
+    """
+    print(f"[EXTRACT_LEARNING] Starting extraction for article language: {article_language}, ui language: {ui_language}, text length: {len(article_text)}")
+    article_lang_name = LANGUAGE_NAMES.get(article_language, 'English')
+    ui_lang_name = LANGUAGE_NAMES.get(ui_language, 'English')
+    
+    extraction_prompt = f"""
+    Analyze this {article_lang_name} article to extract learning terms.
+    Return the terms in {article_lang_name}, then provide definitions/explanations in {ui_lang_name}.
+    
+    Extract:
+    1. **New vocabulary** - 5-7 words/phrases learners should know (common terms, not too difficult)
+    2. **Idioms/expressions** - 2-3 common idioms or fixed expressions used in the article
+    3. **Grammar patterns** - 1-2 interesting grammar structures that appear in the article
+    
+    Return ONLY valid JSON (no markdown, no explanation, no extra text):
+    {{
+        "terms": [
+            {{
+                "term": "word or phrase from article",
+                "type": "vocabulary|idiom|grammar",
+                "definition": "clear explanation in {ui_lang_name}",
+                "english_meaning": "English translation or explanation",
+                "part_of_speech": "noun|verb|adjective|adverb|expression|pattern",
+                "example_sentence": "exact sentence from article where it appears",
+                "difficulty": "beginner|intermediate|advanced",
+                "grammar_note": "null or brief explanation of grammar pattern"
+            }}
+        ]
+    }}
+    
+    IMPORTANT:
+    - Every term MUST appear in the article
+    - Definitions should be clear and simple
+    - Include the exact context/sentence where term appears
+    - Difficulty should be realistic for language learners
+    - For grammar patterns, explain what makes it interesting/useful
+    
+    Article:
+    {article_text[:3000]}
+    """
+    
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": extraction_prompt}],
+            temperature=0
+        )
+        
+        result_text = response.choices[0].message.content.strip()
+        
+        # Try to parse JSON
+        import json
+        
+        # Handle markdown code blocks
+        if result_text.startswith("```"):
+            result_text = result_text.split("```")[1]
+            if result_text.startswith("json"):
+                result_text = result_text[4:]
+        
+        result_json = json.loads(result_text)
+        
+        # Validate and clean up terms
+        terms = result_json.get("terms", [])
+        cleaned_terms = []
+        print(f"[EXTRACT_LEARNING] Raw terms from GPT: {len(terms)}")
+        
+        for term in terms:
+            # Ensure all required fields exist
+            if all(k in term for k in ["term", "type", "definition", "example_sentence"]):
+                cleaned_terms.append({
+                    "term": term.get("term", "").strip(),
+                    "type": term.get("type", "vocabulary").lower(),
+                    "definition": term.get("definition", "").strip(),
+                    "english_meaning": term.get("english_meaning", "").strip(),
+                    "part_of_speech": term.get("part_of_speech", "").strip(),
+                    "example_sentence": term.get("example_sentence", "").strip(),
+                    "difficulty": term.get("difficulty", "intermediate").lower(),
+                    "grammar_note": term.get("grammar_note")
+                })
+        
+        print(f"[EXTRACT_LEARNING] Cleaned terms: {len(cleaned_terms)}")
+        return cleaned_terms
+    
+    except json.JSONDecodeError as e:
+        print(f"[EXTRACT_LEARNING] Failed to parse learning points JSON: {e}")
+        print(f"[EXTRACT_LEARNING] Raw response: {result_text[:500]}")
+        return []
+    except Exception as e:
+        print(f"[EXTRACT_LEARNING] Error extracting learning points: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
 
 
 # classify_news("")
@@ -221,6 +402,102 @@ def calculate_sentiment_subject(text):
 # subjectivity: min: 0, max:1 where 0 is very objective, and 1 is very subjective.
 
 # Function for getting HTML codes of the news
+def fetch_article_from_url(url):
+    """
+    Fetch article content from a URL.
+    Returns: (article_text, error_message)
+    - If successful: (text, None)
+    - If error: (None, error_message)
+    """
+    error_indicators = [
+        'paywalled', 'paywall', 'subscription required', 'subscribe',
+        'login', 'sign in', 'access denied', 'forbidden',
+        'premium', 'members only', 'exclusive'
+    ]
+    
+    try:
+        # Set a realistic user agent to avoid blocking
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        
+        # Check HTTP status
+        if response.status_code == 403:
+            return None, "Access denied. Article may be region-restricted or require authentication."
+        elif response.status_code == 404:
+            return None, "Article not found. Please check the URL."
+        elif response.status_code >= 400:
+            return None, f"Unable to fetch article (HTTP {response.status_code}). Website may be blocking automated access."
+        
+        # Parse HTML
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Check for paywall indicators in HTML
+        page_text = soup.get_text().lower()
+        for indicator in error_indicators:
+            if indicator in page_text:
+                # Do a more thorough check
+                if 'paywall' in indicator or 'subscription' in indicator or 'premium' in indicator:
+                    # Might actually be paywalled
+                    if page_text.count(indicator) > 2:  # If mentioned multiple times
+                        return None, "This article appears to be behind a paywall. Please try copying the text directly or accessing via an archive service."
+        
+        # Extract article text - try common article containers
+        article_text = None
+        
+        # Try common selectors
+        selectors = [
+            'article',
+            '[role="main"]',
+            '.article-body',
+            '.article-content',
+            '.post-content',
+            '.entry-content',
+            '.content',
+            'main'
+        ]
+        
+        for selector in selectors:
+            element = soup.select_one(selector)
+            if element:
+                article_text = element.get_text(strip=True)
+                if len(article_text) > 200:  # Minimum article length
+                    break
+        
+        # Fallback: use body text if no article element found
+        if not article_text:
+            body = soup.body
+            if body:
+                # Remove script and style elements
+                for script in body(['script', 'style', 'nav', 'footer']):
+                    script.decompose()
+                article_text = body.get_text(strip=True)
+        
+        # Clean up the text
+        if article_text:
+            # Remove extra whitespace and newlines
+            article_text = '\n'.join(line.strip() for line in article_text.split('\n') if line.strip())
+            
+            # Minimum length check
+            if len(article_text) < 100:
+                return None, "Article text is too short or could not be extracted. This may be a paywalled or restricted article."
+            
+            return article_text, None
+        else:
+            return None, "Unable to extract article content. The website structure may not be supported."
+    
+    except requests.exceptions.Timeout:
+        return None, "Request timed out. The website is taking too long to respond."
+    except requests.exceptions.ConnectionError:
+        return None, "Connection error. Please check the URL and your internet connection."
+    except requests.exceptions.RequestException as e:
+        return None, f"Error fetching URL: {str(e)}"
+    except Exception as e:
+        return None, f"Unexpected error: {str(e)}"
+
+
 def getting_news(link):
     try:
         # Accessing to the given link'
@@ -240,14 +517,4 @@ def getting_news(link):
 
     except requests.execeptions.RequestException as e:
         print(f"Error: {e}")
-# text = getting_news("https://www.washingtonpost.com/politics/2024/08/24/trump-energy-campaign-harris/")
-# # text = read_docs("sample.docx")
-# print("done extracting")
-# bias_class, bias_scores = get_bias_classification(text)
-# summary = summarize_news(text)
-# reason = reason_news(text, bias_class)
-# print(f"Bias Class: {bias_class}")
-# print(f"Bias Scores: {bias_scores}")
-# print(f"Reason: {reason}")
-# print(f"Summary: {summary}")
 # print()

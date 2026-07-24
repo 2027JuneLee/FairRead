@@ -178,32 +178,39 @@
                 <div class="chat-container">
                     <!-- NEW: Instructions button -->
                     <button type="button" class="instr-btn" data-bs-toggle="modal" data-bs-target="#instructionsModal" aria-label="Open instructions">
-                        <i class="bi bi-info-circle"></i> How to use
+                        <i class="bi bi-info-circle"></i> {{ translate_ui("How to use", current_language) }}
                     </button>
 
-                    <h3 class="chat-title">News Classifier</h3>
-                    <p class="text-center">We will classify the news for you!</p>
+                    <h3 class="chat-title">{{ translate_ui("News Classifier", current_language) }}</h3>
+                    <p class="text-center">{{ translate_ui("We will classify the news for you!", current_language) }}</p>
 
                     <!-- Chat box -->
                     <div class="chat-box" id="chat-box">
                         <div class="chat-message bot-input">
-Hello! You can copy and paste the news text or link, or upload a PDF file. The analysis results will appear on the right.
+{{ translate_ui("Hello! You can copy and paste the news text or link, or upload a PDF file. The analysis results will appear on the right.", current_language) }}
                         </div>
                     </div>
 
                     <!-- Input row -->
                     <div class="chat-input">
-                        <label for="file-input"><i class="bi bi-paperclip"></i> Attach File</label>
+                        <label for="file-input"><i class="bi bi-paperclip"></i> {{ translate_ui("Attach File", current_language) }}</label>
                         <input type="file" id="file-input" accept=".docx, .pdf" onchange="updateFileLabel()">
                         <span id="file-name" style="margin-left: 10px; font-size: 14px; color: #555;"></span>
 
                         <div class="input-wrapper">
                             <div id="text-input-container">
-                                <input type="text" id="user-input" placeholder="Paste or type article text or notes here...">
+                                <input type="text" id="user-input" placeholder="{{ translate_ui("Paste or type article text or notes here...", current_language) }}">
                             </div>
                             <div id="placeholder" style="display: none;"></div>
                         </div>
                         <button onclick="uploadOrSendMessage()" class="send-btn"><i class="bi bi-send-fill"></i></button>
+                    </div>
+
+                    <!-- Learn Button (shows after analysis) -->
+                    <div style="margin-top: 12px;">
+                        <a id="learn-btn" href="#" style="display: none; width: 100%;" class="btn btn-primary">
+                            <i class="bi bi-book"></i> {{ translate_ui("Learn from this article", current_language) }}
+                        </a>
                     </div>
                 </div>
             </div>
@@ -212,32 +219,32 @@ Hello! You can copy and paste the news text or link, or upload a PDF file. The a
             <div class="col-md-6 px-5">
                 <div class="result-container">
                     <div class="card">
-                        <div class="card-title">Bias Classification</div>
-                        <p class="card-text">Bias Class: <span id="bias-class" class="placeholder-text">Not analyzed yet</span></p>
-                        <p class="card-text">Bias Scores:</p>
+                        <div class="card-title">{{ translate_ui("Bias Classification", current_language) }}</div>
+                        <p class="card-text">{{ translate_ui("Bias Class", current_language) }}: <span id="bias-class" class="placeholder-text">{{ translate_ui("Not analyzed yet", current_language) }}</span></p>
+                        <p class="card-text">{{ translate_ui("Bias Scores", current_language) }}:</p>
                         <div class="bias-distribution">
                             <div id="left-bar" class="bias-segment left-segment"></div>
                             <div id="center-bar" class="bias-segment center-segment"></div>
                             <div id="right-bar" class="bias-segment right-segment"></div>
                         </div>
                         <div class="bias-labels">
-                            <span>Left: <span id="left">--%</span></span>
-                            <span>Center: <span id="center">--%</span></span>
-                            <span>Right: <span id="right">--%</span></span>
+                            <span>{{ translate_ui("Left", current_language) }}: <span id="left">--%</span></span>
+                            <span>{{ translate_ui("Center", current_language) }}: <span id="center">--%</span></span>
+                            <span>{{ translate_ui("Right", current_language) }}: <span id="right">--%</span></span>
                         </div>
                     </div>
 
                     <div class="card">
-                        <div class="card-title">Reason for Bias</div>
-                        <p class="card-text"><span id="bias-reason" class="placeholder-text">Analysis pending...</span></p>
+                        <div class="card-title">{{ translate_ui("Reason for Bias", current_language) }}</div>
+                        <p class="card-text"><span id="bias-reason" class="placeholder-text">{{ translate_ui("Analysis pending...", current_language) }}</span></p>
                     </div>
                     <div class="card">
-                        <div class="card-title">News Summary</div>
-                        <p class="card-text"><span id="news-summary" class="placeholder-text">Summary will appear here...</span></p>
+                        <div class="card-title">{{ translate_ui("News Summary", current_language) }}</div>
+                        <p class="card-text"><span id="news-summary" class="placeholder-text">{{ translate_ui("Summary will appear here...", current_language) }}</span></p>
                     </div>
-                    <div class="card">
-                        <div class="card-title">Keywords</div>
-                        <p class="card-text"><span id="keywords" class="placeholder-text">Keywords will be shown here...</span></p>
+                   <div class="card">
+                        <div class="card-title">{{ translate_ui("Keywords", current_language) }}</div>
+                        <p class="card-text"><span id="keywords" class="placeholder-text">{{ translate_ui("Keywords will be shown here...", current_language) }}</span></p>
                     </div>
                 </div>
             </div>
@@ -249,36 +256,36 @@ Hello! You can copy and paste the news text or link, or upload a PDF file. The a
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content modal-modern">
       <div class="modal-header">
-        <h5 class="modal-title" id="instructionsLabel">How to use the News Classifier</h5>
+        <h5 class="modal-title" id="instructionsLabel">{{ translate_ui("How to use the News Classifier", current_language) }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
       <div class="modal-body">
         <!-- Ways to submit -->
-        <div class="section-title">Ways to submit</div>
+        <div class="section-title">{{ translate_ui("Ways to submit", current_language) }}</div>
         <div class="row g-3">
           <div class="col-md-4">
             <div class="feature">
               <div class="d-flex align-items-center">
-                <i class="bi bi-clipboard-plus"></i><h6 class="m-0">Paste text</h6>
+                <i class="bi bi-clipboard-plus"></i><h6 class="m-0">{{ translate_ui("Paste text", current_language) }}</h6>
               </div>
-              <p>Paste any article text or your notes, then press <kbd  style="color: black;">Enter</kbd> or click the send icon.</p>
+              <p>{{ translate_ui("Paste any article text or your notes, then press Enter or click the send icon.", current_language) }}</p>
             </div>
           </div>
           <div class="col-md-4">
             <div class="feature">
               <div class="d-flex align-items-center">
-                <i class="bi bi-link-45deg"></i><h6 class="m-0">Paste a link</h6>
+                <i class="bi bi-link-45deg"></i><h6 class="m-0">{{ translate_ui("Paste a link", current_language) }}</h6>
               </div>
-              <p>Drop an article URL. We’ll fetch its content when possible and analyze it.</p>
+              <p>{{ translate_ui("Drop an article URL. We'll fetch its content when possible and analyze it.", current_language) }}</p>
             </div>
           </div>
           <div class="col-md-4">
             <div class="feature">
               <div class="d-flex align-items-center">
-                <i class="bi bi-paperclip"></i><h6 class="m-0">Upload a file</h6>
+                <i class="bi bi-paperclip"></i><h6 class="m-0">{{ translate_ui("Upload a file", current_language) }}</h6>
               </div>
-              <p>PDF or DOCX supported. If a file is attached, it takes priority over typed text.</p>
+              <p>{{ translate_ui("PDF or DOCX supported. If a file is attached, it takes priority over typed text.", current_language) }}</p>
             </div>
           </div>
         </div>
@@ -286,24 +293,24 @@ Hello! You can copy and paste the news text or link, or upload a PDF file. The a
         <hr class="hr-soft">
 
         <!-- What you'll see -->
-        <div class="section-title">What you’ll see</div>
+        <div class="section-title">{{ translate_ui("What you'll see", current_language) }}</div>
         <p class="mini mb-2">
-          <span class="badge-soft">Bias Class</span>
-          <span class="badge-soft">Left / Center / Right Scores</span>
-          <span class="badge-soft">Reason</span>
-          <span class="badge-soft">Summary</span>
-          <span class="badge-soft">Keywords</span>
+          <span class="badge-soft">{{ translate_ui("Bias Class", current_language) }}</span>
+          <span class="badge-soft">{{ translate_ui("Left / Center / Right Scores", current_language) }}</span>
+          <span class="badge-soft">{{ translate_ui("Reason", current_language) }}</span>
+          <span class="badge-soft">{{ translate_ui("Summary", current_language) }}</span>
+          <span class="badge-soft">{{ translate_ui("Keywords", current_language) }}</span>
         </p>
 
         <hr class="hr-soft">
 
         <!-- Tips & limits -->
-        <div class="section-title">Tips & limits</div>
+        <div class="section-title">{{ translate_ui("Tips & limits", current_language) }}</div>
         <ul class="tip-list">
-          <li><strong>Filenames should be English letters/numbers only</strong> (no special or non-English characters). Example: <code>news_article_2025.pdf</code></li>
-          <li>For paywalled pages, paste the article text or upload a PDF.</li>
-          <li>Very long documents can take longer to process.</li>
-          <li>If content extraction fails, try another link or paste the text directly.</li>
+          <li><strong>{{ translate_ui("Filenames should be English letters/numbers only", current_language) }}</strong> ({{ translate_ui("no special or non-English characters", current_language) }}). {{ translate_ui("Example", current_language) }}: <code>news_article_2025.pdf</code></li>
+          <li>{{ translate_ui("For paywalled pages, paste the article text or upload a PDF.", current_language) }}</li>
+          <li>{{ translate_ui("Very long documents can take longer to process.", current_language) }}</li>
+          <li>{{ translate_ui("If content extraction fails, try another link or paste the text directly.", current_language) }}</li>
         </ul>
 
         <hr class="hr-soft">
@@ -312,21 +319,75 @@ Hello! You can copy and paste the news text or link, or upload a PDF file. The a
       </div>
 
       <div class="modal-footer d-flex justify-content-between align-items-center">
-        <span class="mini text-muted"><i class="bi bi-info-circle me-1"></i>We analyze your input and show results on the right.</span>
-        <button type="button" class="btn btn-brand" data-bs-dismiss="modal">Got it</button>
+        <span class="mini text-muted"><i class="bi bi-info-circle me-1"></i>{{ translate_ui("We analyze your input and show results on the right.", current_language) }}</span>
+        <button type="button" class="btn btn-brand" data-bs-dismiss="modal">{{ translate_ui("Got it", current_language) }}</button>
       </div>
     </div>
   </div>
 </div>
 
 
+
+
 <script>
+/* ---------- Bias label translations ---------- */
+const BIAS_LABEL_TRANSLATIONS = {
+  'en': {'Left': 'Left', 'Center': 'Center', 'Right': 'Right'},
+  'es': {'Left': 'Izquierda', 'Center': 'Centro', 'Right': 'Derecha'},
+  'zh': {'Left': '左翼', 'Center': '中立', 'Right': '右翼'},
+  'ko': {'Left': '좌파', 'Center': '중도', 'Right': '우파'}
+};
+
+/* ---------- UI text translations for JavaScript ---------- */
+const UI_TEXT_TRANSLATIONS = {
+  'en': {
+    'Please rename the file using only English letters, numbers, spaces, underscores, hyphens, and dots (e.g., news_article_2025.pdf).': 'Please rename the file using only English letters, numbers, spaces, underscores, hyphens, and dots (e.g., news_article_2025.pdf).',
+    'Analyzing, please wait...': 'Analyzing, please wait...',
+    'Please attach a file or enter a message.': 'Please attach a file or enter a message.',
+    'Done Processing. Please check the right side.': 'Done Processing. Please check the right side.',
+    'Filename not allowed. Use only English letters, numbers, spaces, underscores, hyphens, and dots.': 'Filename not allowed. Use only English letters, numbers, spaces, underscores, hyphens, and dots.'
+  },
+  'es': {
+    'Please rename the file using only English letters, numbers, spaces, underscores, hyphens, and dots (e.g., news_article_2025.pdf).': 'Por favor, cambia el nombre del archivo usando solo letras inglesas, números, espacios, guiones bajos, guiones y puntos (p. ej., news_article_2025.pdf).',
+    'Analyzing, please wait...': 'Analizando, por favor espera...',
+    'Please attach a file or enter a message.': 'Por favor, adjunta un archivo o escribe un mensaje.',
+    'Done Processing. Please check the right side.': 'Procesamiento completado. Por favor, verifica el lado derecho.',
+    'Filename not allowed. Use only English letters, numbers, spaces, underscores, hyphens, and dots.': 'Nombre de archivo no permitido. Utiliza solo letras inglesas, números, espacios, guiones bajos, guiones y puntos.'
+  },
+  'zh': {
+    'Please rename the file using only English letters, numbers, spaces, underscores, hyphens, and dots (e.g., news_article_2025.pdf).': '请使用仅包含英文字母、数字、空格、下划线、连字符和点的名称重新命名文件（例如 news_article_2025.pdf）。',
+    'Analyzing, please wait...': '正在分析，请稍候...',
+    'Please attach a file or enter a message.': '请附加文件或输入消息。',
+    'Done Processing. Please check the right side.': '处理完成。请检查右侧。',
+    'Filename not allowed. Use only English letters, numbers, spaces, underscores, hyphens, and dots.': '不允许的文件名。仅使用英文字母、数字、空格、下划线、连字符和点。'
+  },
+  'ko': {
+    'Please rename the file using only English letters, numbers, spaces, underscores, hyphens, and dots (e.g., news_article_2025.pdf).': '영문 문자, 숫자, 공백, 밑줄, 하이픈 및 점만 사용하여 파일 이름을 다시 지정하세요(예: news_article_2025.pdf).',
+    'Analyzing, please wait...': '분석 중, 잠시만 기다려주세요...',
+    'Please attach a file or enter a message.': '파일을 첨부하거나 메시지를 입력하세요.',
+    'Done Processing. Please check the right side.': '처리 완료. 오른쪽을 확인하세요.',
+    'Filename not allowed. Use only English letters, numbers, spaces, underscores, hyphens, and dots.': '허용되지 않는 파일 이름입니다. 영문 문자, 숫자, 공백, 밑줄, 하이픈 및 점만 사용하세요.'
+  }
+};
+
+function getBiasLabelTranslation(label, language) {
+  return BIAS_LABEL_TRANSLATIONS[language]?.[label] || label;
+}
+
+function getUITextTranslation(text, language) {
+  return UI_TEXT_TRANSLATIONS[language]?.[text] || UI_TEXT_TRANSLATIONS['en'][text] || text;
+}
+
+function getCurrentLanguage() {
+  return document.getElementById('langSelector')?.value || 'en';
+}
+
 /* ---------- helpers ---------- */
 function scrollToBottom() {
   const chatBox = document.getElementById("chat-box");
   chatBox.scrollTop = chatBox.scrollHeight;
 }
-function showLoadingMessage(message = "Analyzing, please wait...") {
+function showLoadingMessage(message = "{{ translate_ui('Analyzing, please wait...', current_language) }}") {
   const chatbox = document.getElementById("chat-box");
   chatbox.innerHTML += `<div class='chat-message bot-input'>${escapeHTML(message)}</div>`;
   scrollToBottom();
@@ -356,12 +417,14 @@ function uploadOrSendMessage() {
 
       // NEW: filename validation
       if (!isValidFilename(fileName)) {
-        chatBox.innerHTML += "<div class='chat-message bot-input'>Please rename the file using only English letters, numbers, spaces, underscores, hyphens, and dots (e.g., <code>news_article_2025.pdf</code>).</div>";
+        const errorMsg = getUITextTranslation('Please rename the file using only English letters, numbers, spaces, underscores, hyphens, and dots (e.g., news_article_2025.pdf).', getCurrentLanguage());
+        chatBox.innerHTML += `<div class='chat-message bot-input'>${escapeHTML(errorMsg)}</div>`;
         scrollToBottom();
         return; // stop here
       }
 
-      showLoadingMessage(`Analyzing "${escapeHTML(fileName)}", please wait...`);
+      const analyzeMsg = getUITextTranslation('Analyzing, please wait...', getCurrentLanguage());
+      showLoadingMessage(`${analyzeMsg.replace('Analyzing, please wait...', `Analyzing "${escapeHTML(fileName)}"`)}`);
       uploadFile(file);
       fileInput.value = "";
       document.getElementById("file-name").textContent = "";
@@ -369,7 +432,8 @@ function uploadOrSendMessage() {
       sendMessage();
       document.getElementById("user-input").value = '';
   } else {
-      chatBox.innerHTML += "<div class='chat-message bot-input'>Please attach a file or enter a message.</div>";
+      const emptyMsg = getUITextTranslation('Please attach a file or enter a message.', getCurrentLanguage());
+      chatBox.innerHTML += `<div class='chat-message bot-input'>${escapeHTML(emptyMsg)}</div>`;
       scrollToBottom();
   }
 }
@@ -382,7 +446,8 @@ function uploadFile(file){
     .then(response => response.json())
     .then(data => {
       var chatBox = document.getElementById("chat-box");
-      chatBox.innerHTML += "<div class='chat-message bot-input'>Done Processing. Please check the right side.</div>";
+      const doneMsg = getUITextTranslation('Done Processing. Please check the right side.', getCurrentLanguage());
+      chatBox.innerHTML += `<div class='chat-message bot-input'>${escapeHTML(doneMsg)}</div>`;
       updateResult(data);
       scrollToBottom();
       document.getElementById("text-input-container").style.display = "block";
@@ -391,7 +456,9 @@ function uploadFile(file){
 }
 
 function updateResult(data) {
-  document.getElementById("bias-class").innerText = data.bias_class;
+  const lang = getCurrentLanguage();
+  const translatedLabel = getBiasLabelTranslation(data.bias_class, lang);
+  document.getElementById("bias-class").innerText = translatedLabel;
   document.getElementById("left").innerText = data.left_score + "%";
   document.getElementById("center").innerText = data.center_score + "%";
   document.getElementById("right").innerText = data.right_score + "%";
@@ -401,6 +468,13 @@ function updateResult(data) {
   document.getElementById("bias-reason").innerText = data.reason;
   document.getElementById("news-summary").innerText = data.summary;
   document.getElementById("keywords").innerText = data.keywords;
+  
+  // Show Learn button if article_id is available (all article types)
+  if (data.article_id) {
+    const learnBtn = document.getElementById("learn-btn");
+    learnBtn.href = "/learn/" + data.article_id;
+    learnBtn.style.display = "inline-flex";
+  }
 }
 
 function sendMessage(){
@@ -417,11 +491,44 @@ function sendMessage(){
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({message: userInput}),
   })
-  .then(response => response.json())
+  .then(response => {
+      // Check for HTTP error status (e.g., 400 for URL fetch errors)
+      if (!response.ok) {
+          return response.json().then(err => {
+              throw new Error(err.error || `HTTP ${response.status}`);
+          });
+      }
+      return response.json();
+  })
   .then(data => {
-      chatBox.innerHTML += "<div class='chat-message bot-input'>Done Processing. Please check the right side.</div>";
+      // Remove the loading message
+      const chatBox = document.getElementById("chat-box");
+      const messages = chatBox.querySelectorAll('.chat-message');
+      if (messages.length > 0) {
+          const lastMsg = messages[messages.length - 1];
+          if (lastMsg.textContent.includes('Analyzing')) {
+              lastMsg.remove();
+          }
+      }
+      
+      const doneMsg = getUITextTranslation('Done Processing. Please check the right side.', getCurrentLanguage());
+      chatBox.innerHTML += `<div class='chat-message bot-input'>${escapeHTML(doneMsg)}</div>`;
       scrollToBottom();
       updateResult(data);
+  })
+  .catch(error => {
+      const chatBox = document.getElementById("chat-box");
+      // Remove loading message
+      const messages = chatBox.querySelectorAll('.chat-message');
+      if (messages.length > 0) {
+          const lastMsg = messages[messages.length - 1];
+          if (lastMsg.textContent.includes('Analyzing')) {
+              lastMsg.remove();
+          }
+      }
+      // Show error message
+      chatBox.innerHTML += `<div class='chat-message bot-input' style='color: #d32f2f;'><strong>Error:</strong> ${escapeHTML(error.message)}</div>`;
+      scrollToBottom();
   })
 }
 
@@ -460,7 +567,8 @@ function updateFileLabel() {
       if (!isValidFilename(name)) {
         fileNameDisplay.textContent = "";
         fileInput.value = ""; // reset
-        chatBox.innerHTML += "<div class='chat-message bot-input'>Filename not allowed. Use only English letters, numbers, spaces, underscores, hyphens, and dots.</div>";
+        const notAllowedMsg = getUITextTranslation('Filename not allowed. Use only English letters, numbers, spaces, underscores, hyphens, and dots.', getCurrentLanguage());
+        chatBox.innerHTML += `<div class='chat-message bot-input'>${escapeHTML(notAllowedMsg)}</div>`;
         scrollToBottom();
         textInputContainer.style.display = "block";
         placeholder.style.display = "none";
@@ -475,6 +583,21 @@ function updateFileLabel() {
       placeholder.style.display = "none";
   }
 }
+
+    // Handle Learn button click - open in new tab
+    document.addEventListener('DOMContentLoaded', function() {
+        const learnBtn = document.getElementById('learn-btn');
+        if (learnBtn) {
+            learnBtn.onclick = function(e) {
+                e.preventDefault();
+                const articleId = this.href.split('/').pop();
+                // Open in new tab - loading screen will show there
+                window.open('/learn/' + articleId, '_blank');
+                return false;
+            };
+        }
+    });
+
 </script>
 </body>
 {% endblock %}

@@ -132,48 +132,48 @@
     <!-- Context / Topic + Guidelines -->
     <section class="info-card">
       <div class="topic-line">
-        <span class="pill"><i class="bi bi-chat-text"></i> Debate Topic</span>
+        <span class="pill"><i class="bi bi-chat-text"></i> {{ translate_ui("Debate Topic", current_language) }}</span>
         <span>{{ debate[1] }}</span>
       </div>
       <div class="meta">
-        <span><i class="bi bi-calendar-event"></i> Created: {{ debate[2] }}</span>
+        <span><i class="bi bi-calendar-event"></i> {{ translate_ui("Created", current_language) }}: {{ debate[2] }}</span>
         {% if debate[3] %}
-        <span class="text-danger"><i class="bi bi-lock-fill"></i> Closed</span>
+        <span class="text-danger"><i class="bi bi-lock-fill"></i> {{ translate_ui("Closed", current_language) }}</span>
         {% else %}
-        <span class="text-success"><i class="bi bi-unlock"></i> Open</span>
+        <span class="text-success"><i class="bi bi-unlock"></i> {{ translate_ui("Open", current_language) }}</span>
         {% endif %}
       </div>
 
       <div class="guidelines">
         <div class="alert-lite">
           <i class="bi bi-shield-exclamation"></i>
-          Please keep your post on-topic and respectful. Posts are visible to others.
+          {{ translate_ui("Please keep your post on-topic and respectful. Posts are visible to others.", current_language) }}
         </div>
         <div class="guide-item">
           <i class="bi bi-check2-circle text-success"></i>
-          <div>Stay relevant to <strong>{{ debate[1] }}</strong>. Support claims with sources when possible.</div>
+          <div>{{ translate_ui("Stay relevant to", current_language) }} <strong>{{ debate[1] }}</strong>. {{ translate_ui("Support claims with sources when possible.", current_language) }}</div>
         </div>
         <div class="guide-item">
           <i class="bi bi-check2-circle text-success"></i>
-          <div>Use civil language. Critique ideas, not people.</div>
+          <div>{{ translate_ui("Use civil language. Critique ideas, not people.", current_language) }}</div>
         </div>
         <div class="guide-item">
           <i class="bi bi-x-octagon text-danger"></i>
-          <div>No hate speech, harassment, or calls for violence. Avoid slurs and personal data.</div>
+          <div>{{ translate_ui("No hate speech, harassment, or calls for violence. Avoid slurs and personal data.", current_language) }}</div>
         </div>
         <div class="guide-item">
           <i class="bi bi-x-octagon text-danger"></i>
-          <div>No unrelated spam or promotional content.</div>
+          <div>{{ translate_ui("No unrelated spam or promotional content.", current_language) }}</div>
         </div>
       </div>
     </section>
 
     <!-- Form -->
     <section class="form-card">
-      <div class="form-title"><i class="bi bi-pencil-square"></i> Share Your Thoughts</div>
+      <div class="form-title"><i class="bi bi-pencil-square"></i> {{ translate_ui("Share Your Thoughts", current_language) }}</div>
       <form method="POST" id="postForm" novalidate>
         <div class="mb-2">
-          <label for="content" class="form-label">Your Post</label>
+          <label for="content" class="form-label">{{ translate_ui("Your Post", current_language) }}</label>
           <textarea
             name="content"
             id="content"
@@ -181,16 +181,16 @@
             rows="7"
             maxlength="2000"
             required
-            placeholder="Write a clear, constructive contribution to the debate…"></textarea>
+            placeholder="{{ translate_ui("Write a clear, constructive contribution to the debate…", current_language) }}"></textarea>
           <div class="help-row">
             <div>
-              <span class="text-muted">Suggested length:</span> 50–500 words
+              <span class="text-muted">{{ translate_ui("Suggested length", current_language) }}:</span> 50–500 {{ translate_ui("words", current_language) }}
             </div>
             <div class="counter"><span id="charCount">0</span>/2000</div>
           </div>
           <div id="errorMsg" class="error-text mt-2">
             <i class="bi bi-exclamation-triangle-fill"></i>
-            Please revise your post to remove disallowed terms and ensure it’s on-topic.
+            {{ translate_ui("Please revise your post to remove disallowed terms and ensure it's on-topic.", current_language) }}
           </div>
         </div>
 
@@ -198,10 +198,10 @@
           <a href="{{ url_for('debate_detail', debate_id=debate[0]) }}"
              class="btn btn-outline-secondary d-inline-flex align-items-center">
             <i class="bi bi-arrow-left me-2"></i>
-            <span>Back to Debate</span>
+            <span>{{ translate_ui("Back to Debate", current_language) }}</span>
           </a>
           <button type="submit" class="btn btn-primary">
-            <i class="bi bi-send-fill"></i> Submit Post
+            <i class="bi bi-send-fill"></i> {{ translate_ui("Submit Post", current_language) }}
           </button>
         </div>
       </form>

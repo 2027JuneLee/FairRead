@@ -1,0 +1,116 @@
+{% extends "header.html" %}
+{% block learn %}
+<style>
+  body{
+    font-family:'Playfair Display',serif;
+    background:#f0f2f5;
+  }
+  .learn-home-wrap{
+    max-width:900px;
+    margin:0 auto 24px;
+    padding:0 16px 24px;
+  }
+  .learn-home-hero{
+    background:#fff;
+    border:1px solid rgba(15,23,42,.1);
+    border-radius:14px;
+    box-shadow:0 8px 20px rgba(15,23,42,.08);
+    padding:14px 16px;
+    margin-bottom:14px;
+  }
+  .learn-home-title{
+    font-weight:700;
+    margin:0;
+    font-size:1.35rem;
+    color:#0f172a;
+  }
+  .learn-card{
+    background:#fff;
+    border:1px solid rgba(15,23,42,.1);
+    border-radius:14px;
+    box-shadow:0 8px 20px rgba(15,23,42,.08);
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .learn-card-meta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+    color:#64748b;
+    font-size:13px;
+  }
+  .learn-bias{
+    font-weight:700;
+    color:#0f172a;
+  }
+  .learn-status{
+    display:inline-flex;
+    align-items:center;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+  }
+  .learn-status.learned{
+    background:#dcfce7;
+    color:#166534;
+  }
+  .learn-status.not-learned{
+    background:#fee2e2;
+    color:#991b1b;
+  }
+  .learn-summary{
+    color:#334155;
+    margin-bottom:12px;
+    white-space:pre-wrap;
+  }
+  .empty-state{
+    background:#fff;
+    border:1px dashed rgba(15,23,42,.18);
+    border-radius:14px;
+    padding:20px;
+    text-align:center;
+  }
+</style>
+
+<div class="learn-home-wrap">
+  <div class="learn-home-hero">
+    <h2 class="learn-home-title">
+      <i class="bi bi-journal-bookmark me-2"></i>{{ translate_ui("Learn", current_language) }}
+    </h2>
+  </div>
+
+  {% if recent_articles|length == 0 %}
+    <div class="empty-state">
+      <p class="mb-2">{{ translate_ui("No recent items", current_language) }}</p>
+      <a class="btn btn-primary" href="{{ url_for('chatbot') }}">
+        {{ translate_ui("Analyze an article", current_language) }}
+      </a>
+    </div>
+  {% else %}
+    {% for article in recent_articles %}
+      <div class="learn-card">
+        <div class="learn-card-meta">
+          <span>{{ article[1] }}</span>
+          <span class="learn-bias">{{ translate_ui("Class", current_language) }}: {{ translate_bias_label(article[3], current_language) }}</span>
+        </div>
+        <div class="mb-2">
+          {% if article[5] %}
+            <span class="learn-status learned">{{ translate_ui("Learned", current_language) }}</span>
+          {% else %}
+            <span class="learn-status not-learned">{{ translate_ui("Not learned", current_language) }}</span>
+          {% endif %}
+        </div>
+        <div class="learn-summary">
+          {{ article[2][:220] }}{% if article[2]|length > 220 %}...{% endif %}
+        </div>
+        <a href="{{ url_for('learn_from_article', article_id=article[0]) }}" class="btn btn-primary w-100">
+          <i class="bi bi-book"></i> {{ translate_ui("Learn from this article", current_language) }}
+        </a>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

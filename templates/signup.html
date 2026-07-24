@@ -96,6 +96,19 @@ body::before{
 </head>
 <body>
 
+  <!-- Language Selector Navbar -->
+  <nav style="position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; z-index: 10;">
+    <a href="{{ url_for('index') }}" style="display: flex; align-items: center; text-decoration: none;">
+      <img src="../static/img/logo-no-background.png" alt="FairRead" style="height: 32px;">
+    </a>
+    <select id="langSelector" class="form-select form-select-sm" style="width: auto; max-width: 120px;">
+      <option value="en" {% if session.get('language', 'en') == 'en' %}selected{% endif %}>English</option>
+      <option value="es" {% if session.get('language', 'en') == 'es' %}selected{% endif %}>Español</option>
+      <option value="zh" {% if session.get('language', 'en') == 'zh' %}selected{% endif %}>中文</option>
+      <option value="ko" {% if session.get('language', 'en') == 'ko' %}selected{% endif %}>한국어</option>
+    </select>
+  </nav>
+
   <span class="glow"></span>
   <span class="glow-2"></span>
 
@@ -107,38 +120,38 @@ body::before{
     <form action="/register" method="POST" class="mt-2">
       <div class="form-stack">
         <div>
-          <label class="form-label" for="username">Username</label>
-          <input id="username" name="username" class="form-control" placeholder="Choose a username" required>
+          <label class="form-label" for="username">{{ translate_ui("Username", current_language) }}</label>
+          <input id="username" name="username" class="form-control" placeholder="{{ translate_ui("Choose a username", current_language) }}" required>
         </div>
 
         <div>
-          <label class="form-label" for="email">Email</label>
+          <label class="form-label" for="email">{{ translate_ui("Email", current_language) }}</label>
           <input id="email" type="email" name="email" class="form-control" placeholder="you@example.com" required>
         </div>
 
         <div>
-          <label class="form-label" for="password">Password</label>
-          <input id="password" type="password" name="password" class="form-control" placeholder="Create a password" required>
+          <label class="form-label" for="password">{{ translate_ui("Password", current_language) }}</label>
+          <input id="password" type="password" name="password" class="form-control" placeholder="{{ translate_ui("Create a password", current_language) }}" required>
         </div>
 
         <div>
-          <label class="form-label" for="gender">Select your gender</label>
+          <label class="form-label" for="gender">{{ translate_ui("Select your gender", current_language) }}</label>
           <select id="gender" class="form-select" name="gender" required>
-            <option value="" selected disabled>Choose…</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="Other">Other</option>
+            <option value="" selected disabled>{{ translate_ui("Choose…", current_language) }}</option>
+            <option value="male">{{ translate_ui("Male", current_language) }}</option>
+            <option value="female">{{ translate_ui("Female", current_language) }}</option>
+            <option value="Other">{{ translate_ui("Other", current_language) }}</option>
           </select>
         </div>
 
         <div>
-          <label class="form-label" for="birthday">Select your birthday</label>
+          <label class="form-label" for="birthday">{{ translate_ui("Select your birthday", current_language) }}</label>
           <!-- name kept as "age" to match your backend -->
           <input id="birthday" type="date" class="form-control" name="age" required>
         </div>
       </div>
 
-      <button type="submit" class="btn btn-login d-block mx-auto mt-4" style="width:50%;">Register</button>
+      <button type="submit" class="btn btn-login d-block mx-auto mt-4" style="width:50%;">{{ translate_ui("Register", current_language) }}</button>
     </form>
 
     {% with messages = get_flashed_messages() %}
@@ -148,7 +161,7 @@ body::before{
     {% endwith %}
 
     <div class="signin">
-      Already have an account? <a href="{{ url_for('login') }}">Sign in</a>
+      {{ translate_ui("Already have an account?", current_language) }} <a href="{{ url_for('login') }}">{{ translate_ui("Sign in", current_language) }}</a>
     </div>
   </div>
 <!-- Success Modal -->
@@ -156,15 +169,15 @@ body::before{
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content" style="border-radius:18px;">
       <div class="modal-header" style="border-bottom:1px dashed rgba(15,23,42,.12);">
-        <h5 class="modal-title">Registration complete</h5>
+        <h5 class="modal-title">{{ translate_ui("Registration complete", current_language) }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        Your account was created successfully. You can now sign in.
+        {{ translate_ui("Your account was created successfully. You can now sign in.", current_language) }}
       </div>
       <div class="modal-footer">
         <a href="{{ url_for('login') }}" class="btn btn-dark">
-          <i class="bi bi-box-arrow-in-right me-1"></i> Go to Login
+          <i class="bi bi-box-arrow-in-right me-1"></i> {{ translate_ui("Go to Login", current_language) }}
         </a>
       </div>
     </div>
@@ -184,6 +197,19 @@ body::before{
   });
 </script>
 {% endif %}
+
+<script>
+  // Language selector
+  document.getElementById('langSelector')?.addEventListener('change', function(e) {
+    fetch('/set_language', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ language: e.target.value })
+    }).then(r => {
+      if (r.ok) window.location.reload();
+    }).catch(err => console.error('Language change failed:', err));
+  });
+</script>
 
 </body>
 </html>

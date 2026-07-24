@@ -177,18 +177,18 @@
     <div class="hero">
       <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
         <div>
-          <h2 style="color:black;">Debates</h2>
+          <h2 style="color:black;">{{ translate_ui("Debates", current_language) }}</h2>
         </div>
         <div class="d-flex align-items-center gap-2">
-          <span class="badge-soft">Open: {{ open_debates|length }}</span>
-          <span class="badge-soft">Closed: {{ closed_debates|length }}</span>
+          <span class="badge-soft">{{ translate_ui("Open", current_language) }}: {{ open_debates|length }}</span>
+          <span class="badge-soft">{{ translate_ui("Closed", current_language) }}: {{ closed_debates|length }}</span>
         </div>
       </div>
 
 
         <form action="{{ url_for('create_debate') }}" method="POST" class="hero-form">
-          <input style="height: 40px;" name="topic" type="text" placeholder="e.g., Should social media platforms be regulated like utilities?" required>
-          <button class="btn btn-brand btn-compact" type="submit"><i class="bi bi-plus-lg me-1"></i> Create Debate</button>
+          <input style="height: 40px;" name="topic" type="text" placeholder="{{ translate_ui("e.g., Should social media platforms be regulated like utilities?", current_language) }}" required>
+          <button class="btn btn-brand btn-compact" type="submit"><i class="bi bi-plus-lg me-1"></i> {{ translate_ui("Create Debate", current_language) }}</button>
         </form>
 
     </div>
@@ -196,18 +196,18 @@
     <!-- Tabs & Tools -->
     <div class="tabs">
       <div class="pill-tabs">
-        <button class="active" data-target="#tab-open"><i class="bi bi-lightning-charge me-1"></i> Open</button>
-        <button data-target="#tab-closed"><i class="bi bi-shield-lock me-1"></i> Closed</button>
+        <button class="active" data-target="#tab-open"><i class="bi bi-lightning-charge me-1"></i> {{ translate_ui("Open", current_language) }}</button>
+        <button data-target="#tab-closed"><i class="bi bi-shield-lock me-1"></i> {{ translate_ui("Closed", current_language) }}</button>
       </div>
 
       <div class="toolbar">
         <div class="search">
           <i class="bi bi-search"></i>
-          <input id="filterInput" type="text" placeholder="Filter topics...">
+          <input id="filterInput" type="text" placeholder="{{ translate_ui("Filter topics...", current_language) }}">
         </div>
         <select id="sortSelect" class="sort">
-          <option value="new">Newest</option>
-          <option value="old">Oldest</option>
+          <option value="new">{{ translate_ui("Newest", current_language) }}</option>
+          <option value="old">{{ translate_ui("Oldest", current_language) }}</option>
           <option value="az">A → Z</option>
           <option value="za">Z → A</option>
         </select>
@@ -237,7 +237,7 @@
             <div class="divider"></div>
             {% if is_admin %}
             <form action="{{ url_for('close_debate', debate_id=id) }}" method="POST" class="mt-1">
-              <button class="btn btn-line btn-sm" type="submit"><i class="bi bi-lock"></i> Close Debate</button>
+              <button class="btn btn-line btn-sm" type="submit"><i class="bi bi-lock"></i> {{ translate_ui("Close Debate", current_language) }}</button>
             </form>
             {% endif %}
           </div>
@@ -245,7 +245,7 @@
         {% endfor %}
       </div>
       {% else %}
-        <div class="empty mt-3"><i class="bi bi-emoji-neutral me-1"></i> No open debates yet.</div>
+        <div class="empty mt-3"><i class="bi bi-emoji-neutral me-1"></i> {{ translate_ui("No open debates yet.", current_language) }}</div>
       {% endif %}
     </div>
 
@@ -274,7 +274,7 @@
         {% endfor %}
       </div>
       {% else %}
-        <div class="empty mt-3"><i class="bi bi-emoji-smile-upside-down me-1"></i> No closed debates yet.</div>
+        <div class="empty mt-3"><i class="bi bi-emoji-smile-upside-down me-1"></i> {{ translate_ui("No closed debates yet.", current_language) }}</div>
       {% endif %}
     </div>
 

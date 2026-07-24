@@ -1,0 +1,784 @@
+{% extends "header.html" %}
+{% block learn %}
+<head>
+<style>
+    body {
+        font-family: 'Playfair Display', serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+
+    .learn-container {
+        max-width: 1400px;
+        margin: 60px auto;
+        padding: 20px;
+    }
+
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 20px;
+        padding: 10px 16px;
+        background: #295F98;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        transition: background 0.3s ease;
+    }
+
+    .back-btn:hover {
+        background: #1e4670;
+        text-decoration: none;
+    }
+
+    .learn-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .article-panel {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .article-text {
+        font-family: 'Georgia', serif;
+        font-size: 18px;
+        line-height: 1.8;
+        color: #1f2937;
+        margin: 24px 0;
+        letter-spacing: 0.3px;
+        text-align: justify;
+    }
+
+    .article-text p {
+        margin-bottom: 16px;
+    }
+
+    .article-text img {
+        max-width: 100%;
+        height: auto;
+        margin: 16px 0;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .article-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .article-date {
+        color: #64748b;
+        font-size: 13px;
+    }
+
+    .bias-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .bias-badge.left {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .bias-badge.center {
+        background: #fed7aa;
+        color: #92400e;
+    }
+
+    .bias-badge.right {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .article-text {
+        line-height: 1.8;
+        color: #1f2937;
+        font-size: 15px;
+        margin-bottom: 20px;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .summary-section {
+        background: #f9fafb;
+        padding: 16px;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+
+    .summary-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .summary-text {
+        color: #1f2937;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .learning-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .learning-header {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .learning-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #0f172a;
+    }
+
+    .term-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+        font-size: 12px;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #64748b;
+    }
+
+    .stat-badge {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .stat-badge.vocabulary {
+        background: #1e40af;
+    }
+
+    .stat-badge.idiom {
+        background: #166534;
+    }
+
+    .stat-badge.grammar {
+        background: #6b21a8;
+    }
+
+    .term-list {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .term-item {
+        padding: 14px 16px;
+        border-bottom: 1px solid #f0f1f3;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .term-item:last-child {
+        border-bottom: none;
+    }
+
+    .term-item:hover {
+        background: #f9fafb;
+    }
+
+    .term-item.active {
+        background: #f0f4ff;
+        border-left: 3px solid #295F98;
+        padding-left: 13px;
+    }
+
+    .term-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .term-name {
+        font-weight: 600;
+        color: #0f172a;
+        font-size: 14px;
+    }
+
+    .term-type-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .term-type-badge.vocabulary {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .term-type-badge.idiom {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .term-type-badge.grammar {
+        background: #e9d5ff;
+        color: #6b21a8;
+    }
+
+    .term-difficulty {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .term-example {
+        font-size: 12px;
+        color: #64748b;
+        font-style: italic;
+        margin-top: 4px;
+    }
+
+    .detail-panel {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        position: sticky;
+        top: 80px;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+    }
+
+    .detail-empty {
+        text-align: center;
+        padding: 40px 20px;
+        color: #94a3b8;
+    }
+
+    .detail-empty i {
+        font-size: 32px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+
+    .detail-term-header {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #f0f1f3;
+    }
+
+    .detail-term-name {
+        font-size: 24px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 4px;
+        word-break: break-word;
+    }
+
+    .detail-term-type {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        padding: 4px 10px;
+        border-radius: 4px;
+        margin-right: 8px;
+    }
+
+    .detail-term-type.vocabulary {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .detail-term-type.idiom {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .detail-term-type.grammar {
+        background: #e9d5ff;
+        color: #6b21a8;
+    }
+
+    .detail-label {
+        font-size: 11px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        margin-top: 16px;
+        margin-bottom: 8px;
+    }
+
+    .detail-label:first-child {
+        margin-top: 0;
+    }
+
+    .detail-value {
+        font-size: 15px;
+        color: #1f2937;
+        line-height: 1.7;
+        font-family: 'Georgia', serif;
+    }
+
+    .detail-example-box {
+        font-size: 14px;
+        color: #374151;
+        line-height: 1.7;
+        padding: 12px 14px;
+        background: #f9fafb;
+        border-left: 3px solid #295F98;
+        border-radius: 4px;
+        font-style: italic;
+        font-family: 'Georgia', serif;
+    }
+
+    .detail-example-box {
+        background: #f9fafb;
+        padding: 10px 12px;
+        border-left: 3px solid #295F98;
+        border-radius: 4px;
+        font-size: 13px;
+        font-style: italic;
+        color: #1f2937;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 1024px) {
+        .learn-content {
+            grid-template-columns: 1fr;
+        }
+
+        .detail-panel {
+            position: relative;
+            top: 0;
+        }
+    }
+
+    .term-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .term-list::-webkit-scrollbar-track {
+        background: #f0f1f3;
+        border-radius: 10px;
+    }
+
+    .term-list::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    .term-list::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .no-terms {
+        padding: 40px 20px;
+        text-align: center;
+        color: #94a3b8;
+    }
+
+    .no-terms i {
+        font-size: 32px;
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+</style>
+</head>
+
+<body>
+<div class="learn-container">
+    <a href="{{ url_for('chatbot') }}" class="back-btn">
+        <i class="bi bi-arrow-left"></i>
+        {{ translate_ui("Back to Analysis", current_language) }}
+    </a>
+
+    <div class="learn-content">
+        <!-- Left Panel: Learning Terms -->
+        <div class="learning-panel">
+            <!-- Header -->
+            <div class="learning-header">
+                <div class="learning-title">{{ translate_ui("Learning Terms", current_language) }}</div>
+                <div class="term-stats">
+                    <div class="stat-item">
+                        <span class="stat-badge vocabulary"></span>
+                        <span id="vocab-count">0</span> {{ translate_ui("Vocabulary", current_language) }}
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-badge idiom"></span>
+                        <span id="idiom-count">0</span> {{ translate_ui("Idiom", current_language) }}
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-badge grammar"></span>
+                        <span id="grammar-count">0</span> {{ translate_ui("Grammar", current_language) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Term List -->
+            <div class="term-list" id="term-list">
+                {% if annotations %}
+                    {% for annotation in annotations %}
+                    <div class="term-item" data-term-id="{{ annotation.id }}" data-term-type="{{ annotation.type }}">
+                        <div class="term-label">
+                            <span class="term-name">{{ annotation.term }}</span>
+                            <span class="term-type-badge {{ annotation.type }}">
+                                {% if annotation.type == 'vocabulary' %}
+                                    {{ translate_ui("Vocabulary", current_language) }}
+                                {% elif annotation.type == 'idiom' %}
+                                    {{ translate_ui("Idiom", current_language) }}
+                                {% else %}
+                                    {{ translate_ui("Grammar", current_language) }}
+                                {% endif %}
+                            </span>
+                            <span class="term-difficulty">{{ annotation.difficulty }}</span>
+                        </div>
+                        <div class="term-example">{{ annotation.example_sentence }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-terms" id="no-terms-state">
+                        <i class="bi bi-hourglass"></i>
+                        <p id="extract-title">{{ translate_ui("Extracting learning terms...", current_language) }}</p>
+                        <p id="extract-meta">{{ translate_ui("This usually takes 10-30 seconds.", current_language) }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Panel: Definition -->
+        <div class="detail-panel">
+            <div id="detail-content" class="detail-empty">
+                <i class="bi bi-cursor-text"></i>
+                <p>{{ translate_ui("Click any term to see details", current_language) }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const articleId = {{ article_id }};
+    const hasAnnotations = {{ 'true' if annotations else 'false' }};
+    const annotationsData = {{ annotations|tojson }};
+    const currentLanguage = "{{ current_language }}";
+    const exampleTranslationCache = {};
+    const detailTranslationCache = {};
+    const targetLanguageNames = { en: 'English', es: 'Spanish', zh: 'Chinese', ko: 'Korean' };
+    const targetShort = (currentLanguage || 'en').toUpperCase();
+    const extractLabels = {
+        title: "{{ translate_ui('Extracting learning terms...', current_language) }}",
+        eta: "{{ translate_ui('This usually takes 10-30 seconds.', current_language) }}",
+        working: "{{ translate_ui('Still working...', current_language) }}",
+        slow: "{{ translate_ui('Extraction is taking longer than expected.', current_language) }}",
+        refresh: "{{ translate_ui('If this takes too long, please refresh.', current_language) }}",
+        fail: "{{ translate_ui('Failed to generate learning terms.', current_language) }}"
+    };
+
+    async function extractIfNeeded() {
+        if (hasAnnotations) return;
+        const state = document.getElementById('no-terms-state');
+        let elapsed = 0;
+        let ticker = null;
+        let timeoutHandle = null;
+        const controller = new AbortController();
+
+        const renderProgress = () => {
+            const percent = Math.min(95, 8 + (elapsed * 3));
+            const msg = elapsed >= 35 ? extractLabels.slow : extractLabels.working;
+            state.innerHTML = `
+                <i class="bi bi-hourglass-split"></i>
+                <p>${extractLabels.title}</p>
+                <p>${extractLabels.eta}</p>
+                <div style="width:260px;height:8px;background:#e2e8f0;border-radius:6px;margin:8px auto;overflow:hidden;">
+                    <div style="width:${percent}%;height:100%;background:#295F98;transition:width .9s ease;"></div>
+                </div>
+                <p>${msg} (${elapsed}s)</p>
+                <p style="font-size:12px;color:#64748b;">${extractLabels.refresh}</p>
+            `;
+        };
+
+        if (state) {
+            renderProgress();
+            ticker = setInterval(() => {
+                elapsed += 1;
+                renderProgress();
+            }, 1000);
+        }
+
+        timeoutHandle = setTimeout(() => controller.abort(), 90000);
+
+        try {
+            const response = await fetch('/learn_extract/' + articleId, { method: 'POST', signal: controller.signal });
+            const data = await response.json();
+            if (response.ok) {
+                window.location.reload();
+                return;
+            }
+        } catch (e) {
+            if (state) {
+                const timeoutMsg = (e && e.name === 'AbortError') ? extractLabels.slow : extractLabels.fail;
+                state.innerHTML = `<i class="bi bi-exclamation-triangle"></i><p>${timeoutMsg}</p><p style="font-size:12px;color:#64748b;">${extractLabels.refresh}</p>`;
+            }
+        } finally {
+            if (ticker) clearInterval(ticker);
+            if (timeoutHandle) clearTimeout(timeoutHandle);
+        }
+    }
+
+    function updateTermCounts() {
+        const vocabCount = document.querySelectorAll('.term-item[data-term-type="vocabulary"]').length;
+        const idiomCount = document.querySelectorAll('.term-item[data-term-type="idiom"]').length;
+        const grammarCount = document.querySelectorAll('.term-item[data-term-type="grammar"]').length;
+
+        document.getElementById('vocab-count').textContent = vocabCount;
+        document.getElementById('idiom-count').textContent = idiomCount;
+        document.getElementById('grammar-count').textContent = grammarCount;
+    }
+
+    function selectTerm(term, termType) {
+        const termItems = document.querySelectorAll('.term-item');
+        let targetItem = null;
+
+        for (const item of termItems) {
+            if (item.querySelector('.term-name').textContent === term && 
+                item.getAttribute('data-term-type') === termType) {
+                targetItem = item;
+                break;
+            }
+        }
+
+        if (targetItem) {
+            document.querySelectorAll('.term-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            targetItem.classList.add('active');
+            targetItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            showTermDetails(targetItem);
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function partOfSpeechTarget(pos) {
+        const map = {
+            es: { noun: 'sustantivo', verb: 'verbo', adjective: 'adjetivo', adverb: 'adverbio', expression: 'expresión', pattern: 'patrón', pronoun: 'pronombre', preposition: 'preposición', conjunction: 'conjunción', interjection: 'interjección' },
+            zh: { noun: '名词', verb: '动词', adjective: '形容词', adverb: '副词', expression: '固定表达', pattern: '句式', pronoun: '代词', preposition: '介词', conjunction: '连词', interjection: '感叹词' },
+            ko: { noun: '명사', verb: '동사', adjective: '형용사', adverb: '부사', expression: '표현', pattern: '문형', pronoun: '대명사', preposition: '전치사', conjunction: '접속사', interjection: '감탄사' },
+            en: {}
+        };
+        const key = (pos || '').toLowerCase().trim();
+        return map[currentLanguage]?.[key] || pos || '';
+    }
+
+    async function getDualTranslations(text, cacheObj) {
+        const key = `${currentLanguage}::${text || ''}`;
+        if (!text) return { en: '-', target: '-' };
+        if (cacheObj[key]) return cacheObj[key];
+
+        try {
+            const response = await fetch('/translate_example', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, target_language: currentLanguage })
+            });
+            const data = await response.json();
+            const result = {
+                en: (data && data.en) ? data.en : text,
+                target: (data && data.target) ? data.target : text
+            };
+            cacheObj[key] = result;
+            return result;
+        } catch (e) {
+            return { en: text, target: text };
+        }
+    }
+
+    function showTermDetails(termItem) {
+        const termId = termItem.getAttribute('data-term-id');
+        const termName = termItem.querySelector('.term-name').textContent;
+        const ann = annotationsData.find(a => String(a.id) === String(termId));
+        if (!ann) return;
+
+        let html = '<div class="detail-term">';
+        
+        // Term header with name, type, and difficulty
+        html += `<div class="detail-term-header">
+            <div class="detail-term-name">${escapeHtml(termName)}</div>
+            <div>
+                <span class="detail-term-type ${ann.type}">
+                    ${ann.type === 'vocabulary' ? "{{ translate_ui('Vocabulary', current_language) }}" : 
+                      ann.type === 'idiom' ? "{{ translate_ui('Idiom', current_language) }}" : 
+                      "{{ translate_ui('Grammar', current_language) }}"}
+                </span>
+                <span style="display: inline-block; font-size: 12px; background: #f0f1f3; color: #6b7280; padding: 4px 8px; border-radius: 4px; margin-left: 8px;">${escapeHtml(ann.difficulty)}</span>
+            </div>
+        </div>`;
+
+        // Definition (EN + target language)
+        if (ann.definition || ann.english_meaning) {
+            let definitionEn = ann.english_meaning || '';
+            let definitionTarget = ann.definition || '';
+            if (!definitionEn) {
+                definitionEn = currentLanguage === 'en' ? (ann.definition || '') : '-';
+            }
+            if (!definitionTarget) {
+                definitionTarget = '-';
+            }
+
+            html += `<div>
+                <div class="detail-label">{{ translate_ui("Definition", current_language) }}</div>
+                <div class="detail-value" id="definition-en-${termId}"><strong>English (EN):</strong> ${escapeHtml(definitionEn)}</div>
+                <div class="detail-value" id="definition-target-${termId}"><strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ${escapeHtml(definitionTarget)}</div>
+            </div>`;
+        }
+
+        // Part of speech (EN + target language)
+        if (ann.part_of_speech) {
+            const posEn = ann.part_of_speech || '';
+            const posTarget = partOfSpeechTarget(posEn);
+            html += `<div>
+                <div class="detail-label">{{ translate_ui("Part of Speech", current_language) }}</div>
+                <div class="detail-value"><strong>English (EN):</strong> ${escapeHtml(posEn || '-')}</div>
+                <div class="detail-value"><strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ${escapeHtml(posTarget || '-')}</div>
+            </div>`;
+        }
+
+        // Example sentence (EN + target language)
+        if (ann.example_sentence) {
+            html += `<div>
+                <div class="detail-label">{{ translate_ui("Example", current_language) }}</div>
+                <div class="detail-example-box" id="example-box-${termId}">
+                    <div><strong>English (EN):</strong> ...</div>
+                    <div><strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ...</div>
+                </div>
+            </div>`;
+        }
+
+        // Grammar note (EN + target language)
+        if (ann.type === 'grammar' && ann.grammar_note) {
+            html += `<div>
+                <div class="detail-label">{{ translate_ui("Grammar Note", current_language) }}</div>
+                <div class="detail-value" id="grammar-en-${termId}"><strong>English (EN):</strong> ...</div>
+                <div class="detail-value" id="grammar-target-${termId}"><strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ...</div>
+            </div>`;
+        }
+
+        html += '</div>';
+
+        document.getElementById('detail-content').innerHTML = html;
+
+        if (ann.example_sentence) {
+            getDualTranslations(ann.example_sentence, exampleTranslationCache).then((translated) => {
+                const box = document.getElementById(`example-box-${termId}`);
+                if (!box) return;
+                box.innerHTML = `
+                    <div><strong>English (EN):</strong> ${escapeHtml(translated.en || '-')}</div>
+                    <div><strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ${escapeHtml(translated.target || '-')}</div>
+                `;
+            });
+        }
+
+        if (ann.definition || ann.english_meaning) {
+            const sourceDefinition = ann.english_meaning || ann.definition;
+            getDualTranslations(sourceDefinition, detailTranslationCache).then((translated) => {
+                const definitionEn = document.getElementById(`definition-en-${termId}`);
+                const definitionTarget = document.getElementById(`definition-target-${termId}`);
+                if (definitionEn) {
+                    definitionEn.innerHTML = `<strong>English (EN):</strong> ${escapeHtml(translated.en || '-')}`;
+                }
+                if (definitionTarget) {
+                    definitionTarget.innerHTML = `<strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ${escapeHtml(translated.target || '-')}`;
+                }
+            });
+        }
+
+        if (ann.type === 'grammar' && ann.grammar_note) {
+            getDualTranslations(ann.grammar_note, detailTranslationCache).then((translated) => {
+                const grammarEn = document.getElementById(`grammar-en-${termId}`);
+                const grammarTarget = document.getElementById(`grammar-target-${termId}`);
+                if (grammarEn) {
+                    grammarEn.innerHTML = `<strong>English (EN):</strong> ${escapeHtml(translated.en || '-')}`;
+                }
+                if (grammarTarget) {
+                    grammarTarget.innerHTML = `<strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ${escapeHtml(translated.target || '-')}`;
+                }
+            });
+        }
+    }
+
+    function setupTermItemHandlers() {
+        document.querySelectorAll('.term-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.term-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+                item.classList.add('active');
+                showTermDetails(item);
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateTermCounts();
+        setupTermItemHandlers();
+        extractIfNeeded();
+
+        const firstTerm = document.querySelector('.term-item');
+        if (firstTerm) {
+            firstTerm.click();
+        }
+    });
+</script>
+
+</body>
+{% endblock %}

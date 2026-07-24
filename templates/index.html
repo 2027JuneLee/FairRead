@@ -296,30 +296,29 @@
     <div class="container hero-wrap">
       <!-- LEFT -->
       <div data-aos="fade-right">
-        <div class="kicker">Bias • Summary • Transparency</div>
+        <div class="kicker">{{ translate_ui("Bias • Summary • Transparency", current_language) }}</div>
         <h1 class="hero-title">
-          See the <span class="underline-accent">story</span> behind the story.
+          {{ translate_ui("See the story behind the story.", current_language) }}
         </h1>
         <p class="hero-sub">
-          FairRead analyzes any article for political lean, explains <em>why</em>,
-          and returns a concise summary you can trust.
+          {{ translate_ui("FairRead analyzes any article for political lean, explains why, and returns a concise summary you can trust.", current_language) }}
         </p>
         <div class="action-row">
-          <a href="#how-to-use" class="btn-primary-fr" data-aos="fade-up" data-aos-delay="80">Analyze an Article</a>
-          <a href="#features" class="btn-ghost-fr" data-aos="fade-up" data-aos-delay="120">Explore Features</a>
+          <a href="#how-to-use" class="btn-primary-fr" data-aos="fade-up" data-aos-delay="80">{{ translate_ui("Analyze an Article", current_language) }}</a>
+          <a href="#features" class="btn-ghost-fr" data-aos="fade-up" data-aos-delay="120">{{ translate_ui("Explore Features", current_language) }}</a>
         </div>
         <div class="trust-row" data-aos="fade-up" data-aos-delay="200">
           <span class="trust-dot"></span>
-          <span>Private by default • URL · Text · PDF</span>
+          <span>{{ translate_ui("Private by default • URL · Text · PDF", current_language) }}</span>
         </div>
       </div>
 
       <!-- RIGHT -->
       <div class="preview-col" data-aos="fade-left">
         <div class="device">
-          <span class="ribbon">Preview</span>
+          <span class="ribbon">{{ translate_ui("Preview", current_language) }}</span>
           <img src="../static/img/preview.png" alt="FairRead result preview" class="result-img">
-          <div class="caption-mini">Bias &middot; Confidence &middot; Key signals</div>
+          <div class="caption-mini">{{ translate_ui("Bias", current_language) }} &middot; {{ translate_ui("Confidence", current_language) }} &middot; {{ translate_ui("Key signals", current_language) }}</div>
         </div>
       </div>
     </div>
@@ -330,21 +329,19 @@
     <div class="container">
       <div class="row align-items-center gy-3">
         <div class="col-lg-6">
-          <div class="about-eyebrow">About</div>
-          <h2 class="about-title">FairRead, explained</h2>
+          <div class="about-eyebrow">{{ translate_ui("About", current_language) }}</div>
+          <h2 class="about-title">{{ translate_ui("FairRead, explained", current_language) }}</h2>
           <p class="about-lead">
-            FairRead is a lightweight tool for evaluating news articles with clarity and speed.
-            Paste a link, text, or PDF and receive an objective read on where the piece leans.
+            {{ translate_ui("FairRead is a lightweight tool for evaluating news articles with clarity and speed. Paste a link, text, or PDF and receive an objective read on where the piece leans.", current_language) }}
           </p>
           <p class="about-lead">
-            Results include a brief rationale so you can see the cues behind the call — not just the label.
-            Your history stays private and helps you understand your own reading patterns over time.
+            {{ translate_ui("Results include a brief rationale so you can see the cues behind the call — not just the label. Your history stays private and helps you understand your own reading patterns over time.", current_language) }}
           </p>
           <ul class="about-list">
-            <li>Bias classification with confidence</li>
-            <li>Evidence-based rationale (framing, sources, wording)</li>
-            <li>Concise, source-aware summary</li>
-            <li>Personal analytics with privacy by default</li>
+            <li>{{ translate_ui("Bias classification with confidence", current_language) }}</li>
+            <li>{{ translate_ui("Evidence-based rationale (framing, sources, wording)", current_language) }}</li>
+            <li>{{ translate_ui("Concise, source-aware summary", current_language) }}</li>
+            <li>{{ translate_ui("Personal analytics with privacy by default", current_language) }}</li>
           </ul>
         </div>
         <div class="col-lg-6 about-img-wrap" data-aos="fade-left">
@@ -358,49 +355,49 @@
   <section id="features" class="features-simple">
     <div class="container">
       <header class="fs-head" data-aos="fade-up">
-        <p class="fs-eyebrow">Capabilities</p>
-        <h2 class="fs-title">A focused toolkit for reading news clearly</h2>
-        <p class="fs-sub">Everything you need to judge an article—nothing you don’t.</p>
+        <p class="fs-eyebrow">{{ translate_ui("Capabilities", current_language) }}</p>
+        <h2 class="fs-title">{{ translate_ui("A focused toolkit for reading news clearly", current_language) }}</h2>
+        <p class="fs-sub">{{ translate_ui("Everything you need to judge an article—nothing you don't.", current_language) }}</p>
       </header>
 
       <div class="fs-grid">
         <article class="fs-item" data-aos="fade-up">
           <div class="fs-icon"><i class="bi bi-sliders"></i></div>
           <div class="fs-content">
-            <h3>Bias classification with rationale</h3>
-            <p>Left / center / right, paired with the specific cues that informed the call (framing, sources, wording).</p>
+            <h3>{{ translate_ui("Bias classification with rationale", current_language) }}</h3>
+            <p>{{ translate_ui("Left / center / right, paired with the specific cues that informed the call (framing, sources, wording).", current_language) }}</p>
           </div>
         </article>
 
         <article class="fs-item" data-aos="fade-up" data-aos-delay="60">
           <div class="fs-icon"><i class="bi bi-journal-text"></i></div>
           <div class="fs-content">
-            <h3>Concise, source-aware summary</h3>
-            <p>Clear, skimmable summaries that preserve context and map claims to evidence.</p>
+            <h3>{{ translate_ui("Concise, source-aware summary", current_language) }}</h3>
+            <p>{{ translate_ui("Clear, skimmable summaries that preserve context and map claims to evidence.", current_language) }}</p>
           </div>
         </article>
 
         <article class="fs-item" data-aos="fade-up" data-aos-delay="90">
           <div class="fs-icon"><i class="bi bi-graph-up"></i></div>
           <div class="fs-content">
-            <h3>Private reading analytics</h3>
-            <p>See trends in outlets and perspectives over time—stored locally by default.</p>
+            <h3>{{ translate_ui("Private reading analytics", current_language) }}</h3>
+            <p>{{ translate_ui("See trends in outlets and perspectives over time—stored locally by default.", current_language) }}</p>
           </div>
         </article>
 
         <article class="fs-item" data-aos="fade-up" data-aos-delay="120">
           <div class="fs-icon"><i class="bi bi-link-45deg"></i></div>
           <div class="fs-content">
-            <h3>Flexible inputs</h3>
-            <p>Analyze URLs, pasted text, or PDFs. Robust parsing for long-form pieces.</p>
+            <h3>{{ translate_ui("Flexible inputs", current_language) }}</h3>
+            <p>{{ translate_ui("Analyze URLs, pasted text, or PDFs. Robust parsing for long-form pieces.", current_language) }}</p>
           </div>
         </article>
 
         <article class="fs-item" data-aos="fade-up" data-aos-delay="150">
           <div class="fs-icon"><i class="bi bi-shield-check"></i></div>
           <div class="fs-content">
-            <h3>Quality & controls</h3>
-            <p>Deterministic modes for consistency and clear versioned outputs for sharing.</p>
+            <h3>{{ translate_ui("Quality & controls", current_language) }}</h3>
+            <p>{{ translate_ui("Deterministic modes for consistency and clear versioned outputs for sharing.", current_language) }}</p>
           </div>
         </article>
       </div>
@@ -410,9 +407,9 @@
 <section id="how-to-use" class="htu-simple">
   <div class="container">
     <header class="htu-head" data-aos="fade-up">
-      <p class="htu-eyebrow">Getting Started</p>
-      <h2 class="htu-title">How to Use FairRead</h2>
-      <p class="htu-sub">Follow three quick steps to analyze any news article with clarity and transparency.</p>
+      <p class="htu-eyebrow">{{ translate_ui("Getting Started", current_language) }}</p>
+      <h2 class="htu-title">{{ translate_ui("How to Use FairRead", current_language) }}</h2>
+      <p class="htu-sub">{{ translate_ui("Follow three quick steps to analyze any news article with clarity and transparency.", current_language) }}</p>
     </header>
 
     <div class="row g-4 htu-steps">
@@ -420,24 +417,24 @@
       <div class="col-md-4 d-flex" data-aos="fade-up">
         <div class="htu-card flex-fill">
           <div class="htu-icon"><i class="bi bi-collection"></i></div>
-          <h3>1. Provide the article</h3>
-          <p>Enter a <strong>link</strong>, paste the <strong>text</strong>, or upload a <strong>PDF</strong>.</p>
+          <h3>1. {{ translate_ui("Provide the article", current_language) }}</h3>
+          <p>{{ translate_ui("Enter a", current_language) }} <strong>{{ translate_ui("link", current_language) }}</strong>, {{ translate_ui("paste the", current_language) }} <strong>{{ translate_ui("text", current_language) }}</strong>, {{ translate_ui("or upload a", current_language) }} <strong>PDF</strong>.</p>
         </div>
       </div>
       <!-- Step 2 -->
       <div class="col-md-4 d-flex" data-aos="fade-up" data-aos-delay="100">
         <div class="htu-card flex-fill">
           <div class="htu-icon"><i class="bi bi-cpu"></i></div>
-          <h3>2. Let AI analyze</h3>
-          <p>FairRead detects political bias, highlights key signals, and summarizes the piece.</p>
+          <h3>2. {{ translate_ui("Let AI analyze", current_language) }}</h3>
+          <p>{{ translate_ui("FairRead detects political bias, highlights key signals, and summarizes the piece.", current_language) }}</p>
         </div>
       </div>
       <!-- Step 3 -->
       <div class="col-md-4 d-flex" data-aos="fade-up" data-aos-delay="200">
         <div class="htu-card flex-fill">
           <div class="htu-icon"><i class="bi bi-bar-chart-line"></i></div>
-          <h3>3. Review insights</h3>
-          <p>See the <strong>bias label</strong>, rationale, and a concise <strong>summary</strong> you can trust.</p>
+          <h3>3. {{ translate_ui("Review insights", current_language) }}</h3>
+          <p>{{ translate_ui("See the bias label, rationale, and a concise summary you can trust.", current_language) }}</p>
         </div>
       </div>
     </div>
@@ -447,13 +444,13 @@
 <section id="debate" class="debate-section">
   <div class="container">
     <div class="debate-head" data-aos="fade-up">
-      <p class="debate-eyebrow">Community</p>
-      <h2 class="debate-title">Discuss, compare, and learn together</h2>
+      <p class="debate-eyebrow">{{ translate_ui("Community", current_language) }}</p>
+      <h2 class="debate-title">{{ translate_ui("Discuss, compare, and learn together", current_language) }}</h2>
       <p class="debate-sub">
-        Join focused debate rooms on live topics, compare evidence, and see how perspectives shift—without sacrificing civility or privacy.
+        {{ translate_ui("Join focused debate rooms on live topics, compare evidence, and see how perspectives shift—without sacrificing civility or privacy.", current_language) }}
       </p>
       <div class="debate-cta">
-        <a href="/create_debate" class="btn-primary-fr">Explore Debate Rooms</a>
+        <a href="/create_debate" class="btn-primary-fr">{{ translate_ui("Explore Debate Rooms", current_language) }}</a>
       </div>
     </div>
 
@@ -462,11 +459,11 @@
       <div class="col-md-4 d-flex" data-aos="fade-up">
         <article class="debate-card flex-fill">
           <div class="debate-icon"><i class="bi bi-people"></i></div>
-          <h3>Topic-Focused Rooms</h3>
-          <p>Join curated rooms on specific policy issues. Keep discussions on track with structured prompts and timeboxed rounds.</p>
+          <h3>{{ translate_ui("Topic-Focused Rooms", current_language) }}</h3>
+          <p>{{ translate_ui("Join curated rooms on specific policy issues. Keep discussions on track with structured prompts and timeboxed rounds.", current_language) }}</p>
           <ul class="debate-list">
-            <li>Weekly prompts and summaries</li>
-            <li>Invite-only or public access</li>
+            <li>{{ translate_ui("Weekly prompts and summaries", current_language) }}</li>
+            <li>{{ translate_ui("Invite-only or public access", current_language) }}</li>
           </ul>
         </article>
       </div>
@@ -475,11 +472,11 @@
       <div class="col-md-4 d-flex" data-aos="fade-up" data-aos-delay="80">
         <article class="debate-card flex-fill">
           <div class="debate-icon"><i class="bi bi-link-45deg"></i></div>
-          <h3>Evidence-Linked Posts</h3>
-          <p>Back claims with links or PDFs. FairRead highlights bias signals in cited content so participants can assess sources quickly.</p>
+          <h3>{{ translate_ui("Evidence-Linked Posts", current_language) }}</h3>
+          <p>{{ translate_ui("Back claims with links or PDFs. FairRead highlights bias signals in cited content so participants can assess sources quickly.", current_language) }}</p>
           <ul class="debate-list">
-            <li>Inline article analysis</li>
-            <li>Quote and counter-quote threads</li>
+            <li>{{ translate_ui("Inline article analysis", current_language) }}</li>
+            <li>{{ translate_ui("Quote and counter-quote threads", current_language) }}</li>
           </ul>
         </article>
       </div>
@@ -488,11 +485,11 @@
       <div class="col-md-4 d-flex" data-aos="fade-up" data-aos-delay="160">
         <article class="debate-card flex-fill">
           <div class="debate-icon"><i class="bi bi-shield-check"></i></div>
-          <h3>Civility & Privacy</h3>
-          <p>Moderation tools and private rooms reduce noise. Participation history stays local by default; share only what you choose.</p>
+          <h3>{{ translate_ui("Civility & Privacy", current_language) }}</h3>
+          <p>{{ translate_ui("Moderation tools and private rooms reduce noise. Participation history stays local by default; share only what you choose.", current_language) }}</p>
           <ul class="debate-list">
-            <li>Report & mute controls</li>
-            <li>Privacy-first analytics</li>
+            <li>{{ translate_ui("Report & mute controls", current_language) }}</li>
+            <li>{{ translate_ui("Privacy-first analytics", current_language) }}</li>
           </ul>
         </article>
       </div>
@@ -502,20 +499,20 @@
     <div class="debate-timeline" data-aos="fade-up" data-aos-delay="220">
       <div class="dt-item">
         <div class="dt-content">
-          <h4>Weekly Topic</h4>
-          <p>Each week introduces a new debate prompt with a short neutral brief to frame the discussion.</p>
+          <h4>{{ translate_ui("Weekly Topic", current_language) }}</h4>
+          <p>{{ translate_ui("Each week introduces a new debate prompt with a short neutral brief to frame the discussion.", current_language) }}</p>
         </div>
       </div>
       <div class="dt-item">
         <div class="dt-content">
-          <h4>Structured Rounds</h4>
-          <p>Opening statements, evidence posts, and closing remarks keep conversations concise and comparable.</p>
+          <h4>{{ translate_ui("Structured Rounds", current_language) }}</h4>
+          <p>{{ translate_ui("Opening statements, evidence posts, and closing remarks keep conversations concise and comparable.", current_language) }}</p>
         </div>
       </div>
       <div class="dt-item">
         <div class="dt-content">
-          <h4>Outcome Snapshot</h4>
-          <p>See a neutral wrap-up: main claims, strongest evidence cited, and perspective shifts over the week.</p>
+          <h4>{{ translate_ui("Outcome Snapshot", current_language) }}</h4>
+          <p>{{ translate_ui("See a neutral wrap-up: main claims, strongest evidence cited, and perspective shifts over the week.", current_language) }}</p>
         </div>
       </div>
     </div>

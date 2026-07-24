@@ -136,14 +136,14 @@
       </div>
       <div class="action-bar">
           <a class="btn-fr" href="{{ url_for('create_debate') }}">
-          <i class="bi bi-arrow-left-circle"></i> Back to Debates
+          <i class="bi bi-arrow-left-circle"></i> {{ translate_ui("Back to Debates", current_language) }}
         </a>
         <a class="btn-fr" href="{{ url_for('create_post', debate_id=debate[0]) }}">
-          <i class="bi bi-pencil-square"></i> Create Post
+          <i class="bi bi-pencil-square"></i> {{ translate_ui("Create Post", current_language) }}
         </a>
         {% if is_admin %}
         <a class="btn-fr" href="{{ url_for('create_news', debate_id=debate[0]) }}">
-          <i class="bi bi-newspaper"></i> Add Related News
+          <i class="bi bi-newspaper"></i> {{ translate_ui("Add Related News", current_language) }}
         </a>
         {% endif %}
       </div>
@@ -152,7 +152,7 @@
     <div class="row g-4">
       <!-- Left: Discussion -->
       <div class="col-lg-8">
-        <div class="section-subtitle">Discussion</div>
+        <div class="section-subtitle">{{ translate_ui("Discussion", current_language) }}</div>
 
         {% if posts %}
           {% for post_id, username, content, timestamp in posts %}
@@ -164,9 +164,9 @@
                 </div>
 
                 {% if is_admin or current_user == username %}
-                  <form method="POST" action="{{ url_for('delete_post', post_id=post_id, debate_id=debate[0]) }}" onsubmit="return confirm('Delete this post? This cannot be undone.');">
+                  <form method="POST" action="{{ url_for('delete_post', post_id=post_id, debate_id=debate[0]) }}" onsubmit="return confirm('{{ translate_ui("Delete this post? This cannot be undone.", current_language) }}');">
                     <button type="submit" class="btn-delete">
-                      <i class="bi bi-trash3"></i> Delete
+                      <i class="bi bi-trash3"></i> {{ translate_ui("Delete", current_language) }}
                     </button>
                   </form>
                 {% endif %}
@@ -179,14 +179,14 @@
                   <form method="POST" action="{{ url_for('like_post', post_id=post_id) }}">
                     <button type="submit" class="btn-like">
                       <i class="bi bi-hand-thumbs-up"></i>
-                      Like ({{ likes_dict.get(post_id, 0) }})
+                      {{ translate_ui("Like", current_language) }} ({{ likes_dict.get(post_id, 0) }})
                     </button>
                   </form>
                 </div>
 
                 <div class="comment-line"></div>
 
-                <div class="mb-2 fw-semibold"><i class="bi bi-chat-left-text me-1"></i>Comments</div>
+                <div class="mb-2 fw-semibold"><i class="bi bi-chat-left-text me-1"></i>{{ translate_ui("Comments", current_language) }}</div>
                 {% for username, comment, time in comments_dict.get(post_id, []) %}
                   <p class="mb-1">
                     <strong>{{ username }}:</strong> {{ comment }}
@@ -196,7 +196,7 @@
 
                 <form method="POST" action="{{ url_for('comment_post', post_id=post_id) }}" class="mt-2">
                   <div class="input-group">
-                    <input type="text" name="comment" class="form-control" placeholder="Write a comment…" required>
+                    <input type="text" name="comment" class="form-control" placeholder="{{ translate_ui("Write a comment…", current_language) }}" required>
                     <button class="btn btn-outline-dark" type="submit"><i class="bi bi-send"></i></button>
                   </div>
                 </form>
@@ -204,14 +204,14 @@
             </div>
           {% endfor %}
         {% else %}
-          <p class="no-posts">No posts yet. Be the first to contribute to the discussion.</p>
+        <p class="no-posts">{{ translate_ui("No posts yet. Be the first to contribute to the discussion.", current_language) }}</p>
         {% endif %}
       </div>
 
       <!-- Right: Related News Sidebar -->
       <div class="col-lg-4">
         <div class="sidebar">
-          <div class="side-title"><i class="bi bi-newspaper"></i>Related News</div>
+          <div class="side-title"><i class="bi bi-newspaper"></i>{{ translate_ui("Related News", current_language) }}</div>
 
           {% if news %}
             {% for news_id, title, link, summary, classification, left, center, right, has_voted in news %}
@@ -224,7 +224,7 @@
                   </h6>
 
                   {% if is_admin %}
-                    <form method="POST" action="{{ url_for('delete_news', news_id=news_id, debate_id=debate[0]) }}" onsubmit="return confirm('Delete this news item? This cannot be undone.');">
+                    <form method="POST" action="{{ url_for('delete_news', news_id=news_id, debate_id=debate[0]) }}" onsubmit="return confirm('{{ translate_ui("Delete this news item? This cannot be undone.", current_language) }}');">
                       <button type="submit" class="btn-delete">
                         <i class="bi bi-trash3"></i>
                       </button>
@@ -237,12 +237,12 @@
                 </div>
 
                 <a href="#" class="btn-more" data-bs-toggle="modal" data-bs-target="#modal{{ news_id }}">
-                  <i class="bi bi-arrow-right-circle"></i> More
+                  <i class="bi bi-arrow-right-circle"></i> {{ translate_ui("More", current_language) }}
                 </a>
 
                 {% if has_voted %}
                   <div class="bias-badges mt-2">
-                    <span class="badge-chip brand"><i class="bi bi-bullseye me-1"></i> {{ classification }}</span>
+                    <span class="badge-chip brand"><i class="bi bi-bullseye me-1"></i> {{ translate_bias_label(classification, current_language) }}</span>
                     <span class="badge-chip">L: {{ left }}%</span>
                     <span class="badge-chip">C: {{ center }}%</span>
                     <span class="badge-chip">R: {{ right }}%</span>
@@ -255,18 +255,18 @@
                   </div>
                 {% else %}
                   <form method="POST" action="{{ url_for('vote_news', news_id=news_id, debate_id=debate[0]) }}" class="vote-row mt-2">
-                    <p class="mb-2">What is your opinion about this article's bias?</p>
+                    <p class="mb-2">{{ translate_ui("What is your opinion about this article's bias?", current_language) }}</p>
                     <div class="d-flex gap-2">
-                      <button name="vote" value="left" class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-left"></i> Left</button>
-                      <button name="vote" value="center" class="btn btn-outline-dark btn-sm"><i class="bi bi-dash"></i> Center</button>
-                      <button name="vote" value="right" class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-right"></i> Right</button>
+                      <button name="vote" value="left" class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-left"></i> {{ translate_ui("Left", current_language) }}</button>
+                      <button name="vote" value="center" class="btn btn-outline-dark btn-sm"><i class="bi bi-dash"></i> {{ translate_ui("Center", current_language) }}</button>
+                      <button name="vote" value="right" class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-right"></i> {{ translate_ui("Right", current_language) }}</button>
                     </div>
                   </form>
                 {% endif %}
               </div>
             {% endfor %}
           {% else %}
-            <p class="text-muted">No news articles have been added yet.</p>
+          <p class="text-muted">{{ translate_ui("No news articles have been added yet.", current_language) }}</p>
           {% endif %}
         </div>
       </div>
@@ -280,7 +280,7 @@
               <div>
                 <h5 class="modal-title mb-1" id="modalLabel{{ news_id }}">{{ title }}</h5>
                 <a href="{{ link }}" target="_blank" rel="noopener" class="small text-decoration-none">
-                  <i class="bi bi-box-arrow-up-right"></i> Open original article
+                <i class="bi bi-box-arrow-up-right"></i> {{ translate_ui("Open original article", current_language) }}
                 </a>
               </div>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -288,47 +288,47 @@
 
             <div class="modal-body">
               <div class="mb-3">
-                <h6 class="fw-bold mb-2"><i class="bi bi-journal-text me-1"></i>Summary</h6>
+              <h6 class="fw-bold mb-2"><i class="bi bi-journal-text me-1"></i>{{ translate_ui("Summary", current_language) }}</h6>
                 <p class="mb-0" style="white-space:pre-wrap">{{ summary }}</p>
               </div>
 
               <div class="mt-3">
-                <h6 class="fw-bold mb-2"><i class="bi bi-bullseye me-1"></i> Bias & Scores</h6>
+              <h6 class="fw-bold mb-2"><i class="bi bi-bullseye me-1"></i> {{ translate_ui("Bias & Scores", current_language) }}</h6>
 
                 {% if has_voted %}
                   <div class="d-flex flex-wrap gap-2 mb-3">
                     <span class="badge rounded-pill text-dark" style="background:linear-gradient(180deg, rgba(214,194,120,.20), rgba(214,194,120,.08)); border:1px solid rgba(214,194,120,.35);">
-                      Classification: <strong class="ms-1">{{ classification }}</strong>
+                    {{ translate_ui("Classification", current_language) }}: <strong class="ms-1">{{ translate_bias_label(classification, current_language) }}</strong>
                     </span>
-                    <span class="badge rounded-pill bg-light text-dark border">Left: {{ left }}%</span>
-                    <span class="badge rounded-pill bg-light text-dark border">Center: {{ center }}%</span>
-                    <span class="badge rounded-pill bg-light text-dark border">Right: {{ right }}%</span>
+                  <span class="badge rounded-pill bg-light text-dark border">{{ translate_ui("Left", current_language) }}: {{ left }}%</span>
+                  <span class="badge rounded-pill bg-light text-dark border">{{ translate_ui("Center", current_language) }}: {{ center }}%</span>
+                  <span class="badge rounded-pill bg-light text-dark border">{{ translate_ui("Right", current_language) }}: {{ right }}%</span>
                   </div>
 
                   <div class="mb-2">
-                    <div class="small text-muted mb-1">Left</div>
+                  <div class="small text-muted mb-1">{{ translate_ui("Left", current_language) }}</div>
                     <div class="progress" role="progressbar" aria-label="Left" aria-valuenow="{{ left }}" aria-valuemin="0" aria-valuemax="100">
                       <div class="progress-bar" style="width: {{ left }}%; background:#d9534f;"></div>
                     </div>
                   </div>
                   <div class="mb-2">
-                    <div class="small text-muted mb-1">Center</div>
+                  <div class="small text-muted mb-1">{{ translate_ui("Center", current_language) }}</div>
                     <div class="progress" role="progressbar" aria-label="Center" aria-valuenow="{{ center }}" aria-valuemin="0" aria-valuemax="100">
                       <div class="progress-bar" style="width: {{ center }}%; background:#f0ad4e;"></div>
                     </div>
                   </div>
                   <div class="mb-2">
-                    <div class="small text-muted mb-1">Right</div>
+                  <div class="small text-muted mb-1">{{ translate_ui("Right", current_language) }}</div>
                     <div class="progress" role="progressbar" aria-label="Right" aria-valuenow="{{ right }}" aria-valuemin="0" aria-valuemax="100">
                       <div class="progress-bar" style="width: {{ right }}%; background:#337ab7;"></div>
                     </div>
                   </div>
                 {% else %}
-                  <p class="text-muted">Cast your view on this article’s bias to see the full breakdown.</p>
+                <p class="text-muted">{{ translate_ui("Cast your view on this article's bias to see the full breakdown.", current_language) }}</p>
                   <form method="POST" action="{{ url_for('vote_news', news_id=news_id, debate_id=debate[0]) }}" class="d-flex flex-wrap gap-2">
-                    <button name="vote" value="left"   class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-left"></i> Left</button>
-                    <button name="vote" value="center" class="btn btn-outline-dark btn-sm"><i class="bi bi-dash"></i> Center</button>
-                    <button name="vote" value="right"  class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-right"></i> Right</button>
+                  <button name="vote" value="left"   class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-left"></i> {{ translate_ui("Left", current_language) }}</button>
+                  <button name="vote" value="center" class="btn btn-outline-dark btn-sm"><i class="bi bi-dash"></i> {{ translate_ui("Center", current_language) }}</button>
+                  <button name="vote" value="right"  class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-right"></i> {{ translate_ui("Right", current_language) }}</button>
                   </form>
                 {% endif %}
               </div>
@@ -336,9 +336,9 @@
 
             <div class="modal-footer">
               <a href="{{ link }}" target="_blank" rel="noopener" class="btn btn-dark">
-                <i class="bi bi-box-arrow-up-right me-1"></i> Read Full Article
+              <i class="bi bi-box-arrow-up-right me-1"></i> {{ translate_ui("Read Full Article", current_language) }}
               </a>
-              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ translate_ui("Close", current_language) }}</button>
             </div>
           </div>
         </div>

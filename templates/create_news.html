@@ -120,19 +120,19 @@
     <div class="head-left">
 
       <div class="title-wrap">
-        <h1 class="title">Add News Article</h1>
-        <div class="subtitle">Attach a credible source, summarize clearly, and keep it civil.</div>
+        <h1 class="title">{{ translate_ui("Add News Article", current_language) }}</h1>
+        <div class="subtitle">{{ translate_ui("Attach a credible source, summarize clearly, and keep it civil.", current_language) }}</div>
       </div>
 
     </div>
       <a href="{{ url_for('debate_detail', debate_id=debate[0]) }}" class="btn-back">
         <i class="bi bi-arrow-left"></i>
-        <span class="back-label">Back to Debate</span>
+        <span class="back-label">{{ translate_ui("Back to Debate", current_language) }}</span>
       </a>
     <div class="d-flex gap-2">
       <span class="note d-flex align-items-center gap-2">
         <i class="bi bi-shield-check"></i>
-        <span>We store title, link, summary & content to compute bias scores.</span>
+        <span>{{ translate_ui("We store title, link, summary & content to compute bias scores.", current_language) }}</span>
       </span>
     </div>
   </div>
@@ -140,61 +140,61 @@
       <form method="POST" onsubmit="lockSubmit()">
         <!-- Title -->
         <div class="mb-3">
-          <label for="title" class="form-label">Article Title</label>
-          <input name="title" id="title" type="text" class="form-control" placeholder="Enter the article headline…" required>
-          <div class="form-text helper">Keep it faithful to the original headline.</div>
+          <label for="title" class="form-label">{{ translate_ui("Article Title", current_language) }}</label>
+          <input name="title" id="title" type="text" class="form-control" placeholder="{{ translate_ui("Enter the article headline…", current_language) }}" required>
+          <div class="form-text helper">{{ translate_ui("Keep it faithful to the original headline.", current_language) }}</div>
         </div>
 
         <!-- Link + Extract -->
         <div class="mb-3">
-          <label for="link" class="form-label">Article Link</label>
+          <label for="link" class="form-label">{{ translate_ui("Article Link", current_language) }}</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
             <input name="link" id="link" type="url" class="form-control" placeholder="https://example.com/news/article" required>
             <button id="extractBtn" type="button" class="btn btn-soft" onclick="extractText()">
               <span class="icon-inline">
-                <i class="bi bi-magic"></i><span>Extract Content</span>
+                <i class="bi bi-magic"></i><span>{{ translate_ui("Extract Content", current_language) }}</span>
               </span>
             </button>
           </div>
-          <div class="form-text helper">We’ll try to pull the full text from the URL for you to review and edit.</div>
+          <div class="form-text helper">{{ translate_ui("We'll try to pull the full text from the URL for you to review and edit.", current_language) }}</div>
         </div>
 
         <!-- Summary with counter -->
         <div class="mb-3">
           <div class="d-flex justify-content-between align-items-center">
-            <label for="summary" class="form-label mb-0">Summary</label>
-            <small id="summaryCounter" class="counter">0 words</small>
+            <label for="summary" class="form-label mb-0">{{ translate_ui("Summary", current_language) }}</label>
+            <small id="summaryCounter" class="counter">0 {{ translate_ui("words", current_language) }}</small>
           </div>
-          <textarea name="summary" id="summary" rows="4" class="form-control" placeholder="Summarize the article in 2–3 sentences…" required></textarea>
-          <div class="form-text helper">Be neutral and concise; avoid personal opinions here.</div>
+          <textarea name="summary" id="summary" rows="4" class="form-control" placeholder="{{ translate_ui("Summarize the article in 2–3 sentences…", current_language) }}" required></textarea>
+          <div class="form-text helper">{{ translate_ui("Be neutral and concise; avoid personal opinions here.", current_language) }}</div>
         </div>
 
         <!-- Content -->
         <div class="mb-4">
-          <label for="content" class="form-label">News Content</label>
-          <textarea name="content" id="content" rows="8" class="form-control" placeholder="Paste or edit the extracted article text…" required></textarea>
-          <div class="form-text helper">Edit for clarity. Don’t include unrelated or harmful content.</div>
+          <label for="content" class="form-label">{{ translate_ui("News Content", current_language) }}</label>
+          <textarea name="content" id="content" rows="8" class="form-control" placeholder="{{ translate_ui("Paste or edit the extracted article text…", current_language) }}" required></textarea>
+          <div class="form-text helper">{{ translate_ui("Edit for clarity. Don't include unrelated or harmful content.", current_language) }}</div>
         </div>
 
         <!-- Safety / Guidelines -->
         <div class="mb-4 note">
-          <div class="fw-semibold mb-1"><i class="bi bi-exclamation-octagon"></i> Guidelines</div>
+          <div class="fw-semibold mb-1"><i class="bi bi-exclamation-octagon"></i> {{ translate_ui("Guidelines", current_language) }}</div>
           <ul class="mb-0">
-            <li>Stay on topic and cite credible sources.</li>
-            <li>No hate speech, harassment, or personal attacks.</li>
-            <li>Report misclassified or suspicious sources to an admin.</li>
+            <li>{{ translate_ui("Stay on topic and cite credible sources.", current_language) }}</li>
+            <li>{{ translate_ui("No hate speech, harassment, or personal attacks.", current_language) }}</li>
+            <li>{{ translate_ui("Report misclassified or suspicious sources to an admin.", current_language) }}</li>
           </ul>
         </div>
 
         <!-- Actions -->
         <div class="toolbar">
           <div class="helper">
-            <i class="bi bi-info-circle"></i> After submission, bias and stance will be computed automatically.
+            <i class="bi bi-info-circle"></i> {{ translate_ui("After submission, bias and stance will be computed automatically.", current_language) }}
           </div>
           <div class="inline-actions">
             <button id="submitBtn" type="submit" class="btn btn-brand">
-              <i class="bi bi-send me-1"></i> Submit News
+              <i class="bi bi-send me-1"></i> {{ translate_ui("Submit News", current_language) }}
             </button>
           </div>
         </div>
@@ -232,7 +232,7 @@
     const btn = document.getElementById('extractBtn');
 
     if(!linkInput.value){
-      alert('Please paste a valid link first.');
+      alert('{{ translate_ui("Please paste a valid link first.", current_language) }}');
       linkInput.focus();
       return;
     }
@@ -240,7 +240,7 @@
     // loading state
     btn.disabled = true;
     const originalHTML = btn.innerHTML;
-    btn.innerHTML = '<span class="icon-inline"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> <span>Extracting…</span></span>';
+    btn.innerHTML = '<span class="icon-inline"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> <span>{{ translate_ui("Extracting…", current_language) }}</span></span>';
 
     try{
       const resp = await fetch('/api/extract_text', {

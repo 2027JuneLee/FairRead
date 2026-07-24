@@ -79,7 +79,7 @@
       <div class="kpi">
         <i class="bi bi-people-fill"></i>
         <div>
-          <div class="label">Total Users</div>
+          <div class="label">{{ translate_ui("Total Users", current_language) }}</div>
           <div class="number" id="stat-total-users">0</div>
         </div>
       </div>
@@ -88,7 +88,7 @@
       <div class="kpi">
         <i class="bi bi-person-check-fill"></i>
         <div>
-          <div class="label">Active Users (30d)</div>
+          <div class="label">{{ translate_ui("Active Users (30d)", current_language) }}</div>
           <div class="number" id="stat-active-users">0</div>
         </div>
       </div>
@@ -97,7 +97,7 @@
       <div class="kpi">
         <i class="bi bi-newspaper"></i>
         <div>
-          <div class="label">Total News</div>
+          <div class="label">{{ translate_ui("Total News", current_language) }}</div>
           <div class="number" id="stat-total-news">0</div>
         </div>
       </div>
@@ -106,7 +106,7 @@
       <div class="kpi">
         <i class="bi bi-lightning-charge-fill"></i>
         <div>
-          <div class="label">Recent News (30d)</div>
+          <div class="label">{{ translate_ui("Recent News (30d)", current_language) }}</div>
           <div class="number" id="stat-recent-news">0</div>
         </div>
       </div>
@@ -118,8 +118,8 @@
     <div class="col-lg-6">
       <div class="card-fr">
         <div class="card-head">
-          <h3 class="card-title"><i class="bi bi-bar-chart-line me-2"></i>Chatbot Usage (Last 7 Days)</h3>
-          <span class="muted">Daily requests</span>
+          <h3 class="card-title"><i class="bi bi-bar-chart-line me-2"></i>{{ translate_ui("Chatbot Usage (Last 7 Days)", current_language) }}</h3>
+          <span class="muted">{{ translate_ui("Daily requests", current_language) }}</span>
         </div>
         <div class="chart-box h-260">
           <canvas id="usage7d"></canvas>
@@ -130,8 +130,8 @@
     <div class="col-lg-6">
       <div class="card-fr">
         <div class="card-head">
-          <h3 class="card-title"><i class="bi bi-pie-chart me-2"></i>Monthly Chatbot Usage</h3>
-          <span class="muted">By month</span>
+          <h3 class="card-title"><i class="bi bi-pie-chart me-2"></i>{{ translate_ui("Monthly Chatbot Usage", current_language) }}</h3>
+          <span class="muted">{{ translate_ui("By month", current_language) }}</span>
         </div>
         <div class="chart-box h-260">
           <canvas id="usageMonthly"></canvas>
@@ -142,8 +142,8 @@
     <div class="col-lg-6">
       <div class="card-fr">
         <div class="card-head">
-          <h3 class="card-title"><i class="bi bi-graph-up-arrow me-2"></i>User Growth</h3>
-          <span class="muted">Accounts over time</span>
+          <h3 class="card-title"><i class="bi bi-graph-up-arrow me-2"></i>{{ translate_ui("User Growth", current_language) }}</h3>
+          <span class="muted">{{ translate_ui("Accounts over time", current_language) }}</span>
         </div>
         <div class="chart-box h-280">
           <canvas id="userGrowthChart"></canvas>
@@ -154,8 +154,8 @@
     <div class="col-lg-6">
       <div class="card-fr">
         <div class="card-head">
-          <h3 class="card-title"><i class="bi bi-tags me-2"></i>Top Keywords</h3>
-          <span class="muted">Most frequent</span>
+          <h3 class="card-title"><i class="bi bi-tags me-2"></i>{{ translate_ui("Top Keywords", current_language) }}</h3>
+          <span class="muted">{{ translate_ui("Most frequent", current_language) }}</span>
         </div>
         <div class="chart-box h-280">
           <canvas id="keywordsChart"></canvas>
@@ -166,8 +166,8 @@
     <div class="col-lg-6">
       <div class="card-fr">
         <div class="card-head">
-          <h3 class="card-title"><i class="bi bi-activity me-2"></i>Daily User Sessions</h3>
-          <span class="muted">Last 7 days</span>
+          <h3 class="card-title"><i class="bi bi-activity me-2"></i>{{ translate_ui("Daily User Sessions", current_language) }}</h3>
+          <span class="muted">{{ translate_ui("Last 7 days", current_language) }}</span>
         </div>
         <div class="chart-box h-240">
           <canvas id="userSessionsChart"></canvas>
@@ -179,11 +179,11 @@
       <div class="card-fr">
         <div class="card-head">
           <h3 class="card-title">
-            <i class="bi bi-bullseye me-2"></i>Average Bias Scores
+            <i class="bi bi-bullseye me-2"></i>{{ translate_ui("Average Bias Scores", current_language) }}
           </h3>
           <!-- Toggle: All + Top 5 keywords -->
           <div class="btn-group btn-group-sm" id="biasToggle">
-            <button type="button" class="btn btn-outline-secondary active" data-mode="all">All</button>
+            <button type="button" class="btn btn-outline-secondary active" data-mode="all">{{ translate_ui("All", current_language) }}</button>
             {% for kw in keyword_labels[:5] %}
               <button type="button" class="btn btn-outline-secondary" data-kw="{{ kw }}">{{ kw }}</button>
             {% endfor %}
@@ -239,7 +239,7 @@
 
   new Chart(document.getElementById('usage7d').getContext('2d'), {
     type: 'line',
-    data: { labels: dates, datasets: [{ label: 'Chatbot Usage', data: counts, borderColor: cIndigo, backgroundColor: 'rgba(99,102,241,.18)', fill:true, tension:.35, pointRadius:2.5 }]},
+    data: { labels: dates, datasets: [{ label: '{{ translate_ui("Chatbot Usage", current_language) }}', data: counts, borderColor: cIndigo, backgroundColor: 'rgba(99,102,241,.18)', fill:true, tension:.35, pointRadius:2.5 }]},
     options: {
       responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{ display:false } },
@@ -264,7 +264,7 @@
 
   new Chart(document.getElementById('userGrowthChart').getContext('2d'), {
     type:'bar',
-    data:{ labels: months, datasets:[{ label:'Users', data: monthlyCounts, backgroundColor:'rgba(20,184,166,.35)', borderColor:cTeal, borderWidth:1.5 }]},
+    data:{ labels: months, datasets:[{ label:'{{ translate_ui("Users", current_language) }}', data: monthlyCounts, backgroundColor:'rgba(20,184,166,.35)', borderColor:cTeal, borderWidth:1.5 }]},
     options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false }}, y:{ beginAtZero:true, grid:{ color:'rgba(15,23,42,.08)' } } } }
   });
 
@@ -281,11 +281,11 @@
 
     new Chart(document.getElementById('keywordsChart').getContext('2d'), {
       type:'bar',
-      data:{ labels, datasets:[{ label:'Mentions', data:values, backgroundColor:'rgba(59,130,246,.35)', borderColor:cBlue, borderWidth:1.5, barThickness:20, maxBarThickness:24 }] },
+      data:{ labels, datasets:[{ label:'{{ translate_ui("Mentions", current_language) }}', data:values, backgroundColor:'rgba(59,130,246,.35)', borderColor:cBlue, borderWidth:1.5, barThickness:20, maxBarThickness:24 }] },
       options:{
         indexAxis:'y',
         responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ title:(items)=>items.map(i=>fullLabels[i.dataIndex]), label:(ctx)=>` Mentions: ${ctx.parsed.x}` } } },
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ title:(items)=>items.map(i=>fullLabels[i.dataIndex]), label:(ctx)=>` {{ translate_ui("Mentions", current_language) }}: ${ctx.parsed.x}` } } },
         scales:{ x:{ beginAtZero:true, grid:{ color:'rgba(15,23,42,.08)'} }, y:{ grid:{ display:false } } }
       }
     });
@@ -293,7 +293,7 @@
 
   new Chart(document.getElementById('userSessionsChart').getContext('2d'), {
     type:'line',
-    data:{ labels: sessionDates, datasets:[{ label:'Sessions', data: sessionCounts, borderColor:cTeal, backgroundColor:'rgba(20,184,166,.18)', fill:true, tension:.35, pointRadius:2.5 }]},
+    data:{ labels: sessionDates, datasets:[{ label:'{{ translate_ui("Sessions", current_language) }}', data: sessionCounts, borderColor:cTeal, backgroundColor:'rgba(20,184,166,.18)', fill:true, tension:.35, pointRadius:2.5 }]},
     options:{
       responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{ display:false } },
@@ -312,7 +312,7 @@
   const biasCtx = document.getElementById('biasChart').getContext('2d');
   const biasChart = new Chart(biasCtx, {
     type:'doughnut',
-    data:{ labels:['Left','Center','Right'], datasets:[{ data: BIAS_ALL, backgroundColor:[cBlue,cAmber,cRed], borderColor:'#fff', borderWidth:2 }] },
+    data:{ labels:['{{ translate_ui("Left", current_language) }}','{{ translate_ui("Center", current_language) }}','{{ translate_ui("Right", current_language) }}'], datasets:[{ data: BIAS_ALL, backgroundColor:[cBlue,cAmber,cRed], borderColor:'#fff', borderWidth:2 }] },
     options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:14 } } } }
   });
 
