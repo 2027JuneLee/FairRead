@@ -1817,6 +1817,14 @@ def chatbot():
     return render_template('chatbot.html', is_login=is_login, is_admin=is_admin_user())
 
 
+@app.route('/wordle')
+def wordle_page():
+    is_login = 'username' in session
+    if not is_login:
+        return redirect(url_for('login'))
+    return render_template('wordle.html', is_login=is_login, is_admin=is_admin_user())
+
+
 
 @app.route('/profile')
 

@@ -693,9 +693,19 @@
         hint: ''
     };
     const wordleBanks = {
-        en: ['crown', 'earth', 'river', 'stone', 'story', 'light', 'music', 'dream', 'field', 'smile', 'brave', 'trace', 'clear', 'press', 'plant', 'voice', 'table', 'peace', 'spark', 'great', 'shift', 'globe', 'trend', 'focus', 'fresh', 'paint', 'worth', 'trust', 'blend', 'quick', 'quiet', 'range', 'proud', 'sugar', 'flame', 'adore', 'fruit', 'heart', 'pilot', 'grain', 'watch', 'crisp', 'north', 'south', 'grant', 'charm', 'skill', 'phase', 'topic', 'value']
+        en: [
+            'abate','adept','aloof','amity','ardor','astute','banal','belie','benign','blunt','candid','candor',
+            'chide','civic','clout','coax','cogent','copious','cordial','coyly','crass','cryptic','cursory','defer',
+            'deign','deter','droll','eager','edict','elicit','elude','empathy','endow','enigma','entail','equity',
+            'erode','ethic','evoke','exalt','fervor','finite','flair','foster','frugal','genial','glib','guile',
+            'harbor','hasten','imbue','immune','impart','incur','induce','innate','jovial','judicious','kindle','laconic',
+            'lament','latent','laudable','lucid','meager','medley','mentor','merit','method','mitigate','modest','nuance',
+            'obscure','ornate','outset','placid','plausible','pragmatic','precise','prelude','prudent','qualify','quell','quaint',
+            'rational','refine','relish','reticent','robust','salient','sincere','solace','static','sterile','subtle','succinct',
+            'tactful','tangible','tenable','tenacious','theory','timely','tranquil','uphold','urbane','usable','venerate','vigilant',
+            'viable','vivid','wary','zeal'
+        ]
     };
-    const wordleLengths = { en: 5 };
     const wordleStatsKey = 'fairread-learn-wordle-stats';
 
     function defaultWordleStats() {
@@ -827,22 +837,22 @@
 
         const getWordlePool = () => {
             const pool = wordleBanks.en;
-            return pool.filter((word) => splitUnits(word).length === wordleLengths.en);
+            return pool.filter((word) => splitUnits(word).length === 5);
         };
 
         const pickTargetWord = () => {
             const pool = getWordlePool();
             miniGameState.wordBank = pool;
-            const choice = pool[Math.floor(Math.random() * pool.length)] || pool[0] || 'story';
+            const choice = pool[Math.floor(Math.random() * pool.length)] || pool[0] || 'abate';
             miniGameState.target = choice;
             miniGameState.targetLetters = splitUnits(choice);
-            miniGameState.hint = 'Guess the five-letter word.';
+            miniGameState.hint = 'Guess the five-letter SAT word.';
         };
 
         const renderWordle = () => {
             const host = document.getElementById('mini-game-host');
             if (!host) return;
-            const targetLength = miniGameState.targetLetters.length || wordleLengths.en || 5;
+            const targetLength = miniGameState.targetLetters.length || 5;
             const readyButton = miniGameState.ready ? `
                 <button type="button" class="btn btn-warning btn-sm mt-2" id="reveal-terms-btn">Show learning terms</button>
             ` : '';

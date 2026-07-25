@@ -77,6 +77,38 @@
 
   /* Optional: make keyboard focus match too */
   .nav-link:focus { color: #d6c278; outline: none; }
+
+  .wordle-fab{
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 1035;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 10px 10px 10px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ffd7ef 0%, #ffc6e0 48%, #f6d6ff 100%);
+    color: #3f2b56;
+    text-decoration: none;
+    box-shadow: 0 10px 20px rgba(139,92,246,.24);
+    font-weight: 700;
+    border: 1px solid rgba(143, 99, 196, .35);
+  }
+  .wordle-fab:hover{
+    color:#3f2b56;
+    transform: translateY(-2px) scale(1.01);
+  }
+  .wordle-fab .fab-emoji{
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(255,255,255,.65);
+    font-size: 17px;
+  }
     </style>
 </head>
 <body>
@@ -184,6 +216,13 @@
     {% block create_post %}{% endblock %}
     {% block create_news %}{% endblock %}
     {% block learn %}{% endblock %}
+    {% block wordle %}{% endblock %}
+
+{% if is_login %}
+  <a href="{{ url_for('wordle_page') }}" class="wordle-fab" aria-label="Open Raccoon Wordle">
+    <span class="fab-emoji" aria-hidden="true">🦝</span>
+  </a>
+{% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script>

@@ -1,0 +1,243 @@
+{% extends "header.html" %}
+{% block wordle %}
+<style>
+  body{font-family:'Playfair Display',serif;background:#f0f2f5;}
+  .wordle-wrap {
+    max-width: 860px;
+    margin: 0 auto 24px;
+    padding-top: 50px; /* Adjust this value (e.g., 80px to 120px) to push it down */
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: 28px;
+  }
+  .wordle-card{
+    background:#fff;border:1px solid rgba(15,23,42,.12);border-radius:16px;
+    box-shadow:0 10px 24px rgba(15,23,42,.08);padding:22px 20px;
+  }
+  .wordle-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .wordle-title{font-size:1.45rem;font-weight:800;color:#0f172a;margin:0;}
+  .wordle-sub{color:#475569;margin:4px 0 0;}
+  .wordle-stats{display:flex;gap:8px;flex-wrap:wrap;}
+  .wordle-stat{
+    background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;
+    padding:6px 10px;font-size:.9rem;color:#334155;
+  }
+  .wordle-stat strong{color:#0f172a;margin-left:4px;}
+  .wordle-board{margin-top:16px;display:flex;flex-direction:column;gap:8px;align-items:center;}
+  .wordle-row{display:flex;gap:8px;}
+  .tile{
+    width:44px;height:44px;border-radius:10px;border:2px solid #cbd5e1;background:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:800;
+    text-transform:uppercase;color:#0f172a;
+  }
+  .tile.empty{background:#f8fafc;color:#cbd5e1;}
+  .tile.filled{border-color:#94a3b8;background:#f8fafc;}
+  .tile.correct{border-color:#15803d;background:#16a34a;color:#fff;}
+  .tile.present{border-color:#ca8a04;background:#eab308;color:#1f2937;}
+  .tile.absent{border-color:#64748b;background:#64748b;color:#fff;}
+  .wordle-controls{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;}
+  .wordle-input{
+    width:190px;padding:8px 10px;border:1px solid #cbd5e1;
+    border-radius:10px;font-size:1rem;text-transform:uppercase;
+  }
+  .wordle-msg{margin-top:10px;min-height:24px;color:#334155;font-size:.95rem;}
+  .answer{display:inline-block;margin-top:6px;padding:4px 8px;border-radius:8px;background:#fee2e2;color:#991b1b;font-weight:700;}
+</style>
+
+<div class="wordle-wrap">
+  <div class="wordle-card">
+    <div class="wordle-head">
+      <div>
+        <h2 class="wordle-title">Wordle</h2>
+        <p class="wordle-sub">5 letter English words for you to guess!</p>
+      </div>
+      <div class="wordle-stats" id="stats-panel"></div>
+    </div>
+
+    <div style="margin-top:10px;color:#334155;font-size:.95rem;">
+      Length: <strong id="target-length">5</strong> · Attempts: <strong id="attempt-left">6</strong>/6
+    </div>
+
+    <div id="board" class="wordle-board"></div>
+
+    <div class="wordle-controls">
+      <input id="guess-input" class="wordle-input" type="text" autocomplete="off" maxlength="5" placeholder="Type guess">
+      <button id="guess-btn" class="btn btn-primary btn-sm">Guess</button>
+      <button id="new-btn" class="btn btn-outline-secondary btn-sm">New Word</button>
+    </div>
+
+    <div id="message" class="wordle-msg"></div>
+  </div>
+</div>
+
+<script>
+  const SAT_WORDS = [
+    'abate','adept','aloof','amity','ardor','astute','banal','belie','benign','blunt','candid','candor',
+    'chide','civic','clout','coax','cogent','copious','cordial','coyly','crass','cryptic','cursory','defer',
+    'deign','deter','droll','eager','edict','elicit','elude','empathy','endow','enigma','entail','equity',
+    'erode','ethic','evoke','exalt','fervor','finite','flair','foster','frugal','genial','glib','guile',
+    'harbor','hasten','imbue','immune','impart','incur','induce','innate','jovial','judicious','kindle','laconic',
+    'lament','latent','laudable','lucid','meager','medley','mentor','merit','method','mitigate','modest','nuance',
+    'obscure','ornate','outset','placid','plausible','pragmatic','precise','prelude','prudent','qualify','quell','quaint',
+    'rational','refine','relish','reticent','robust','salient','sincere','solace','static','sterile','subtle','succinct',
+    'tactful','tangible','tenable','tenacious','theory','timely','tranquil','uphold','urbane','usable','venerate','vigilant',
+    'viable','vivid','wary','zeal'
+  ];
+  const STATS_KEY = 'fairread-wordle-stats';
+  const MAX_ATTEMPTS = 6;
+  const TARGET_LENGTH = 5;
+  const state = { target: '', attempts: [], currentGuess: '', solved: false, failed: false, finalized: false };
+
+  function splitUnits(word) { return Array.from(String(word || '')); }
+  function normalizeWord(word) { return String(word || '').trim().toLowerCase().replace(/[^a-z]/g, ''); }
+  function targetLength() { return TARGET_LENGTH; }
+  function wordPool() { return SAT_WORDS.filter((word) => splitUnits(word).length === TARGET_LENGTH); }
+
+  function defaultStats() { return { plays: 0, wins: 0, streak: 0 }; }
+  function loadStats() {
+    try {
+      const raw = localStorage.getItem(STATS_KEY);
+      const data = raw ? JSON.parse(raw) : null;
+      return data && typeof data === 'object'
+        ? { plays: Number(data.plays) || 0, wins: Number(data.wins) || 0, streak: Number(data.streak) || 0 }
+        : defaultStats();
+    } catch (e) { return defaultStats(); }
+  }
+  function saveStats(stats) { try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {} }
+  function renderStats() {
+    const s = loadStats();
+    document.getElementById('stats-panel').innerHTML = `
+      <div class="wordle-stat">Plays <strong>${s.plays}</strong></div>
+      <div class="wordle-stat">Wins <strong>${s.wins}</strong></div>
+      <div class="wordle-stat">Streak <strong>${s.streak}</strong></div>
+    `;
+  }
+  function finalizeGame(outcome) {
+    if (state.finalized) return;
+    state.finalized = true;
+    const stats = loadStats();
+    stats.plays += 1;
+    if (outcome === 'win') {
+      stats.wins += 1;
+      stats.streak += 1;
+    } else {
+      stats.streak = 0;
+    }
+    saveStats(stats);
+    renderStats();
+  }
+
+  function scoreGuess(guess, target) {
+    const g = splitUnits(guess);
+    const t = splitUnits(target);
+    const result = Array(g.length).fill('absent');
+    const counts = {};
+    for (let i = 0; i < t.length; i += 1) counts[t[i]] = (counts[t[i]] || 0) + 1;
+    for (let i = 0; i < g.length; i += 1) {
+      if (g[i] === t[i]) { result[i] = 'correct'; counts[g[i]] -= 1; }
+    }
+    for (let i = 0; i < g.length; i += 1) {
+      if (result[i] === 'correct') continue;
+      if (counts[g[i]] > 0) { result[i] = 'present'; counts[g[i]] -= 1; }
+    }
+    return result;
+  }
+
+  function pickTarget() {
+    const pool = wordPool();
+    const pick = pool[Math.floor(Math.random() * pool.length)] || 'abate';
+    state.target = normalizeWord(pick);
+  }
+
+  function setMessage(text, failedAnswer = '') {
+    const el = document.getElementById('message');
+    el.innerHTML = failedAnswer ? `${text}<div class="answer">Answer: ${failedAnswer.toUpperCase()}</div>` : text;
+  }
+
+  function renderBoard() {
+    const board = document.getElementById('board');
+    const len = targetLength();
+    document.getElementById('target-length').textContent = String(len);
+    document.getElementById('attempt-left').textContent = String(Math.max(0, MAX_ATTEMPTS - state.attempts.length));
+    const input = document.getElementById('guess-input');
+    input.maxLength = len;
+    input.value = state.currentGuess;
+    input.disabled = state.solved || state.failed;
+    document.getElementById('guess-btn').disabled = state.solved || state.failed;
+
+    const rows = state.attempts.map((guess) => {
+      const scores = scoreGuess(guess, state.target);
+      const tiles = splitUnits(guess).map((ch, idx) => `<span class="tile ${scores[idx]}">${ch}</span>`).join('');
+      return `<div class="wordle-row">${tiles}</div>`;
+    });
+
+    if (!state.solved && !state.failed) {
+      const draft = splitUnits(state.currentGuess).map((ch) => `<span class="tile filled">${ch}</span>`).join('');
+      const blanks = Array.from({ length: Math.max(0, len - splitUnits(state.currentGuess).length) }, () => '<span class="tile empty">&nbsp;</span>').join('');
+      rows.push(`<div class="wordle-row">${draft}${blanks}</div>`);
+    }
+
+    const rowCount = rows.length;
+    for (let i = rowCount; i < MAX_ATTEMPTS; i += 1) {
+      rows.push(`<div class="wordle-row">${Array.from({ length: len }, () => '<span class="tile empty">&nbsp;</span>').join('')}</div>`);
+    }
+    board.innerHTML = rows.join('');
+  }
+
+  function resetGame() {
+    state.attempts = [];
+    state.currentGuess = '';
+    state.solved = false;
+    state.failed = false;
+    state.finalized = false;
+    pickTarget();
+    setMessage('Guess the five-letter word!');
+    renderBoard();
+    document.getElementById('guess-input').focus();
+  }
+
+  function submitGuess() {
+    if (state.solved || state.failed) return;
+    const len = targetLength();
+    const guess = normalizeWord(document.getElementById('guess-input').value);
+    if (splitUnits(guess).length !== len) {
+      setMessage(`Enter exactly ${len} letters.`);
+      return;
+    }
+    state.attempts.push(guess);
+    state.currentGuess = '';
+    if (guess === state.target) {
+      state.solved = true;
+      finalizeGame('win');
+      setMessage('Correct! Great solve.');
+      renderBoard();
+      return;
+    }
+    if (state.attempts.length >= MAX_ATTEMPTS) {
+      state.failed = true;
+      finalizeGame('loss');
+      setMessage('No attempts left.', state.target);
+      renderBoard();
+      return;
+    }
+    setMessage('Keep going.');
+    renderBoard();
+  }
+
+  document.getElementById('guess-btn').addEventListener('click', submitGuess);
+  document.getElementById('new-btn').addEventListener('click', resetGame);
+  document.getElementById('guess-input').addEventListener('input', (e) => {
+    state.currentGuess = normalizeWord(e.target.value).slice(0, targetLength());
+    renderBoard();
+  });
+  document.getElementById('guess-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitGuess();
+    }
+  });
+
+  renderStats();
+  resetGame();
+</script>
+{% endblock %}
