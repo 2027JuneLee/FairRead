@@ -218,7 +218,22 @@ def detect_article_language(text):
         if any(ord(c) >= 0xac00 and ord(c) <= 0xd7af for c in sample):
             return "ko"
         
-        # English/Spanish - default to English
+        lowered = sample.lower()
+        spanish_hits = 0
+        english_hits = 0
+
+        for token in (" el ", " la ", " los ", " las ", " de ", " del ", " que ", " y ", " en ", " por ", " para ", " con ", " una ", " un ", " al ", " se ", " no "):
+            if token in f" {lowered} ":
+                spanish_hits += 1
+
+        for token in (" the ", " and ", " of ", " to ", " in ", " that ", " is ", " for ", " with ", " on ", " as ", " are "):
+            if token in f" {lowered} ":
+                english_hits += 1
+
+        if spanish_hits > english_hits and spanish_hits >= 2:
+            return "es"
+
+        # English/Spanish default
         return "en"
     except:
         return "en"
@@ -273,20 +288,29 @@ def extract_learning_points(article_text, article_language='en', ui_language='en
     
     extraction_prompt = f"""
     Analyze this {article_lang_name} article to extract learning terms.
-    Return the terms in {article_lang_name}, then provide definitions/explanations in {ui_lang_name}.
+    Return each term in {article_lang_name} only. Do not mix in {ui_lang_name} or add translations, English glosses, parentheticals, or slash-separated variants to the term itself.
+    For grammar patterns, keep the term as the exact {article_lang_name} structure that appears in the article.
+    Provide definitions/explanations in English only.
     
     Extract:
     1. **New vocabulary** - 5-7 words/phrases learners should know (common terms, not too difficult)
     2. **Idioms/expressions** - 2-3 common idioms or fixed expressions used in the article
     3. **Grammar patterns** - 1-2 interesting grammar structures that appear in the article
+
+    Rules:
+    - Only include a grammar pattern if it appears exactly in the example sentence from the article.
+    - Do not invent idioms. If the phrase is just literal wording and not a real idiom in context, skip it.
+    - Do not return partial Korean endings or dangling fragments for grammar patterns.
+    - For Korean grammar, keep the exact study form from the article. If the pattern is unclear or feels incomplete, skip it.
+    - Never output standalone fragments; skip them instead.
     
     Return ONLY valid JSON (no markdown, no explanation, no extra text):
     {{
         "terms": [
             {{
-                "term": "word or phrase from article",
+                "term": "word or phrase from article, written only in {article_lang_name}",
                 "type": "vocabulary|idiom|grammar",
-                "definition": "clear explanation in {ui_lang_name}",
+                "definition": "clear explanation in English",
                 "english_meaning": "English translation or explanation",
                 "part_of_speech": "noun|verb|adjective|adverb|expression|pattern",
                 "example_sentence": "exact sentence from article where it appears",
@@ -331,17 +355,24 @@ def extract_learning_points(article_text, article_language='en', ui_language='en
         terms = result_json.get("terms", [])
         cleaned_terms = []
         print(f"[EXTRACT_LEARNING] Raw terms from GPT: {len(terms)}")
-        
+
         for term in terms:
             # Ensure all required fields exist
             if all(k in term for k in ["term", "type", "definition", "example_sentence"]):
+                term_type = term.get("type", "vocabulary").lower()
+                normalized_term = (term.get("term", "") or "").strip()
+                example_sentence = term.get("example_sentence", "").strip()
+                if not normalized_term or not example_sentence:
+                    continue
+                if normalized_term not in example_sentence:
+                    continue
                 cleaned_terms.append({
-                    "term": term.get("term", "").strip(),
-                    "type": term.get("type", "vocabulary").lower(),
+                    "term": normalized_term,
+                    "type": term_type,
                     "definition": term.get("definition", "").strip(),
                     "english_meaning": term.get("english_meaning", "").strip(),
                     "part_of_speech": term.get("part_of_speech", "").strip(),
-                    "example_sentence": term.get("example_sentence", "").strip(),
+                    "example_sentence": example_sentence,
                     "difficulty": term.get("difficulty", "intermediate").lower(),
                     "grammar_note": term.get("grammar_note")
                 })

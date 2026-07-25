@@ -348,6 +348,8 @@ UI_LABELS = {
         "Part of Speech": "Part of Speech",
         "Difficulty": "Difficulty",
         "Grammar Note": "Grammar Note",
+        "Your language": "Your language",
+        "Article language": "Article language",
         "Total Terms": "Total Terms",
         "Back to Analysis": "Back to Analysis",
         "Generating learning terms...": "Generating learning terms...",
@@ -640,6 +642,8 @@ UI_LABELS = {
         "Part of Speech": "Parte del discurso",
         "Difficulty": "Dificultad",
         "Grammar Note": "Nota de gramática",
+        "Your language": "Tu idioma",
+        "Article language": "Idioma del artículo",
         "Total Terms": "Términos totales",
         "Back to Analysis": "Volver al análisis",
         "Generating learning terms...": "Generando términos de aprendizaje...",
@@ -932,6 +936,8 @@ UI_LABELS = {
         "Part of Speech": "词类",
         "Difficulty": "难度",
         "Grammar Note": "语法说明",
+        "Your language": "你的语言",
+        "Article language": "文章语言",
         "Total Terms": "总术语数",
         "Back to Analysis": "返回分析",
         "Generating learning terms...": "正在生成学习术语...",
@@ -1224,6 +1230,8 @@ UI_LABELS = {
         "Part of Speech": "품사",
         "Difficulty": "난이도",
         "Grammar Note": "문법 설명",
+        "Your language": "사용자 언어",
+        "Article language": "기사 언어",
         "Total Terms": "총 용어 수",
         "Back to Analysis": "분석으로 돌아가기",
         "Generating learning terms...": "학습 용어 생성 중...",
@@ -2406,24 +2414,41 @@ def learn_from_article(article_id):
         return redirect(url_for('chatbot'))
     
     article_id_db, article_url, summary, date, bias_class, is_url = article
-    
+    from chatbot import detect_article_language
+    detected_article_language = detect_article_language(article_url or "")
+
+    def annotation_is_valid(row):
+        term = (row[1] or '').strip()
+        example_sentence = (row[6] or '').strip()
+        if not term or not example_sentence:
+            return False
+        return term in example_sentence
+
     # Fetch or generate learning annotations
     cursor.execute("""
-        SELECT id, term, term_type, definition, english_meaning, part_of_speech, 
-               example_sentence, difficulty, grammar_note
+        SELECT id, term, term_type, definition, english_meaning, part_of_speech,
+               example_sentence, difficulty, grammar_note, COALESCE(article_language, target_language, 'en')
         FROM learning_annotations
         WHERE article_id = ? AND target_language = ?
         ORDER BY term_type, difficulty
     """, (article_id_db, session.get('language', 'en')))
-    
+
     annotations = cursor.fetchall()
-    
+    allow_any_annotations = True
+    if annotations:
+        stored_languages = {ann[9] or 'en' for ann in annotations}
+        if stored_languages != {detected_article_language} or not all(annotation_is_valid(ann) for ann in annotations):
+            cursor.execute("DELETE FROM learning_annotations WHERE article_id = ?", (article_id_db,))
+            conn.commit()
+            annotations = []
+            allow_any_annotations = False
+
     # If no annotations for current UI language, reuse any existing annotations for this article.
     # Do not auto-extract here (prevents blocking page load).
-    if not annotations:
+    if not annotations and allow_any_annotations:
         cursor.execute("""
             SELECT id, term, term_type, definition, english_meaning, part_of_speech,
-                   example_sentence, difficulty, grammar_note
+                   example_sentence, difficulty, grammar_note, COALESCE(article_language, target_language, 'en')
             FROM learning_annotations
             WHERE article_id = ?
             ORDER BY term_type, difficulty
@@ -2435,6 +2460,7 @@ def learn_from_article(article_id):
     # Format annotations for template
     formatted_annotations = []
     for ann in annotations:
+        article_lang = ann[9] if len(ann) > 9 and ann[9] else session.get('language', 'en')
         formatted_annotations.append({
             'id': ann[0],
             'term': ann[1],
@@ -2444,13 +2470,15 @@ def learn_from_article(article_id):
             'part_of_speech': ann[5],
             'example_sentence': ann[6],
             'difficulty': ann[7],
-            'grammar_note': ann[8]
+            'grammar_note': ann[8],
+            'article_language': article_lang
         })
     
     return render_template('learn_article.html',
                           article_id=article_id,
                           annotations=formatted_annotations,
-                          current_language=session.get('language', 'en'))
+                          current_language=session.get('language', 'en'),
+                          article_language=detected_article_language)
 
 @app.route('/learn_extract/<int:article_id>', methods=['POST'])
 def learn_extract(article_id):
@@ -2472,16 +2500,25 @@ def learn_extract(article_id):
         return jsonify({'ok': False, 'error': 'not_found'}), 404
 
     article_id_db, article_text = article
+    article_language = detect_article_language(article_text)
 
     # Never re-extract if already learned once for this article
     cursor.execute("SELECT COUNT(*) FROM learning_annotations WHERE article_id = ?", (article_id_db,))
     existing_count = cursor.fetchone()[0]
     if existing_count > 0:
-        conn.close()
-        return jsonify({'ok': True, 'status': 'already_learned'})
-
-    from chatbot import extract_learning_points, detect_article_language
-    article_language = detect_article_language(article_text)
+        cursor.execute("""
+            SELECT DISTINCT COALESCE(article_language, target_language, 'en')
+            FROM learning_annotations
+            WHERE article_id = ?
+        """, (article_id_db,))
+        existing_languages = {row[0] or 'en' for row in cursor.fetchall()}
+        if existing_languages == {article_language}:
+            conn.close()
+            return jsonify({'ok': True, 'status': 'already_learned'})
+        cursor.execute("DELETE FROM learning_annotations WHERE article_id = ?", (article_id_db,))
+        conn.commit()
+ 
+    from chatbot import extract_learning_points
     ui_language = session.get('language', 'en')
     learning_points = extract_learning_points(article_text, article_language, ui_language)
 
@@ -2518,28 +2555,28 @@ def translate_example():
 
     data = request.get_json() or {}
     text = (data.get('text') or '').strip()
-    target_language = (data.get('target_language') or 'es').strip().lower()
+    article_language = (data.get('article_language') or 'en').strip().lower()
     language_names = {
         'en': 'English',
         'es': 'Spanish',
         'zh': 'Chinese',
         'ko': 'Korean'
     }
-    if target_language not in language_names:
-        target_language = 'es'
+    if article_language not in language_names:
+        article_language = 'en'
     if not text:
         return jsonify({'ok': False, 'error': 'empty_text'}), 400
 
-    if target_language == 'en':
+    if article_language == 'en':
         return jsonify({'ok': True, 'en': text, 'target': text})
 
     prompt = f"""
-Translate this text into English and {language_names[target_language]}.
+Translate this text into English and {language_names[article_language]}.
 Preserve names and factual meaning.
 Return ONLY valid JSON:
 {{
   "en": "English translation",
-  "target": "{language_names[target_language]} translation"
+  "target": "{language_names[article_language]} translation"
 }}
 
 Text:

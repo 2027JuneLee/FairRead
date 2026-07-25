@@ -31,6 +31,7 @@ try:
             difficulty TEXT,
             part_of_speech TEXT,
             grammar_note TEXT,
+            article_language TEXT DEFAULT 'en',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (article_id) REFERENCES Chatlog(rowid)
         )

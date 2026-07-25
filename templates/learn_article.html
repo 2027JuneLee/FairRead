@@ -385,6 +385,13 @@
         line-height: 1.5;
     }
 
+    .term-highlight {
+        background: #fde68a;
+        color: inherit;
+        padding: 0 2px;
+        border-radius: 3px;
+    }
+
     @media (max-width: 1024px) {
         .learn-content {
             grid-template-columns: 1fr;
@@ -503,10 +510,13 @@
     const hasAnnotations = {{ 'true' if annotations else 'false' }};
     const annotationsData = {{ annotations|tojson }};
     const currentLanguage = "{{ current_language }}";
+    const articleLanguage = "{{ article_language }}";
     const exampleTranslationCache = {};
     const detailTranslationCache = {};
-    const targetLanguageNames = { en: 'English', es: 'Spanish', zh: 'Chinese', ko: 'Korean' };
-    const targetShort = (currentLanguage || 'en').toUpperCase();
+    const languageNames = { en: 'English', es: 'Spanish', zh: 'Chinese', ko: 'Korean' };
+    const articleShort = (articleLanguage || 'en').toUpperCase();
+    const englishShort = 'EN';
+    const articleLanguageName = languageNames[articleLanguage] || 'Article';
     const extractLabels = {
         title: "{{ translate_ui('Extracting learning terms...', current_language) }}",
         eta: "{{ translate_ui('This usually takes 10-30 seconds.', current_language) }}",
@@ -609,7 +619,41 @@
             .replace(/'/g, '&#39;');
     }
 
-    function partOfSpeechTarget(pos) {
+    function escapeRegex(value) {
+        return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function getHighlightCandidates(term) {
+        const base = String(term || '').trim();
+        if (!base) return [];
+        const candidates = [base];
+        const withoutLeadingDash = base.replace(/^[\-–—]\s*/, '');
+        if (withoutLeadingDash !== base) candidates.push(withoutLeadingDash);
+        const withoutParens = base.replace(/[()]/g, '');
+        if (withoutParens !== base) candidates.push(withoutParens);
+        const compact = base.replace(/\s+/g, ' ').trim();
+        if (compact !== base) candidates.push(compact);
+        return [...new Set(candidates)].sort((a, b) => b.length - a.length);
+    }
+
+    function highlightTermText(text, term) {
+        const raw = String(text || '');
+        const candidates = getHighlightCandidates(term);
+        let highlighted = raw;
+        for (const candidate of candidates) {
+            if (!candidate) continue;
+            const pattern = new RegExp(escapeRegex(candidate), 'g');
+            if (pattern.test(highlighted)) {
+                highlighted = highlighted.replace(pattern, '[[[TERM_HIGHLIGHT]]]' + candidate + '[[[/TERM_HIGHLIGHT]]]');
+                break;
+            }
+        }
+        return escapeHtml(highlighted)
+            .replace(/\[\[\[TERM_HIGHLIGHT\]\]\]/g, '<mark class="term-highlight">')
+            .replace(/\[\[\[\/TERM_HIGHLIGHT\]\]\]/g, '</mark>');
+    }
+
+    function partOfSpeechLabel(pos, languageCode) {
         const map = {
             es: { noun: 'sustantivo', verb: 'verbo', adjective: 'adjetivo', adverb: 'adverbio', expression: 'expresión', pattern: 'patrón', pronoun: 'pronombre', preposition: 'preposición', conjunction: 'conjunción', interjection: 'interjección' },
             zh: { noun: '名词', verb: '动词', adjective: '形容词', adverb: '副词', expression: '固定表达', pattern: '句式', pronoun: '代词', preposition: '介词', conjunction: '连词', interjection: '感叹词' },
@@ -617,11 +661,11 @@
             en: {}
         };
         const key = (pos || '').toLowerCase().trim();
-        return map[currentLanguage]?.[key] || pos || '';
+        return map[languageCode]?.[key] || pos || '';
     }
 
     async function getDualTranslations(text, cacheObj) {
-        const key = `${currentLanguage}::${text || ''}`;
+        const key = `en::${articleLanguage}::${text || ''}`;
         if (!text) return { en: '-', target: '-' };
         if (cacheObj[key]) return cacheObj[key];
 
@@ -629,7 +673,7 @@
             const response = await fetch('/translate_example', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, target_language: currentLanguage })
+                body: JSON.stringify({ text, article_language: articleLanguage })
             });
             const data = await response.json();
             const result = {
@@ -664,52 +708,45 @@
             </div>
         </div>`;
 
-        // Definition (EN + target language)
+        // Definition (English + article language)
         if (ann.definition || ann.english_meaning) {
-            let definitionEn = ann.english_meaning || '';
-            let definitionTarget = ann.definition || '';
-            if (!definitionEn) {
-                definitionEn = currentLanguage === 'en' ? (ann.definition || '') : '-';
-            }
-            if (!definitionTarget) {
-                definitionTarget = '-';
-            }
+            const definitionSource = ann.definition || ann.english_meaning || '';
 
             html += `<div>
                 <div class="detail-label">{{ translate_ui("Definition", current_language) }}</div>
-                <div class="detail-value" id="definition-en-${termId}"><strong>English (EN):</strong> ${escapeHtml(definitionEn)}</div>
-                <div class="detail-value" id="definition-target-${termId}"><strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ${escapeHtml(definitionTarget)}</div>
+                <div class="detail-value" id="definition-en-${termId}"><strong>English (${escapeHtml(englishShort)}):</strong> ...</div>
+                <div class="detail-value" id="definition-article-${termId}"><strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ...</div>
             </div>`;
         }
 
-        // Part of speech (EN + target language)
+        // Part of speech (English + article language)
         if (ann.part_of_speech) {
             const posEn = ann.part_of_speech || '';
-            const posTarget = partOfSpeechTarget(posEn);
+            const posArticle = partOfSpeechLabel(ann.part_of_speech || '', articleLanguage);
             html += `<div>
                 <div class="detail-label">{{ translate_ui("Part of Speech", current_language) }}</div>
-                <div class="detail-value"><strong>English (EN):</strong> ${escapeHtml(posEn || '-')}</div>
-                <div class="detail-value"><strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ${escapeHtml(posTarget || '-')}</div>
+                <div class="detail-value"><strong>English (${escapeHtml(englishShort)}):</strong> ${escapeHtml(posEn || '-')}</div>
+                <div class="detail-value"><strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ${escapeHtml(posArticle || '-')}</div>
             </div>`;
         }
 
-        // Example sentence (EN + target language)
+        // Example sentence (English + article language)
         if (ann.example_sentence) {
             html += `<div>
                 <div class="detail-label">{{ translate_ui("Example", current_language) }}</div>
                 <div class="detail-example-box" id="example-box-${termId}">
-                    <div><strong>English (EN):</strong> ...</div>
-                    <div><strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ...</div>
+                    <div><strong>English (${escapeHtml(englishShort)}):</strong> ...</div>
+                    <div><strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ...</div>
                 </div>
             </div>`;
         }
 
-        // Grammar note (EN + target language)
+        // Grammar note (English + article language)
         if (ann.type === 'grammar' && ann.grammar_note) {
             html += `<div>
                 <div class="detail-label">{{ translate_ui("Grammar Note", current_language) }}</div>
-                <div class="detail-value" id="grammar-en-${termId}"><strong>English (EN):</strong> ...</div>
-                <div class="detail-value" id="grammar-target-${termId}"><strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ...</div>
+                <div class="detail-value" id="grammar-en-${termId}"><strong>English (${escapeHtml(englishShort)}):</strong> ...</div>
+                <div class="detail-value" id="grammar-article-${termId}"><strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ...</div>
             </div>`;
         }
 
@@ -722,22 +759,22 @@
                 const box = document.getElementById(`example-box-${termId}`);
                 if (!box) return;
                 box.innerHTML = `
-                    <div><strong>English (EN):</strong> ${escapeHtml(translated.en || '-')}</div>
-                    <div><strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ${escapeHtml(translated.target || '-')}</div>
+                    <div><strong>English (${escapeHtml(englishShort)}):</strong> ${escapeHtml(translated.en || '-')}</div>
+                    <div><strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ${highlightTermText(ann.example_sentence || '-', termName)}</div>
                 `;
             });
         }
 
         if (ann.definition || ann.english_meaning) {
-            const sourceDefinition = ann.english_meaning || ann.definition;
+            const sourceDefinition = ann.definition || ann.english_meaning;
             getDualTranslations(sourceDefinition, detailTranslationCache).then((translated) => {
                 const definitionEn = document.getElementById(`definition-en-${termId}`);
-                const definitionTarget = document.getElementById(`definition-target-${termId}`);
+                const definitionArticle = document.getElementById(`definition-article-${termId}`);
                 if (definitionEn) {
-                    definitionEn.innerHTML = `<strong>English (EN):</strong> ${escapeHtml(translated.en || '-')}`;
+                    definitionEn.innerHTML = `<strong>English (${escapeHtml(englishShort)}):</strong> ${escapeHtml(translated.en || '-')}`;
                 }
-                if (definitionTarget) {
-                    definitionTarget.innerHTML = `<strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ${escapeHtml(translated.target || '-')}`;
+                if (definitionArticle) {
+                    definitionArticle.innerHTML = `<strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ${escapeHtml(translated.target || '-')}`;
                 }
             });
         }
@@ -745,12 +782,12 @@
         if (ann.type === 'grammar' && ann.grammar_note) {
             getDualTranslations(ann.grammar_note, detailTranslationCache).then((translated) => {
                 const grammarEn = document.getElementById(`grammar-en-${termId}`);
-                const grammarTarget = document.getElementById(`grammar-target-${termId}`);
+                const grammarArticle = document.getElementById(`grammar-article-${termId}`);
                 if (grammarEn) {
-                    grammarEn.innerHTML = `<strong>English (EN):</strong> ${escapeHtml(translated.en || '-')}`;
+                    grammarEn.innerHTML = `<strong>English (${escapeHtml(englishShort)}):</strong> ${escapeHtml(translated.en || '-')}`;
                 }
-                if (grammarTarget) {
-                    grammarTarget.innerHTML = `<strong>${escapeHtml(targetLanguageNames[currentLanguage] || 'Target')} (${escapeHtml(targetShort)}):</strong> ${escapeHtml(translated.target || '-')}`;
+                if (grammarArticle) {
+                    grammarArticle.innerHTML = `<strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ${escapeHtml(translated.target || '-')}`;
                 }
             });
         }
