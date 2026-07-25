@@ -285,6 +285,11 @@ UI_LABELS = {
         "Bias classification with rationale": "Bias classification with rationale",
         "Left / center / right paired with the specific cues that informed the call (framing, sources, wording).": "Left / center / right paired with the specific cues that informed the call (framing, sources, wording).",
         "Clear, skimmable summaries that preserve context and map claims to evidence.": "Clear, skimmable summaries that preserve context and map claims to evidence.",
+        "Learning features": "Learning features",
+        "Study article terms": "Study article terms",
+        "Open the Learn tab after analysis to review vocabulary, idioms, and grammar in the article language with English support.": "Open the Learn tab after analysis to review vocabulary, idioms, and grammar in the article language with English support.",
+        "Learning mode": "Learning mode",
+        "Practice terms from your articles and keep them in the article language.": "Practice terms from your articles and keep them in the article language.",
         "Private reading analytics": "Private reading analytics",
         "See trends in outlets and perspectives over time—stored locally by default.": "See trends in outlets and perspectives over time—stored locally by default.",
         "Flexible inputs": "Flexible inputs",
@@ -579,6 +584,11 @@ UI_LABELS = {
         "Bias classification with rationale": "Clasificación de sesgo con explicación",
         "Left / center / right paired with the specific cues that informed the call (framing, sources, wording).": "Izquierda / centro / derecha junto con las señales específicas que sustentan la evaluación (enfoque, fuentes, redacción).",
         "Clear, skimmable summaries that preserve context and map claims to evidence.": "Resúmenes claros y fáciles de revisar que preservan el contexto y vinculan afirmaciones con evidencia.",
+        "Learning features": "Funciones de aprendizaje",
+        "Study article terms": "Estudiar términos del artículo",
+        "Open the Learn tab after analysis to review vocabulary, idioms, and grammar in the article language with English support.": "Abre la pestaña Learn después del análisis para revisar vocabulario, modismos y gramática en el idioma del artículo con apoyo en inglés.",
+        "Learning mode": "Modo de aprendizaje",
+        "Practice terms from your articles and keep them in the article language.": "Practica los términos de tus artículos y consérvalos en el idioma del artículo.",
         "Private reading analytics": "Analítica privada de lectura",
         "See trends in outlets and perspectives over time—stored locally by default.": "Observa tendencias en medios y perspectivas a lo largo del tiempo, almacenadas localmente por defecto.",
         "Flexible inputs": "Entradas flexibles",
@@ -873,6 +883,11 @@ UI_LABELS = {
         "Bias classification with rationale": "带说明的倾向分类",
         "Left / center / right paired with the specific cues that informed the call (framing, sources, wording).": "左 / 中 / 右结论会结合具体线索展示（框架、来源、措辞）。",
         "Clear, skimmable summaries that preserve context and map claims to evidence.": "清晰易扫读的摘要，在保留语境的同时将观点对应到证据。",
+        "Learning features": "学习功能",
+        "Study article terms": "学习文章术语",
+        "Open the Learn tab after analysis to review vocabulary, idioms, and grammar in the article language with English support.": "分析后打开 Learn 选项卡，在英文辅助下复习文章语言中的词汇、习语和语法。",
+        "Learning mode": "学习模式",
+        "Practice terms from your articles and keep them in the article language.": "练习你文章中的术语，并保持为文章原语言。",
         "Private reading analytics": "私密阅读分析",
         "See trends in outlets and perspectives over time—stored locally by default.": "查看媒体来源和观点的长期趋势——默认本地存储。",
         "Flexible inputs": "灵活输入",
@@ -1167,6 +1182,11 @@ UI_LABELS = {
         "Bias classification with rationale": "근거가 포함된 편향 분류",
         "Left / center / right paired with the specific cues that informed the call (framing, sources, wording).": "좌 / 중 / 우 결과와 함께 판단에 사용된 구체적 단서(프레이밍, 출처, 표현)를 보여줍니다.",
         "Clear, skimmable summaries that preserve context and map claims to evidence.": "맥락을 유지하면서 주장과 근거를 연결해 주는 명확하고 훑어보기 쉬운 요약을 제공합니다.",
+        "Learning features": "학습 기능",
+        "Study article terms": "기사 용어 학습",
+        "Open the Learn tab after analysis to review vocabulary, idioms, and grammar in the article language with English support.": "분석 후 Learn 탭을 열어 기사 언어의 어휘, 관용구, 문법을 영어 설명과 함께 복습하세요.",
+        "Learning mode": "학습 모드",
+        "Practice terms from your articles and keep them in the article language.": "내 기사에서 나온 용어를 연습하고 기사 언어 그대로 익히세요.",
         "Private reading analytics": "비공개 읽기 분석",
         "See trends in outlets and perspectives over time—stored locally by default.": "매체와 관점의 변화를 לאורך 시간에 따라 확인하세요. 기본적으로 로컬에 저장됩니다.",
         "Flexible inputs": "유연한 입력 방식",
@@ -2417,13 +2437,6 @@ def learn_from_article(article_id):
     from chatbot import detect_article_language
     detected_article_language = detect_article_language(article_url or "")
 
-    def annotation_is_valid(row):
-        term = (row[1] or '').strip()
-        example_sentence = (row[6] or '').strip()
-        if not term or not example_sentence:
-            return False
-        return term in example_sentence
-
     # Fetch or generate learning annotations
     cursor.execute("""
         SELECT id, term, term_type, definition, english_meaning, part_of_speech,
@@ -2437,7 +2450,7 @@ def learn_from_article(article_id):
     allow_any_annotations = True
     if annotations:
         stored_languages = {ann[9] or 'en' for ann in annotations}
-        if stored_languages != {detected_article_language} or not all(annotation_is_valid(ann) for ann in annotations):
+        if stored_languages != {detected_article_language}:
             cursor.execute("DELETE FROM learning_annotations WHERE article_id = ?", (article_id_db,))
             conn.commit()
             annotations = []

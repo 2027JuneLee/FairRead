@@ -298,7 +298,7 @@ def extract_learning_points(article_text, article_language='en', ui_language='en
     3. **Grammar patterns** - 1-2 interesting grammar structures that appear in the article
 
     Rules:
-    - Only include a grammar pattern if it appears exactly in the example sentence from the article.
+    - Include idioms and grammar only when they are genuinely helpful to learn.
     - Do not invent idioms. If the phrase is just literal wording and not a real idiom in context, skip it.
     - Do not return partial Korean endings or dangling fragments for grammar patterns.
     - For Korean grammar, keep the exact study form from the article. If the pattern is unclear or feels incomplete, skip it.

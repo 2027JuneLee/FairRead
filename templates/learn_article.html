@@ -390,6 +390,165 @@
         color: inherit;
         padding: 0 2px;
         border-radius: 3px;
+        font-style: italic;
+        font-weight: 700;
+    }
+
+    .wordle-board {
+        display: grid;
+        gap: 6px;
+        margin-top: 10px;
+    }
+
+    .wordle-row {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        flex-wrap: nowrap;
+    }
+
+    .wordle-tile {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        background: #fff;
+        color: #0f172a;
+        font-size: 14px;
+        text-transform: uppercase;
+    }
+
+    .wordle-tile.correct {
+        background: #22c55e;
+        border-color: #16a34a;
+        color: #fff;
+    }
+
+    .wordle-tile.present {
+        background: #f59e0b;
+        border-color: #d97706;
+        color: #fff;
+    }
+
+    .wordle-tile.absent {
+        background: #e2e8f0;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+
+    .wordle-tile.filled {
+        background: #eff6ff;
+        border-color: #93c5fd;
+    }
+
+    .wordle-tile.empty {
+        background: #f8fafc;
+        color: #cbd5e1;
+    }
+
+    .wordle-controls {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .wordle-controls input {
+        flex: 1;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+
+    .mini-game-ready {
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 12px;
+        margin: 8px 0;
+    }
+
+    .wordle-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .wordle-stat {
+        background: #fff;
+        border: 1px solid #dbe4f0;
+        border-radius: 10px;
+        padding: 8px 10px;
+        text-align: center;
+    }
+
+    .wordle-stat span {
+        display: block;
+        font-size: 11px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .wordle-stat strong {
+        display: block;
+        font-size: 15px;
+        color: #0f172a;
+    }
+
+    .mini-game-card {
+        margin-top: 14px;
+        padding: 14px;
+        background: #eef2ff;
+        border-radius: 10px;
+        border: 1px solid #c7d2fe;
+    }
+
+    .mini-game-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #3730a3;
+        margin-bottom: 8px;
+    }
+
+    .mini-game-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .mini-game-btn {
+        border: 1px solid #cbd5e1;
+        background: white;
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .mini-game-btn:hover {
+        transform: translateY(-1px);
+        background: #f8fafc;
+    }
+
+    .mini-game-btn.target {
+        background: #fde68a;
+        border-color: #f59e0b;
+    }
+
+    .mini-game-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 12px;
+        color: #475569;
     }
 
     @media (max-width: 1024px) {
@@ -517,6 +676,79 @@
     const articleShort = (articleLanguage || 'en').toUpperCase();
     const englishShort = 'EN';
     const articleLanguageName = languageNames[articleLanguage] || 'Article';
+    const miniGameState = {
+        active: false,
+        ready: false,
+        solved: false,
+        failed: false,
+        outcome: null,
+        finalized: false,
+        attempts: [],
+        target: '',
+        targetLetters: [],
+        currentGuess: '',
+        maxAttempts: 6,
+        progressId: null,
+        wordBank: [],
+        hint: ''
+    };
+    const wordleBanks = {
+        en: ['crown', 'earth', 'river', 'stone', 'story', 'light', 'music', 'dream', 'field', 'smile', 'brave', 'trace', 'clear', 'press', 'plant', 'voice', 'table', 'peace', 'spark', 'great', 'shift', 'globe', 'trend', 'focus', 'fresh', 'paint', 'worth', 'trust', 'blend', 'quick', 'quiet', 'range', 'proud', 'sugar', 'flame', 'adore', 'fruit', 'heart', 'pilot', 'grain', 'watch', 'crisp', 'north', 'south', 'grant', 'charm', 'skill', 'phase', 'topic', 'value']
+    };
+    const wordleLengths = { en: 5 };
+    const wordleStatsKey = 'fairread-learn-wordle-stats';
+
+    function defaultWordleStats() {
+        return { plays: 0, wins: 0, streak: 0, maxStreak: 0 };
+    }
+
+    function loadWordleStats() {
+        try {
+            const raw = localStorage.getItem(wordleStatsKey);
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (!parsed) return defaultWordleStats();
+            return {
+                plays: Number(parsed.plays) || 0,
+                wins: Number(parsed.wins) || 0,
+                streak: Number(parsed.streak) || 0,
+                maxStreak: Number(parsed.maxStreak) || 0
+            };
+        } catch (e) {
+            return defaultWordleStats();
+        }
+    }
+
+    function saveWordleStats(stats) {
+        try {
+            localStorage.setItem(wordleStatsKey, JSON.stringify(stats));
+        } catch (e) {}
+    }
+
+    function updateWordleStats(outcome) {
+        const stats = loadWordleStats();
+        stats.plays += 1;
+        if (outcome === 'win') {
+            stats.wins += 1;
+            stats.streak += 1;
+            stats.maxStreak = Math.max(stats.maxStreak, stats.streak);
+        } else {
+            stats.streak = 0;
+        }
+        saveWordleStats(stats);
+        renderWordleStats();
+        return stats;
+    }
+
+    function renderWordleStats() {
+        const panel = document.getElementById('wordle-stats');
+        if (!panel) return;
+        const stats = loadWordleStats();
+        panel.innerHTML = `
+            <div class="wordle-stat"><span>Plays</span><strong>${stats.plays}</strong></div>
+            <div class="wordle-stat"><span>Wins</span><strong>${stats.wins}</strong></div>
+            <div class="wordle-stat"><span>Streak</span><strong>${stats.streak}</strong></div>
+        `;
+    }
     const extractLabels = {
         title: "{{ translate_ui('Extracting learning terms...', current_language) }}",
         eta: "{{ translate_ui('This usually takes 10-30 seconds.', current_language) }}",
@@ -530,30 +762,220 @@
         if (hasAnnotations) return;
         const state = document.getElementById('no-terms-state');
         let elapsed = 0;
-        let ticker = null;
         let timeoutHandle = null;
         const controller = new AbortController();
 
-        const renderProgress = () => {
-            const percent = Math.min(95, 8 + (elapsed * 3));
-            const msg = elapsed >= 35 ? extractLabels.slow : extractLabels.working;
+        const ensureLoadingUi = () => {
+            if (!state || document.getElementById('loading-progress-fill')) return;
             state.innerHTML = `
                 <i class="bi bi-hourglass-split"></i>
-                <p>${extractLabels.title}</p>
-                <p>${extractLabels.eta}</p>
+                <p id="loading-title">${extractLabels.title}</p>
+                <p id="loading-eta">${extractLabels.eta}</p>
                 <div style="width:260px;height:8px;background:#e2e8f0;border-radius:6px;margin:8px auto;overflow:hidden;">
-                    <div style="width:${percent}%;height:100%;background:#295F98;transition:width .9s ease;"></div>
+                    <div id="loading-progress-fill" style="width:0%;height:100%;background:#295F98;transition:width .9s ease;"></div>
                 </div>
-                <p>${msg} (${elapsed}s)</p>
+                <p id="loading-message" style="font-size:12px;color:#64748b;"></p>
                 <p style="font-size:12px;color:#64748b;">${extractLabels.refresh}</p>
+                <div id="mini-game-host"></div>
             `;
         };
 
+        const renderProgress = () => {
+            ensureLoadingUi();
+            const fill = document.getElementById('loading-progress-fill');
+            const message = document.getElementById('loading-message');
+            if (fill) fill.style.width = Math.min(95, 8 + (elapsed * 3)) + '%';
+            if (message) message.textContent = elapsed >= 35 ? extractLabels.slow : extractLabels.working;
+        };
+
+        const normalizeWord = (word) => {
+            const raw = String(word || '').trim();
+            return raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
+        };
+
+        const splitUnits = (word) => Array.from(String(word || ''));
+
+        const scoreGuess = (guess, target) => {
+            const guessUnits = splitUnits(guess);
+            const targetUnits = splitUnits(target);
+            const result = Array(guessUnits.length).fill('absent');
+            const targetCounts = {};
+
+            for (let i = 0; i < targetUnits.length; i += 1) {
+                const ch = targetUnits[i];
+                targetCounts[ch] = (targetCounts[ch] || 0) + 1;
+            }
+
+            for (let i = 0; i < guessUnits.length; i += 1) {
+                if (guessUnits[i] === targetUnits[i]) {
+                    result[i] = 'correct';
+                    targetCounts[guessUnits[i]] -= 1;
+                }
+            }
+
+            for (let i = 0; i < guessUnits.length; i += 1) {
+                if (result[i] === 'correct') continue;
+                const ch = guessUnits[i];
+                if (targetCounts[ch] > 0) {
+                    result[i] = 'present';
+                    targetCounts[ch] -= 1;
+                }
+            }
+
+            return result;
+        };
+
+        const getWordlePool = () => {
+            const pool = wordleBanks.en;
+            return pool.filter((word) => splitUnits(word).length === wordleLengths.en);
+        };
+
+        const pickTargetWord = () => {
+            const pool = getWordlePool();
+            miniGameState.wordBank = pool;
+            const choice = pool[Math.floor(Math.random() * pool.length)] || pool[0] || 'story';
+            miniGameState.target = choice;
+            miniGameState.targetLetters = splitUnits(choice);
+            miniGameState.hint = 'Guess the five-letter word.';
+        };
+
+        const renderWordle = () => {
+            const host = document.getElementById('mini-game-host');
+            if (!host) return;
+            const targetLength = miniGameState.targetLetters.length || wordleLengths.en || 5;
+            const readyButton = miniGameState.ready ? `
+                <button type="button" class="btn btn-warning btn-sm mt-2" id="reveal-terms-btn">Show learning terms</button>
+            ` : '';
+            const board = miniGameState.attempts.map((attempt) => {
+                const colors = scoreGuess(attempt.normalized, miniGameState.target);
+                return `<div class="wordle-row">${attempt.letters.map((letter, idx) => `<span class="wordle-tile ${colors[idx]}">${escapeHtml(letter)}</span>`).join('')}</div>`;
+            }).join('');
+            const currentRow = !miniGameState.solved && miniGameState.currentGuess
+                ? `<div class="wordle-row">${splitUnits(miniGameState.currentGuess).map((letter) => `<span class="wordle-tile filled">${escapeHtml(letter)}</span>`).join('')}</div>`
+                : '';
+            const emptyRows = [];
+            const remaining = Math.max(0, miniGameState.maxAttempts - miniGameState.attempts.length - (miniGameState.currentGuess ? 1 : 0));
+            for (let i = 0; i < remaining; i += 1) {
+                emptyRows.push(`<div class="wordle-row">${Array.from({ length: targetLength }, () => '<span class="wordle-tile empty">&nbsp;</span>').join('')}</div>`);
+            }
+            const answerNotice = miniGameState.failed
+                ? `<div class="mini-game-ready">Answer: <strong>${escapeHtml(miniGameState.target)}</strong></div>`
+                : '';
+            const gameDoneNotice = miniGameState.solved && !miniGameState.failed
+                ? `<div class="mini-game-ready">Solved. Click the button when you want to open the terms.</div>`
+                : '';
+
+            host.innerHTML = `
+                <div class="mini-game-card">
+                    <div class="mini-game-title">Mini Wordle</div>
+                    <div class="mini-game-meta">
+                        <span>Words: <strong>${miniGameState.wordBank.length}</strong></span>
+                        <span>Length: <strong>${targetLength}</strong></span>
+                    </div>
+                    <div id="wordle-stats" class="wordle-stats"></div>
+                    <div style="font-size:12px;margin-bottom:10px;color:#475569;">${escapeHtml(miniGameState.hint || 'Guess the hidden word.')}</div>
+                    ${answerNotice}
+                    ${gameDoneNotice}
+                    ${miniGameState.ready ? `<div class="mini-game-ready">The terms are ready. Keep playing or click the button when you want to open them.</div>` : ''}
+                    ${readyButton}
+                    <div class="wordle-board">${board}${currentRow}${emptyRows.join('')}</div>
+                    <div class="wordle-controls">
+                        <input type="text" id="wordle-input" maxlength="${targetLength}" placeholder="Type a guess" value="${escapeHtml(miniGameState.currentGuess)}" ${miniGameState.solved ? 'disabled' : ''}>
+                        <button type="button" class="btn btn-primary btn-sm" id="wordle-submit" ${miniGameState.solved ? 'disabled' : ''}>Guess</button>
+                    </div>
+                </div>
+            `;
+
+            const input = document.getElementById('wordle-input');
+            const submit = document.getElementById('wordle-submit');
+            renderWordleStats();
+            if (input) {
+                input.addEventListener('input', () => {
+                    miniGameState.currentGuess = input.value;
+                });
+                input.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        if (submit) submit.click();
+                    }
+                });
+            }
+
+            if (submit) {
+                submit.addEventListener('click', () => {
+                    if (!miniGameState.active || miniGameState.solved || miniGameState.failed) return;
+                    const normalized = normalizeWord(miniGameState.currentGuess);
+                    if (splitUnits(normalized).length !== targetLength) return;
+                    miniGameState.attempts.push({
+                        raw: miniGameState.currentGuess,
+                        normalized: normalized,
+                        letters: splitUnits(miniGameState.currentGuess)
+                    });
+                    miniGameState.currentGuess = '';
+                    if (normalized === miniGameState.target) {
+                        miniGameState.solved = true;
+                        miniGameState.outcome = 'win';
+                        if (!miniGameState.finalized) {
+                            updateWordleStats('win');
+                            miniGameState.finalized = true;
+                        }
+                        miniGameState.hint = 'Solved. Wait for the terms or click reveal.';
+                    } else if (miniGameState.attempts.length >= miniGameState.maxAttempts) {
+                        miniGameState.solved = true;
+                        miniGameState.failed = true;
+                        miniGameState.outcome = 'fail';
+                        if (!miniGameState.finalized) {
+                            updateWordleStats('fail');
+                            miniGameState.finalized = true;
+                        }
+                        miniGameState.hint = 'Out of guesses. The answer is shown above.';
+                    }
+                    renderWordle();
+                });
+            }
+
+            const revealBtn = document.getElementById('reveal-terms-btn');
+            if (revealBtn) {
+                revealBtn.addEventListener('click', () => {
+                    miniGameState.active = false;
+                    if (miniGameState.progressId) clearInterval(miniGameState.progressId);
+                    if (timeoutHandle) clearTimeout(timeoutHandle);
+                    window.location.reload();
+                });
+            }
+        };
+
+        const startMiniGame = () => {
+            if (!state || miniGameState.active) return;
+            miniGameState.active = true;
+            pickTargetWord();
+            miniGameState.attempts = [];
+            miniGameState.currentGuess = '';
+            miniGameState.solved = false;
+            miniGameState.failed = false;
+            miniGameState.finalized = false;
+            miniGameState.outcome = null;
+            miniGameState.ready = false;
+            renderWordle();
+        };
+
+        const renderProgressLoop = () => {
+            const percent = Math.min(95, 8 + (elapsed * 3));
+            const msg = elapsed >= 35 ? extractLabels.slow : extractLabels.working;
+            ensureLoadingUi();
+            const fill = document.getElementById('loading-progress-fill');
+            const message = document.getElementById('loading-message');
+            if (fill) fill.style.width = percent + '%';
+            if (message) message.textContent = msg + ' (' + elapsed + 's)';
+        };
+
         if (state) {
-            renderProgress();
-            ticker = setInterval(() => {
+            ensureLoadingUi();
+            renderProgressLoop();
+            startMiniGame();
+            miniGameState.progressId = setInterval(() => {
                 elapsed += 1;
-                renderProgress();
+                renderProgressLoop();
             }, 1000);
         }
 
@@ -563,7 +985,11 @@
             const response = await fetch('/learn_extract/' + articleId, { method: 'POST', signal: controller.signal });
             const data = await response.json();
             if (response.ok) {
-                window.location.reload();
+                miniGameState.ready = true;
+                miniGameState.hint = 'The learning terms are ready. Play or click the button when you want to open them.';
+                if (miniGameState.progressId) clearInterval(miniGameState.progressId);
+                miniGameState.progressId = null;
+                renderWordle();
                 return;
             }
         } catch (e) {
@@ -572,8 +998,11 @@
                 state.innerHTML = `<i class="bi bi-exclamation-triangle"></i><p>${timeoutMsg}</p><p style="font-size:12px;color:#64748b;">${extractLabels.refresh}</p>`;
             }
         } finally {
-            if (ticker) clearInterval(ticker);
             if (timeoutHandle) clearTimeout(timeoutHandle);
+            if (!miniGameState.ready) {
+                if (miniGameState.progressId) clearInterval(miniGameState.progressId);
+                miniGameState.active = false;
+            }
         }
     }
 
