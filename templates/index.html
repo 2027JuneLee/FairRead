@@ -1,7 +1,7 @@
 {% extends "header.html" %}
 {% block index %}
 <head>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
   <!-- Bootstrap Icons (for clean iconography) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -317,7 +317,7 @@
       <div class="preview-col" data-aos="fade-left">
         <div class="device">
           <span class="ribbon">{{ translate_ui("Preview", current_language) }}</span>
-          <img src="../static/img/preview.png" alt="FairRead result preview" class="result-img">
+          <img src="{{ url_for('static', filename='img/preview.png') }}" alt="FairRead result preview" class="result-img">
           <div class="caption-mini">{{ translate_ui("Bias", current_language) }} &middot; {{ translate_ui("Confidence", current_language) }} &middot; {{ translate_ui("Key signals", current_language) }}</div>
         </div>
       </div>
@@ -346,7 +346,7 @@
           </ul>
         </div>
         <div class="col-lg-6 about-img-wrap" data-aos="fade-left">
-          <img src="../static/img/about_img.jpg" alt="FairRead overview" class="about-img">
+          <img src="{{ url_for('static', filename='img/about_img.jpg') }}" alt="FairRead overview" class="about-img">
         </div>
       </div>
     </div>

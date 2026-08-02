@@ -1,8 +1,6 @@
 import ast
 import json
 import os
-import shutil
-import sqlite3
 import sys
 import time
 
@@ -25,35 +23,6 @@ app.secret_key = "abc"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
-
-SOURCE_DB_PATH = os.path.join(BASE_DIR, "static", "database.db")
-RUNTIME_DB_PATH = os.getenv("SQLITE_DB_PATH")
-if not RUNTIME_DB_PATH:
-    if os.getenv("VERCEL"):
-        RUNTIME_DB_PATH = os.path.join("/tmp", "fairread.db")
-    else:
-        RUNTIME_DB_PATH = SOURCE_DB_PATH
-
-if RUNTIME_DB_PATH != SOURCE_DB_PATH and os.path.exists(SOURCE_DB_PATH):
-    runtime_db_dir = os.path.dirname(RUNTIME_DB_PATH)
-    if runtime_db_dir:
-        os.makedirs(runtime_db_dir, exist_ok=True)
-    if not os.path.exists(RUNTIME_DB_PATH):
-        shutil.copy2(SOURCE_DB_PATH, RUNTIME_DB_PATH)
-
-_original_sqlite_connect = sqlite3.connect
-
-
-def _fairread_sqlite_connect(database, *args, **kwargs):
-    if isinstance(database, str):
-        normalized = database.replace("\\", "/")
-        source_normalized = SOURCE_DB_PATH.replace("\\", "/")
-        if normalized in {"static/database.db", "./static/database.db", source_normalized}:
-            database = RUNTIME_DB_PATH
-    return _original_sqlite_connect(database, *args, **kwargs)
-
-
-sqlite3.connect = _fairread_sqlite_connect
 
 from chatbot import *
 from helper import *
@@ -85,6 +54,44 @@ def _extract_missing_column_name(error: APIError):
     if end <= start:
         return None
     return message[start:end]
+
+
+def _supabase_insert_resilient(table_name, payload):
+    working = dict(payload)
+    while True:
+        try:
+            return supabase.table(table_name).insert(working).execute()
+        except APIError as e:
+            missing_col = _extract_missing_column_name(e)
+            if missing_col and missing_col in working:
+                working.pop(missing_col, None)
+                continue
+            raise
+
+
+def _pick_row_value(row, *keys, default=None):
+    for key in keys:
+        value = row.get(key) if isinstance(row, dict) else None
+        if value is not None:
+            return value
+    return default
+
+
+def _coerce_bool(value):
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "t", "yes", "y"}
+
+
+def _display_date(value):
+    if value is None:
+        return ""
+    text = str(value)
+    if "T" in text:
+        return text.replace("T", " ")[:19]
+    return text
 
 def now_kst():
 
@@ -1390,39 +1397,42 @@ def create_debate():
 
     is_login = 'username' in session
 
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
+
     if request.method == "POST":
 
         topic = request.form.get("topic")
 
-        today = now_kst().date().isoformat()
-
-        with sqlite3.connect('static/database.db') as conn:
-
-            cursor = conn.cursor()
-
-            cursor.execute('INSERT INTO debates (topic, date, isClosed) VALUES (?,?,?)',
-
-                           (topic, today, False))
-
-            conn.commit()
+        now_iso = now_kst().isoformat()
+        _supabase_insert_resilient("debates", {
+            "topic": topic,
+            "created_at": now_iso,
+            "is_closed": False,
+            "date": now_kst().date().isoformat(),
+            "isClosed": False
+        })
 
         return redirect(url_for('create_debate'))
 
-
-
-    with sqlite3.connect('static/database.db') as conn:
-
-        cursor = conn.cursor()
-
-        cursor.execute('SELECT id, topic, date FROM debates WHERE isClosed = 0 ORDER BY date DESC')
-
-        open_debates = cursor.fetchall()
-
-        cursor.execute('SELECT id, topic, date FROM debates WHERE isClosed = 1 ORDER BY date DESC')
-
-        closed_debates = cursor.fetchall()
-
-
+    debates_res = (
+        supabase.table("debates")
+        .select("*")
+        .order("id", desc=True)
+        .execute()
+    )
+    open_debates = []
+    closed_debates = []
+    for row in (debates_res.data or []):
+        debate_tuple = (
+            _pick_row_value(row, "id"),
+            _pick_row_value(row, "topic", "title", default=""),
+            _display_date(_pick_row_value(row, "created_at", "date"))
+        )
+        if _coerce_bool(_pick_row_value(row, "is_closed", "isClosed")):
+            closed_debates.append(debate_tuple)
+        else:
+            open_debates.append(debate_tuple)
 
     is_admin = session.get("username") == "testtest"
 
@@ -1446,13 +1456,9 @@ def delete_debate(debate_id):
 
         return redirect(url_for('create_debate'))
 
-    with sqlite3.connect('static/database.db') as conn:
-
-        cursor = conn.cursor()
-
-        cursor.execute('DELETE FROM debates WHERE id = ?', (debate_id,))
-
-        conn.commit()
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
+    supabase.table("debates").delete().eq("id", debate_id).execute()
 
     return redirect(url_for('create_debate'))
 
@@ -1470,37 +1476,35 @@ def delete_post(post_id, debate_id):
 
 
 
-    with sqlite3.connect('static/database.db') as conn:
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
 
-        c = conn.cursor()
+    post_res = (
+        supabase.table("posts")
+        .select("id,username")
+        .eq("id", post_id)
+        .limit(1)
+        .execute()
+    )
+    row = (post_res.data or [None])[0]
+    if not row:
+        return redirect(url_for('debate_detail', debate_id=debate_id))
 
-        c.execute('SELECT username FROM posts WHERE id = ?', (post_id,))
-
-        row = c.fetchone()
-
-        if not row:
-
-            return redirect(url_for('debate_detail', debate_id=debate_id))
-
-        author = row[0]
-
-
-
-        is_admin = (username == 'testtest')
-
-        if not (is_admin or username == author):
-
-            abort(403)
+    author = row.get("username")
 
 
 
-        c.execute('DELETE FROM post_comments WHERE post_id = ?', (post_id,))
+    is_admin = (username == 'testtest')
 
-        c.execute('DELETE FROM post_likes    WHERE post_id = ?', (post_id,))
+    if not (is_admin or username == author):
 
-        c.execute('DELETE FROM posts         WHERE id = ?', (post_id,))
+        abort(403)
 
-        conn.commit()
+
+
+    supabase.table("post_comments").delete().eq("post_id", post_id).execute()
+    supabase.table("post_likes").delete().eq("post_id", post_id).execute()
+    supabase.table("posts").delete().eq("id", post_id).execute()
 
 
 
@@ -1524,15 +1528,10 @@ def delete_news(news_id, debate_id):
 
 
 
-    with sqlite3.connect('static/database.db') as conn:
-
-        c = conn.cursor()
-
-        c.execute('DELETE FROM news_votes WHERE news_id = ?', (news_id,))
-
-        c.execute('DELETE FROM news       WHERE id = ?', (news_id,))
-
-        conn.commit()
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
+    supabase.table("news_votes").delete().eq("news_id", news_id).execute()
+    supabase.table("news").delete().eq("id", news_id).execute()
 
 
 
@@ -1544,13 +1543,16 @@ def delete_news(news_id, debate_id):
 
 def close_debate(debate_id):
 
-    with sqlite3.connect('static/database.db') as conn:
-
-        cursor = conn.cursor()
-
-        cursor.execute('UPDATE debates SET isClosed = 1 WHERE id = ?', (debate_id,))
-
-        conn.commit()
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
+    try:
+        supabase.table("debates").update({"is_closed": True}).eq("id", debate_id).execute()
+    except APIError as e:
+        missing_col = _extract_missing_column_name(e)
+        if missing_col == "is_closed":
+            supabase.table("debates").update({"isClosed": True}).eq("id", debate_id).execute()
+        else:
+            raise
 
     return redirect(url_for('create_debate'))
 
@@ -1561,14 +1563,27 @@ def close_debate(debate_id):
 def create_news(debate_id):
 
     is_login = 'username' in session
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
 
-    with sqlite3.connect('static/database.db') as conn:
-
-        cursor = conn.cursor()
-
-        cursor.execute('SELECT id, topic, date, isClosed FROM debates WHERE id = ?', (debate_id,))
-
-        debate = cursor.fetchone()
+    debate_res = (
+        supabase.table("debates")
+        .select("*")
+        .eq("id", debate_id)
+        .limit(1)
+        .execute()
+    )
+    debate_row = (debate_res.data or [None])[0]
+    debate = None
+    if debate_row:
+        debate = (
+            _pick_row_value(debate_row, "id"),
+            _pick_row_value(debate_row, "topic", "title", default=""),
+            _display_date(_pick_row_value(debate_row, "created_at", "date")),
+            _coerce_bool(_pick_row_value(debate_row, "is_closed", "isClosed"))
+        )
+    if not debate:
+        return redirect(url_for('create_debate'))
 
 
 
@@ -1589,21 +1604,19 @@ def create_news(debate_id):
 
 
 
-        timestamp = now_kst().strftime('%Y-%m-%d %H:%M:%S')
-
-        with sqlite3.connect('static/database.db') as conn:
-
-            cursor = conn.cursor()
-
-            cursor.execute('''
-
-                INSERT INTO news (debate_id,title, link, summary, classification, left, center, right)
-
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-
-            ''', (debate_id, title, link, summary, classification, left, center, right))
-
-            conn.commit()
+        _supabase_insert_resilient("news", {
+            "debate_id": debate_id,
+            "title": title,
+            "link": link,
+            "summary": summary,
+            "classification": classification,
+            "left_score": left,
+            "center_score": center,
+            "right_score": right,
+            "left": left,
+            "center": center,
+            "right": right
+        })
 
         return redirect(url_for('debate_detail', debate_id=debate_id))
 
@@ -1624,14 +1637,27 @@ def create_news(debate_id):
 def create_post(debate_id):
 
     is_login = 'username' in session
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
 
-    with sqlite3.connect('static/database.db') as conn:
-
-        cursor = conn.cursor()
-
-        cursor.execute('SELECT id, topic, date, isClosed FROM debates WHERE id = ?', (debate_id,))
-
-        debate = cursor.fetchone()
+    debate_res = (
+        supabase.table("debates")
+        .select("*")
+        .eq("id", debate_id)
+        .limit(1)
+        .execute()
+    )
+    debate_row = (debate_res.data or [None])[0]
+    debate = None
+    if debate_row:
+        debate = (
+            _pick_row_value(debate_row, "id"),
+            _pick_row_value(debate_row, "topic", "title", default=""),
+            _display_date(_pick_row_value(debate_row, "created_at", "date")),
+            _coerce_bool(_pick_row_value(debate_row, "is_closed", "isClosed"))
+        )
+    if not debate:
+        return redirect(url_for('create_debate'))
 
 
 
@@ -1639,21 +1665,14 @@ def create_post(debate_id):
 
         content = request.form.get('content')
 
-        timestamp = now_kst().strftime('%Y-%m-%d %H:%M:%S')
-
-        with sqlite3.connect('static/database.db') as conn:
-
-            cursor = conn.cursor()
-
-            cursor.execute('''
-
-                INSERT INTO posts (debate_id, username, content, timestamp)
-
-                VALUES (?, ?, ?, ?)
-
-            ''', (debate_id, session['username'], content, timestamp))
-
-            conn.commit()
+        timestamp = now_kst().isoformat()
+        _supabase_insert_resilient("posts", {
+            "debate_id": debate_id,
+            "username": session['username'],
+            "content": content,
+            "created_at": timestamp,
+            "timestamp": timestamp
+        })
 
         return redirect(url_for('debate_detail', debate_id=debate_id))
 
@@ -1677,59 +1696,112 @@ def debate_detail(debate_id):
 
     is_login = 'username' in session
 
-    with sqlite3.connect('static/database.db') as conn:
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
 
-        cursor = conn.cursor()
+    debate_res = (
+        supabase.table("debates")
+        .select("*")
+        .eq("id", debate_id)
+        .limit(1)
+        .execute()
+    )
+    debate_row = (debate_res.data or [None])[0]
+    debate = None
+    if debate_row:
+        debate = (
+            _pick_row_value(debate_row, "id"),
+            _pick_row_value(debate_row, "topic", "title", default=""),
+            _display_date(_pick_row_value(debate_row, "created_at", "date")),
+            _coerce_bool(_pick_row_value(debate_row, "is_closed", "isClosed"))
+        )
+    if not debate:
+        return redirect(url_for('create_debate'))
 
-        cursor.execute('SELECT id, topic, date, isClosed FROM debates WHERE id = ?', (debate_id,))
+    posts_res = (
+        supabase.table("posts")
+        .select("*")
+        .eq("debate_id", debate_id)
+        .order("id", desc=True)
+        .execute()
+    )
+    posts_rows = posts_res.data or []
+    posts = []
+    for row in posts_rows:
+        posts.append((
+            _pick_row_value(row, "id"),
+            _pick_row_value(row, "username", default=""),
+            _pick_row_value(row, "content", default=""),
+            _display_date(_pick_row_value(row, "created_at", "timestamp"))
+        ))
 
-        debate = cursor.fetchone()
+    post_ids = [p[0] for p in posts if p[0] is not None]
+    likes_dict = {}
+    if post_ids:
+        likes_res = (
+            supabase.table("post_likes")
+            .select("post_id")
+            .in_("post_id", post_ids)
+            .execute()
+        )
+        for row in (likes_res.data or []):
+            pid = row.get("post_id")
+            likes_dict[pid] = likes_dict.get(pid, 0) + 1
 
+    comments_dict = {}
+    if post_ids:
+        comments_res = (
+            supabase.table("post_comments")
+            .select("*")
+            .in_("post_id", post_ids)
+            .order("id")
+            .execute()
+        )
+        for row in (comments_res.data or []):
+            pid = row.get("post_id")
+            comments_dict.setdefault(pid, []).append((
+                _pick_row_value(row, "username", default=""),
+                _pick_row_value(row, "comment", default=""),
+                _display_date(_pick_row_value(row, "created_at", "timestamp"))
+            ))
 
+    news_res = (
+        supabase.table("news")
+        .select("*")
+        .eq("debate_id", debate_id)
+        .order("id", desc=True)
+        .execute()
+    )
+    news_rows = news_res.data or []
+    news_ids = [n.get("id") for n in news_rows if n.get("id") is not None]
+    voted_news_ids = set()
+    if user and news_ids:
+        votes_res = (
+            supabase.table("news_votes")
+            .select("news_id")
+            .eq("username", user)
+            .in_("news_id", news_ids)
+            .execute()
+        )
+        voted_news_ids = {row.get("news_id") for row in (votes_res.data or [])}
 
-        cursor.execute('SELECT id, username, content, timestamp FROM posts WHERE debate_id = ? ORDER BY timestamp DESC', (debate_id,))
-
-        posts = cursor.fetchall()
-
-
-
-        cursor.execute('SELECT post_id, COUNT(*) FROM post_likes GROUP BY post_id')
-
-        likes_dict = dict(cursor.fetchall())
-
-
-
-        cursor.execute('SELECT post_id,username,comment,timestamp FROM post_comments ORDER BY timestamp ASC')
-
-        all_comments = cursor.fetchall()
-
-        comments_dict = {}
-
-        for post_id, username, comment, timestamp in all_comments:
-
-            comments_dict.setdefault(post_id, []).append((username, comment, timestamp))
-
-
-
-        cursor.execute('''
-
-            SELECT n.id, n.title, n.link, n.summary, n.classification, n.left, n.center, n.right,
-
-                   EXISTS (
-
-                       SELECT 1 FROM news_votes v WHERE v.news_id = n.id AND v.username = ?
-
-                   ) as has_voted
-
-            FROM news n
-
-            WHERE n.debate_id = ?
-
-            ORDER BY n.id DESC
-
-        ''', (user, debate_id))
-
-        news = cursor.fetchall()
+    news = []
+    for row in news_rows:
+        news_id = _pick_row_value(row, "id")
+        left = _pick_row_value(row, "left_score", "left", default=0) or 0
+        center = _pick_row_value(row, "center_score", "center", default=0) or 0
+        right = _pick_row_value(row, "right_score", "right", default=0) or 0
+        news.append((
+            news_id,
+            _pick_row_value(row, "title", default=""),
+            _pick_row_value(row, "link", default=""),
+            _pick_row_value(row, "summary", default=""),
+            _pick_row_value(row, "classification", default=""),
+            left,
+            center,
+            right,
+            news_id in voted_news_ids
+        ))
 
 
 
@@ -1765,31 +1837,41 @@ def like_post(post_id):
 
         return redirect(url_for('login'))
 
-    with sqlite3.connect('static/database.db') as conn:
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
 
-        cursor = conn.cursor()
+    like_res = (
+        supabase.table("post_likes")
+        .select("id")
+        .eq("post_id", post_id)
+        .eq("username", username)
+        .limit(1)
+        .execute()
+    )
+    existing_like = (like_res.data or [None])[0]
 
-        cursor.execute('SELECT 1 FROM post_likes WHERE post_id = ? AND username = ?', (post_id, username))
+    if not existing_like:
+        ts = now_kst().isoformat()
+        _supabase_insert_resilient("post_likes", {
+            "post_id": post_id,
+            "username": username,
+            "created_at": ts,
+            "timestamp": ts
+        })
+    else:
+        supabase.table("post_likes").delete().eq("id", existing_like.get("id")).execute()
 
-        if not cursor.fetchone():
-
-            cursor.execute('INSERT INTO post_likes (post_id, username, timestamp) VALUES (?, ?, ?)',
-
-                           (post_id, username, now_kst().strftime('%Y-%m-%d %H:%M:%S')))
-
-            conn.commit()
-
-        else:
-
-            cursor.execute('DELETE FROM post_likes WHERE post_id = ? AND username = ?', (post_id, username))
-
-            conn.commit()
-
-
-
-        cursor.execute('SELECT debate_id FROM posts WHERE id = ?', (post_id,))
-
-        debate_id = cursor.fetchone()[0]
+    post_res = (
+        supabase.table("posts")
+        .select("debate_id")
+        .eq("id", post_id)
+        .limit(1)
+        .execute()
+    )
+    post_row = (post_res.data or [None])[0]
+    if not post_row:
+        return redirect(url_for('create_debate'))
+    debate_id = post_row.get("debate_id") if post_row else None
 
     return redirect(url_for('debate_detail', debate_id=debate_id))
 
@@ -1805,21 +1887,32 @@ def comment_post(post_id):
 
         return redirect(url_for('login'))
 
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
+
+    post_res = (
+        supabase.table("posts")
+        .select("debate_id")
+        .eq("id", post_id)
+        .limit(1)
+        .execute()
+    )
+    post_row = (post_res.data or [None])[0]
+    if not post_row:
+        return redirect(url_for('create_debate'))
+    debate_id = post_row.get("debate_id") if post_row else None
+
     comment = request.form.get('comment')
 
     if comment:
-
-        with sqlite3.connect('static/database.db') as conn:
-
-            cursor = conn.cursor()
-
-            cursor.execute('INSERT INTO post_comments (post_id, username, comment, timestamp) VALUES (?, ?, ?, ?)',
-
-                           (post_id, username, comment, now_kst().strftime('%Y-%m-%d %H:%M:%S')))
-
-            cursor.execute('SELECT debate_id FROM posts WHERE id = ?', (post_id,))
-
-            debate_id = cursor.fetchone()[0]
+        ts = now_kst().isoformat()
+        _supabase_insert_resilient("post_comments", {
+            "post_id": post_id,
+            "username": username,
+            "comment": comment,
+            "created_at": ts,
+            "timestamp": ts
+        })
 
     return redirect(url_for('debate_detail', debate_id=debate_id))
 
@@ -1837,21 +1930,25 @@ def vote_news(news_id, debate_id):
 
 
 
-    with sqlite3.connect('static/database.db') as conn:
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
 
-        cursor = conn.cursor()
-
-        cursor.execute('SELECT 1 FROM news_votes WHERE username = ? AND news_id = ?', (username, news_id))
-
-        if not cursor.fetchone():
-
-            now = now_kst().strftime('%Y-%m-%d %H:%M:%S')
-
-            cursor.execute('INSERT INTO news_votes (username, news_id, voted_at) VALUES (?, ?, ?)',
-
-                           (username, news_id, now))
-
-            conn.commit()
+    vote_res = (
+        supabase.table("news_votes")
+        .select("id")
+        .eq("username", username)
+        .eq("news_id", news_id)
+        .limit(1)
+        .execute()
+    )
+    if not (vote_res.data or []):
+        now = now_kst().isoformat()
+        _supabase_insert_resilient("news_votes", {
+            "username": username,
+            "news_id": news_id,
+            "voted_at": now,
+            "vote_value": request.form.get("vote")
+        })
 
 
 
@@ -1897,51 +1994,83 @@ def profile():
     if initial_term_range not in ['day', 'week', 'month', 'all']:
         initial_term_range = 'week'
 
-    conn = sqlite3.connect("static/database.db")
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
 
-    cursor = conn.cursor()
+    recent_res = (
+        supabase.table("chatlog")
+        .select("id,created_at,question,bias_class,bias_percentage,summary,reason,is_url")
+        .eq("username", session["username"])
+        .order("created_at", desc=True)
+        .limit(5)
+        .execute()
+    )
+    recent_classification = [
+        (
+            row.get("id"),
+            _display_date(row.get("created_at")),
+            row.get("question"),
+            row.get("bias_class"),
+            row.get("bias_percentage"),
+            row.get("summary"),
+            row.get("reason"),
+            row.get("is_url"),
+        )
+        for row in (recent_res.data or [])
+    ]
 
+    email_res = (
+        supabase.table("users")
+        .select("email")
+        .eq("username", session["username"])
+        .limit(1)
+        .execute()
+    )
+    email_row = (email_res.data or [None])[0]
+    email = email_row.get("email") if email_row and email_row.get("email") else ""
 
+    rows_res = (
+        supabase.table("chatlog")
+        .select("id,created_at,question,bias_class,bias_percentage,summary,reason,is_url")
+        .eq("username", session["username"])
+        .execute()
+    )
+    rows = [
+        (
+            row.get("id"),
+            _display_date(row.get("created_at")),
+            row.get("question"),
+            row.get("bias_class"),
+            row.get("bias_percentage"),
+            row.get("summary"),
+            row.get("reason"),
+            row.get("is_url"),
+        )
+        for row in (rows_res.data or [])
+    ]
 
-    cursor.execute("""
-
-        SELECT rowid, date, question, bias_class, bias_percentage, summary, reason, is_url
-        FROM Chatlog
-
-        WHERE username = ?
-
-        ORDER BY date DESC
-
-        LIMIT 5;
-
-    """, (session["username"],))
-
-    recent_classification = cursor.fetchall()
-
-
-
-    cursor.execute("SELECT email FROM Users WHERE username = ?;", (session["username"],))
-
-    email_row = cursor.fetchone()
-
-    email = email_row[0] if email_row and email_row[0] else ""
-
-
-
-    cursor.execute("SELECT * FROM Chatlog WHERE username = ?;", (session["username"],))
-
-    rows = cursor.fetchall()
-
-    cursor.execute("""
-        SELECT la.term, la.term_type, la.definition, la.english_meaning, la.target_language, la.difficulty, c.date
-        FROM learning_annotations la
-        JOIN Chatlog c ON c.rowid = la.article_id
-        WHERE c.username = ?
-        ORDER BY c.date DESC, la.id DESC
-    """, (session["username"],))
-    term_rows = cursor.fetchall()
-
-    conn.close()
+    chatlog_by_id = {row[0]: row for row in rows}
+    ann_res = (
+        supabase.table("learning_annotations")
+        .select("article_id,term,term_type,definition,english_meaning,target_language,difficulty,id")
+        .order("id", desc=True)
+        .execute()
+    )
+    term_rows = []
+    for ann in (ann_res.data or []):
+        article_id = ann.get("article_id")
+        chat_row = chatlog_by_id.get(article_id)
+        if not chat_row:
+            continue
+        term_rows.append((
+            ann.get("term"),
+            ann.get("term_type"),
+            ann.get("definition"),
+            ann.get("english_meaning"),
+            ann.get("target_language"),
+            ann.get("difficulty"),
+            chat_row[1],
+        ))
 
 
 
@@ -2005,9 +2134,16 @@ def profile():
     def parse_saved_datetime(value):
         if not value:
             return None
+        if isinstance(value, datetime):
+            return value
+        text = str(value).strip()
+        try:
+            return datetime.fromisoformat(text.replace('Z', '+00:00'))
+        except ValueError:
+            pass
         for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d'):
             try:
-                return datetime.strptime(value, fmt)
+                return datetime.strptime(text, fmt)
             except ValueError:
                 continue
         return None
@@ -2135,93 +2271,80 @@ def statistics():
 
 
 
-    conn = sqlite3.connect('static/database.db')
-
-    cursor = conn.cursor()
-
-
-
     current_date = now_kst()
+    current_date_cmp = current_date.replace(tzinfo=None) if current_date.tzinfo else current_date
 
     seven_days_ago = current_date - timedelta(days=7)
+    seven_days_ago_cmp = current_date_cmp - timedelta(days=7)
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
 
+    def parse_dt(value):
+        if not value:
+            return None
+        if isinstance(value, datetime):
+            return value
+        text = str(value).strip()
+        try:
+            return datetime.fromisoformat(text.replace('Z', '+00:00'))
+        except ValueError:
+            for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d'):
+                try:
+                    return datetime.strptime(text, fmt)
+                except ValueError:
+                    continue
+        return None
 
+    chatlog_res = (
+        supabase.table("chatlog")
+        .select("created_at,keywords,bias_percentage")
+        .execute()
+    )
+    chatlog_rows = chatlog_res.data or []
 
-    # Recent 7-day chatbot usage
+    users_res = (
+        supabase.table("users")
+        .select("recent_login")
+        .execute()
+    )
+    user_rows = users_res.data or []
 
-    cursor.execute("""
+    date_counts = defaultdict(int)
+    month_counts = defaultdict(int)
+    for row in chatlog_rows:
+        dt = parse_dt(row.get("created_at"))
+        if not dt:
+            continue
+        day_key = dt.strftime('%Y-%m-%d')
+        month_key = dt.strftime('%Y-%m')
+        month_counts[month_key] += 1
+        if seven_days_ago.date() <= dt.date() <= current_date.date():
+            date_counts[day_key] += 1
 
-        SELECT Date(date), COUNT(*)
+    result = sorted(date_counts.items(), key=lambda x: x[0])
+    monthly_result = sorted(month_counts.items(), key=lambda x: x[0])
 
-        FROM Chatlog
-
-        WHERE Date(date) BETWEEN ? AND ?
-
-        GROUP BY Date(date)
-
-        ORDER BY Date(date) ASC;
-
-    """, (seven_days_ago.strftime('%Y-%m-%d'), current_date.strftime('%Y-%m-%d')))
-
-    result = cursor.fetchall()
-
-
-
-    # Monthly usage
-
-    cursor.execute("""
-
-        SELECT strftime('%Y-%m', date) AS month, COUNT(*)
-
-        FROM Chatlog
-
-        GROUP BY month
-
-        ORDER BY month ASC;
-
-    """)
-
-    monthly_result = cursor.fetchall()
-
-
-
-    # Totals
-
-    cursor.execute("SELECT COUNT(*) FROM Users;")
-
-    total_users = cursor.fetchone()[0]
-
-
-
+    total_users = len(user_rows)
     thirty_days_ago = current_date - timedelta(days=30)
+    active_users = 0
+    for row in user_rows:
+        dt = parse_dt(row.get("recent_login"))
+        if dt:
+            dt_cmp = dt.replace(tzinfo=None) if dt.tzinfo else dt
+            if dt_cmp >= thirty_days_ago.replace(tzinfo=None) if thirty_days_ago.tzinfo else thirty_days_ago:
+                active_users += 1
 
-    cursor.execute("SELECT COUNT(*) FROM Users WHERE recent_login >= ?",
+    total_news = len(chatlog_rows)
+    recent_news = 0
+    for row in chatlog_rows:
+        dt = parse_dt(row.get("created_at"))
+        if dt:
+            dt_cmp = dt.replace(tzinfo=None) if dt.tzinfo else dt
+            threshold = thirty_days_ago.replace(tzinfo=None) if thirty_days_ago.tzinfo else thirty_days_ago
+            if dt_cmp >= threshold:
+                recent_news += 1
 
-                   (thirty_days_ago.strftime('%Y-%m-%d %H:%M:%S'),))
-
-    active_users = cursor.fetchone()[0]
-
-
-
-    cursor.execute("SELECT COUNT(*) FROM Chatlog;")
-
-    total_news = cursor.fetchone()[0]
-
-
-
-    cursor.execute("SELECT COUNT(*) FROM Chatlog WHERE date >= ?",
-
-                   (thirty_days_ago.strftime('%Y-%m-%d %H:%M:%S'),))
-
-    recent_news = cursor.fetchone()[0]
-
-
-
-    # --- Top keywords (frequency only) ---
-
-    cursor.execute("SELECT keywords FROM Chatlog;")
-
-    rows = cursor.fetchall()
+    rows = [(row.get("keywords"),) for row in chatlog_rows]
 
     counter = Counter()
 
@@ -2263,9 +2386,7 @@ def statistics():
 
     # --- Bias aggregates: overall + per keyword (for toggle) ---
 
-    cursor.execute("SELECT bias_percentage, keywords FROM Chatlog;")
-
-    bias_rows = cursor.fetchall()
+    bias_rows = [(row.get("bias_percentage"), row.get("keywords")) for row in chatlog_rows]
 
 
 
@@ -2365,31 +2486,18 @@ def statistics():
 
 
 
-    # Sessions (past 7 days)
-
-    cursor.execute("""
-
-        SELECT Date(recent_login), COUNT(*)
-
-        FROM Users
-
-        WHERE Date(recent_login) BETWEEN ? AND ?
-
-        GROUP BY Date(recent_login)
-
-        ORDER BY Date(recent_login) ASC;
-
-    """, (seven_days_ago.strftime('%Y-%m-%d'), current_date.strftime('%Y-%m-%d')))
-
-    session_result = cursor.fetchall()
+    session_counts_map = defaultdict(int)
+    for row in user_rows:
+        dt = parse_dt(row.get("recent_login"))
+        if dt:
+            dt_cmp = dt.replace(tzinfo=None) if dt.tzinfo else dt
+            if seven_days_ago_cmp.date() <= dt_cmp.date() <= current_date_cmp.date():
+                session_counts_map[dt_cmp.strftime('%Y-%m-%d')] += 1
+    session_result = sorted(session_counts_map.items(), key=lambda x: x[0])
 
     session_dates = [row[0] for row in session_result]
 
     session_counts = [row[1] for row in session_result]
-
-
-
-    conn.close()
 
 
 
@@ -2435,14 +2543,19 @@ def learn_status(article_id):
     is_login = 'username' in session
     if not is_login:
         return jsonify({'ready': False}), 401
-    
-    conn = sqlite3.connect('static/database.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM learning_annotations WHERE article_id = ?", (article_id,))
-    count = cursor.fetchone()[0]
-    conn.close()
-    
-    return jsonify({'ready': count > 0})
+
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
+
+    result = (
+        supabase.table("learning_annotations")
+        .select("id", count="exact")
+        .eq("article_id", article_id)
+        .limit(1)
+        .execute()
+    )
+
+    return jsonify({'ready': (result.count or 0) > 0})
 
 @app.route('/learn')
 def learn_home():
@@ -2450,22 +2563,40 @@ def learn_home():
     if not is_login:
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect('static/database.db')
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT c.rowid, c.date, c.question, c.bias_class, c.summary,
-               EXISTS(
-                   SELECT 1
-                   FROM learning_annotations la
-                   WHERE la.article_id = c.rowid
-               ) AS learned
-        FROM Chatlog c
-        WHERE c.username = ?
-        ORDER BY c.date DESC
-        LIMIT 20
-    """, (session['username'],))
-    recent_articles = cursor.fetchall()
-    conn.close()
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
+
+    articles_res = (
+        supabase.table("chatlog")
+        .select("id,created_at,question,bias_class,summary")
+        .eq("username", session['username'])
+        .order("created_at", desc=True)
+        .limit(20)
+        .execute()
+    )
+    articles = articles_res.data or []
+    article_ids = [a.get("id") for a in articles if a.get("id") is not None]
+
+    learned_ids = set()
+    if article_ids:
+        learned_res = (
+            supabase.table("learning_annotations")
+            .select("article_id")
+            .in_("article_id", article_ids)
+            .execute()
+        )
+        learned_ids = {row.get("article_id") for row in (learned_res.data or [])}
+
+    recent_articles = []
+    for a in articles:
+        recent_articles.append((
+            a.get("id"),
+            a.get("created_at"),
+            a.get("question") or "",
+            a.get("bias_class") or "",
+            a.get("summary") or "",
+            a.get("id") in learned_ids
+        ))
 
     return render_template(
         'learn_home.html',
@@ -2479,74 +2610,79 @@ def learn_from_article(article_id):
     is_login = 'username' in session
     if not is_login:
         return redirect(url_for('login'))
-    
-    conn = sqlite3.connect('static/database.db')
-    cursor = conn.cursor()
-    
-    # Fetch article from Chatlog
-    cursor.execute("""
-        SELECT rowid, question, summary, date, bias_class, is_url
-        FROM Chatlog 
-        WHERE rowid = ? AND username = ?
-    """, (article_id, session['username']))
-    
-    article = cursor.fetchone()
-    
+
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
+
+    article_res = (
+        supabase.table("chatlog")
+        .select("id,question,summary,created_at,bias_class,is_url")
+        .eq("id", article_id)
+        .eq("username", session['username'])
+        .limit(1)
+        .execute()
+    )
+    article = (article_res.data or [None])[0]
+
     if not article:
-        conn.close()
         return redirect(url_for('chatbot'))
-    
-    article_id_db, article_url, summary, date, bias_class, is_url = article
+
+    article_id_db = article.get("id")
+    article_url = article.get("question")
     from chatbot import detect_article_language
     detected_article_language = detect_article_language(article_url or "")
 
     # Fetch or generate learning annotations
-    cursor.execute("""
-        SELECT id, term, term_type, definition, english_meaning, part_of_speech,
-               example_sentence, difficulty, grammar_note, COALESCE(article_language, target_language, 'en')
-        FROM learning_annotations
-        WHERE article_id = ? AND target_language = ?
-        ORDER BY term_type, difficulty
-    """, (article_id_db, session.get('language', 'en')))
-
-    annotations = cursor.fetchall()
+    ann_res = (
+        supabase.table("learning_annotations")
+        .select("id,term,term_type,definition,english_meaning,part_of_speech,example_sentence,difficulty,grammar_note,article_language,target_language")
+        .eq("article_id", article_id_db)
+        .eq("target_language", session.get('language', 'en'))
+        .order("term_type")
+        .order("difficulty")
+        .execute()
+    )
+    annotations = ann_res.data or []
     allow_any_annotations = True
     if annotations:
-        stored_languages = {ann[9] or 'en' for ann in annotations}
+        stored_languages = {(ann.get("article_language") or ann.get("target_language") or 'en') for ann in annotations}
         if stored_languages != {detected_article_language}:
-            cursor.execute("DELETE FROM learning_annotations WHERE article_id = ?", (article_id_db,))
-            conn.commit()
+            (
+                supabase.table("learning_annotations")
+                .delete()
+                .eq("article_id", article_id_db)
+                .execute()
+            )
             annotations = []
             allow_any_annotations = False
 
     # If no annotations for current UI language, reuse any existing annotations for this article.
     # Do not auto-extract here (prevents blocking page load).
     if not annotations and allow_any_annotations:
-        cursor.execute("""
-            SELECT id, term, term_type, definition, english_meaning, part_of_speech,
-                   example_sentence, difficulty, grammar_note, COALESCE(article_language, target_language, 'en')
-            FROM learning_annotations
-            WHERE article_id = ?
-            ORDER BY term_type, difficulty
-        """, (article_id_db,))
-        annotations = cursor.fetchall()
-    
-    conn.close()
+        ann_any_res = (
+            supabase.table("learning_annotations")
+            .select("id,term,term_type,definition,english_meaning,part_of_speech,example_sentence,difficulty,grammar_note,article_language,target_language")
+            .eq("article_id", article_id_db)
+            .order("term_type")
+            .order("difficulty")
+            .execute()
+        )
+        annotations = ann_any_res.data or []
     
     # Format annotations for template
     formatted_annotations = []
     for ann in annotations:
-        article_lang = ann[9] if len(ann) > 9 and ann[9] else session.get('language', 'en')
+        article_lang = ann.get("article_language") or ann.get("target_language") or session.get('language', 'en')
         formatted_annotations.append({
-            'id': ann[0],
-            'term': ann[1],
-            'type': ann[2],
-            'definition': ann[3],
-            'english_meaning': ann[4],
-            'part_of_speech': ann[5],
-            'example_sentence': ann[6],
-            'difficulty': ann[7],
-            'grammar_note': ann[8],
+            'id': ann.get("id"),
+            'term': ann.get("term"),
+            'type': ann.get("term_type"),
+            'definition': ann.get("definition"),
+            'english_meaning': ann.get("english_meaning"),
+            'part_of_speech': ann.get("part_of_speech"),
+            'example_sentence': ann.get("example_sentence"),
+            'difficulty': ann.get("difficulty"),
+            'grammar_note': ann.get("grammar_note"),
             'article_language': article_lang
         })
     
@@ -2562,65 +2698,73 @@ def learn_extract(article_id):
     if not is_login:
         return jsonify({'ok': False, 'error': 'unauthorized'}), 401
 
-    conn = sqlite3.connect('static/database.db')
-    cursor = conn.cursor()
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
 
-    cursor.execute("""
-        SELECT rowid, question
-        FROM Chatlog
-        WHERE rowid = ? AND username = ?
-    """, (article_id, session['username']))
-    article = cursor.fetchone()
+    article_res = (
+        supabase.table("chatlog")
+        .select("id,question")
+        .eq("id", article_id)
+        .eq("username", session['username'])
+        .limit(1)
+        .execute()
+    )
+    article = (article_res.data or [None])[0]
     if not article:
-        conn.close()
         return jsonify({'ok': False, 'error': 'not_found'}), 404
 
-    article_id_db, article_text = article
+    article_id_db = article.get("id")
+    article_text = article.get("question") or ""
     article_language = detect_article_language(article_text)
 
     # Never re-extract if already learned once for this article
-    cursor.execute("SELECT COUNT(*) FROM learning_annotations WHERE article_id = ?", (article_id_db,))
-    existing_count = cursor.fetchone()[0]
+    existing_res = (
+        supabase.table("learning_annotations")
+        .select("id,article_language,target_language", count="exact")
+        .eq("article_id", article_id_db)
+        .execute()
+    )
+    existing_count = existing_res.count or 0
     if existing_count > 0:
-        cursor.execute("""
-            SELECT DISTINCT COALESCE(article_language, target_language, 'en')
-            FROM learning_annotations
-            WHERE article_id = ?
-        """, (article_id_db,))
-        existing_languages = {row[0] or 'en' for row in cursor.fetchall()}
+        existing_languages = {
+            (row.get("article_language") or row.get("target_language") or 'en')
+            for row in (existing_res.data or [])
+        }
         if existing_languages == {article_language}:
-            conn.close()
             return jsonify({'ok': True, 'status': 'already_learned'})
-        cursor.execute("DELETE FROM learning_annotations WHERE article_id = ?", (article_id_db,))
-        conn.commit()
+        (
+            supabase.table("learning_annotations")
+            .delete()
+            .eq("article_id", article_id_db)
+            .execute()
+        )
  
     from chatbot import extract_learning_points
     ui_language = session.get('language', 'en')
     learning_points = extract_learning_points(article_text, article_language, ui_language)
 
-    for point in learning_points:
-        cursor.execute("""
-            INSERT INTO learning_annotations
-            (article_id, user_id, target_language, term, term_type, definition,
-             english_meaning, example_sentence, difficulty, part_of_speech, grammar_note, article_language)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            article_id_db,
-            None,
-            ui_language,
-            point['term'],
-            point['type'],
-            point['definition'],
-            point['english_meaning'],
-            point['example_sentence'],
-            point['difficulty'],
-            point['part_of_speech'],
-            point['grammar_note'],
-            article_language
-        ))
+    if not learning_points:
+        return jsonify({'ok': False, 'error': 'extract_failed'}), 502
 
-    conn.commit()
-    conn.close()
+    rows = []
+    for point in learning_points:
+        rows.append({
+            "article_id": article_id_db,
+            "user_id": None,
+            "target_language": ui_language,
+            "term": point['term'],
+            "term_type": point['type'],
+            "definition": point['definition'],
+            "english_meaning": point['english_meaning'],
+            "example_sentence": point['example_sentence'],
+            "difficulty": point['difficulty'],
+            "part_of_speech": point['part_of_speech'],
+            "grammar_note": point['grammar_note'],
+            "article_language": article_language
+        })
+
+    supabase.table("learning_annotations").insert(rows).execute()
+
     return jsonify({'ok': True, 'status': 'extracted'})
 
 @app.route('/translate_example', methods=['POST'])
@@ -2697,6 +2841,18 @@ def set_language():
 
         session['language'] = lang
 
+    return jsonify({'success': True})
+
+
+@app.route('/set_tz', methods=['POST'])
+def set_tz():
+    data = request.get_json() or {}
+    tz = (data.get('tz') or '').strip()
+    offset_min = data.get('offset_min')
+    if tz:
+        session['tz'] = tz
+    if isinstance(offset_min, int):
+        session['tz_offset_min'] = offset_min
     return jsonify({'success': True})
 
 
@@ -2838,21 +2994,21 @@ def read_file():
 
 
 
-    conn = sqlite3.connect('static/database.db')
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
 
-    cursor = conn.cursor()
-
-    command = ("INSERT INTO Chatlog(username, date, question, bias_class, bias_percentage, summary, reason, keywords) "
-
-               "Values(?,?,?,?,?,?,?,?)")
-
-    current_date = now_kst().strftime('%Y-%m-%d %H:%M:%S')
-
-    cursor.execute(command, (session["username"], current_date, text, bias_class, str(bias_score), summary, reason, keywords))
-
-    conn.commit()
-
-    conn.close()
+    current_date = now_kst().isoformat()
+    supabase.table("chatlog").insert({
+        "username": session["username"],
+        "created_at": current_date,
+        "question": text,
+        "bias_class": bias_class,
+        "bias_percentage": str(bias_score),
+        "summary": summary,
+        "reason": reason,
+        "keywords": keywords,
+        "is_url": False
+    }).execute()
 
 
 
@@ -2913,17 +3069,34 @@ def get_chatbot_response():
     summary = summarize_news(text, language)
     keywords = get_keywords(text, language)
 
-    conn = sqlite3.connect('static/database.db')
-    cursor = conn.cursor()
-    command = ("INSERT INTO Chatlog(username, date, question, bias_class, bias_percentage, summary, reason, keywords, is_url) "
-               "Values(?,?,?,?,?,?,?,?,?)")
-    current_date = now_kst().strftime('%Y-%m-%d %H:%M:%S')
-    cursor.execute(command, (session["username"], current_date, text, bias_class, bias_score, summary, reason, keywords, 1 if is_url else 0))
-    conn.commit()
-    
-    # Get the rowid of the inserted article
-    article_id = cursor.lastrowid
-    conn.close()
+    if supabase is None:
+        abort(500, description="Supabase is not configured.")
+
+    current_date = now_kst().isoformat()
+    insert_res = supabase.table("chatlog").insert({
+        "username": session["username"],
+        "created_at": current_date,
+        "question": text,
+        "bias_class": bias_class,
+        "bias_percentage": str(bias_score),
+        "summary": summary,
+        "reason": reason,
+        "keywords": keywords,
+        "is_url": bool(is_url)
+    }).execute()
+    inserted = (insert_res.data or [None])[0]
+    article_id = inserted.get("id") if inserted else None
+    if article_id is None:
+        latest_res = (
+            supabase.table("chatlog")
+            .select("id")
+            .eq("username", session["username"])
+            .order("id", desc=True)
+            .limit(1)
+            .execute()
+        )
+        latest = (latest_res.data or [None])[0]
+        article_id = latest.get("id") if latest else None
 
     return jsonify({
         "bias_class": bias_class,
