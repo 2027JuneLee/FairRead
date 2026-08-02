@@ -69,6 +69,63 @@ def _supabase_insert_resilient(table_name, payload):
             raise
 
 
+def _api_error_payload(error: APIError):
+    payload = error.args[0] if error.args else None
+    return payload if isinstance(payload, dict) else {}
+
+
+def _api_error_message(error: APIError):
+    payload = _api_error_payload(error)
+    return payload.get("message", "") or str(error)
+
+
+def _api_error_code(error: APIError):
+    payload = _api_error_payload(error)
+    return payload.get("code")
+
+
+def _next_numeric_id(table_name):
+    latest_res = (
+        supabase.table(table_name)
+        .select("id")
+        .order("id", desc=True)
+        .limit(1)
+        .execute()
+    )
+    latest = (latest_res.data or [None])[0]
+    latest_id = _pick_row_value(latest, "id", default=0) if latest else 0
+    try:
+        return int(latest_id) + 1
+    except (TypeError, ValueError):
+        raise RuntimeError(f"{table_name}.id is not numeric: {latest_id!r}")
+
+
+def _insert_chatlog_resilient(payload):
+    working = dict(payload)
+    id_retry_count = 0
+    while True:
+        try:
+            return supabase.table("chatlog").insert(working).execute()
+        except APIError as e:
+            missing_col = _extract_missing_column_name(e)
+            if missing_col and missing_col in working:
+                working.pop(missing_col, None)
+                continue
+
+            message = _api_error_message(e)
+            code = _api_error_code(e)
+            needs_manual_id = (
+                'null value in column "id" of relation "chatlog" violates not-null constraint' in message
+                and "id" not in working
+            )
+            duplicate_id = code == "23505" and "id" in working
+            if (needs_manual_id or duplicate_id) and id_retry_count < 3:
+                working["id"] = _next_numeric_id("chatlog")
+                id_retry_count += 1
+                continue
+            raise
+
+
 def _pick_row_value(row, *keys, default=None):
     for key in keys:
         value = row.get(key) if isinstance(row, dict) else None
@@ -2998,7 +3055,7 @@ def read_file():
         abort(500, description="Supabase is not configured.")
 
     current_date = now_kst().isoformat()
-    supabase.table("chatlog").insert({
+    _insert_chatlog_resilient({
         "username": session["username"],
         "created_at": current_date,
         "question": text,
@@ -3073,7 +3130,7 @@ def get_chatbot_response():
         abort(500, description="Supabase is not configured.")
 
     current_date = now_kst().isoformat()
-    insert_res = supabase.table("chatlog").insert({
+    insert_res = _insert_chatlog_resilient({
         "username": session["username"],
         "created_at": current_date,
         "question": text,
