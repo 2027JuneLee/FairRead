@@ -33,7 +33,14 @@ import os
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 from supabase import create_client, Client
+import sys
+import os
 
+# Ensure Vercel finds local modules in the same directory
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from chatbot import *
+from helper import *
 load_dotenv()
 
 app = Flask(__name__)
