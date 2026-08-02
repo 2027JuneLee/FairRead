@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">FairRead F Logo</title>
+  <desc id="desc">A black F inside a white square with a black border.</desc>
+  <rect x="8" y="8" width="240" height="240" rx="18" fill="#ffffff" stroke="#111111" stroke-width="12"/>
+  <text
+    x="128"
+    y="176"
+    text-anchor="middle"
+    font-family="'Times New Roman', 'Playfair Display', Georgia, serif"
+    font-size="172"
+    font-weight="700"
+    fill="#111111">F</text>
+</svg>

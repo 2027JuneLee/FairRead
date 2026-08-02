@@ -99,7 +99,7 @@ body::before{
   <!-- Language Selector Navbar -->
   <nav style="position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; z-index: 10;">
     <a href="{{ url_for('index') }}" style="display: flex; align-items: center; text-decoration: none;">
-      <img src="../static/img/logo-no-background.png" alt="FairRead" style="height: 32px;">
+      <img src="../static/img/logo-f-square.svg" alt="FairRead" style="height: 32px;">
     </a>
     <select id="langSelector" class="form-select form-select-sm" style="width: auto; max-width: 120px;">
       <option value="en" {% if session.get('language', 'en') == 'en' %}selected{% endif %}>English</option>
@@ -114,7 +114,7 @@ body::before{
 
   <div class="login-card mt-3">
     <a href="{{ url_for('index') }}">
-      <img class="login-logo d-block mx-auto mb-4" src="../static/img/logo-no-background.png" alt="FairRead logo">
+      <img class="login-logo d-block mx-auto mb-4" src="../static/img/logo-f-square.svg" alt="FairRead logo">
     </a>
 
     <form action="/register" method="POST" class="mt-2">

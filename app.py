@@ -1,6 +1,7 @@
 import ast
 import json
 import os
+import shutil
 import sqlite3
 import sys
 import time
@@ -24,19 +25,48 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.append(BASE_DIR)
 
+SOURCE_DB_PATH = os.path.join(BASE_DIR, "static", "database.db")
+RUNTIME_DB_PATH = os.getenv("SQLITE_DB_PATH")
+if not RUNTIME_DB_PATH:
+    if os.getenv("VERCEL"):
+        RUNTIME_DB_PATH = os.path.join("/tmp", "fairread.db")
+    else:
+        RUNTIME_DB_PATH = SOURCE_DB_PATH
+
+if RUNTIME_DB_PATH != SOURCE_DB_PATH and os.path.exists(SOURCE_DB_PATH):
+    runtime_db_dir = os.path.dirname(RUNTIME_DB_PATH)
+    if runtime_db_dir:
+        os.makedirs(runtime_db_dir, exist_ok=True)
+    if not os.path.exists(RUNTIME_DB_PATH):
+        shutil.copy2(SOURCE_DB_PATH, RUNTIME_DB_PATH)
+
+_original_sqlite_connect = sqlite3.connect
+
+
+def _fairread_sqlite_connect(database, *args, **kwargs):
+    if isinstance(database, str):
+        normalized = database.replace("\\", "/")
+        source_normalized = SOURCE_DB_PATH.replace("\\", "/")
+        if normalized in {"static/database.db", "./static/database.db", source_normalized}:
+            database = RUNTIME_DB_PATH
+    return _original_sqlite_connect(database, *args, **kwargs)
+
+
+sqlite3.connect = _fairread_sqlite_connect
+
 from chatbot import *
 from helper import *
 load_dotenv()
 
 url: str = os.getenv("SUPABASE_URL")
-key: str = os.getenv("SUPABASE_KEY")
+key: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
 
 supabase: Client = None
 
 if url and key:
     supabase = create_client(url, key)
 else:
-    print("WARNING: SUPABASE_URL or SUPABASE_KEY environment variable is missing.")
+    print("WARNING: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_KEY) is missing.")
 
 def now_kst():
 
