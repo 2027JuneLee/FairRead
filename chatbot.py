@@ -1,5 +1,4 @@
 from openai import OpenAI
-from textblob import TextBlob
 import requests
 from bs4 import BeautifulSoup
 from collections import Counter
@@ -423,10 +422,30 @@ def get_response(prompt, model="gpt-3.5-turbo"):
     else:
         return "We cannot answer to your question because we only answer to the news-related questions"
 def calculate_sentiment_subject(text):
-    # Textblob is a library for getting plorarity and subjectivity score of the given text
-    blob = TextBlob(text)
-    sentiment = blob.sentiment
-    return {"ploarity":sentiment.polarity, "subjectivity":sentiment.subjectivity}
+    # Import TextBlob lazily so app startup is not blocked in restricted runtimes.
+    try:
+        from textblob import TextBlob
+        blob = TextBlob(text)
+        sentiment = blob.sentiment
+        return {"ploarity": sentiment.polarity, "subjectivity": sentiment.subjectivity}
+    except ImportError:
+        positive_words = {
+            "good", "great", "excellent", "positive", "success", "benefit", "improve",
+            "happy", "win", "effective", "safe", "clear", "strong"
+        }
+        negative_words = {
+            "bad", "poor", "terrible", "negative", "fail", "risk", "decline",
+            "sad", "lose", "harm", "danger", "weak", "crisis"
+        }
+        words = [w.strip(".,!?;:()[]{}\"'").lower() for w in text.split() if w.strip()]
+        if not words:
+            return {"ploarity": 0.0, "subjectivity": 0.0}
+
+        pos = sum(1 for w in words if w in positive_words)
+        neg = sum(1 for w in words if w in negative_words)
+        polarity = (pos - neg) / len(words)
+        subjectivity = min(1.0, (pos + neg) / len(words))
+        return {"ploarity": polarity, "subjectivity": subjectivity}
 
 #print(calculate_sentiment_subject("i got f on my algera exam"))
 # polarity: min: -1, max: 1, where -1 indicates negative sentiment, 1 is positive sentiment
