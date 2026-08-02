@@ -13,6 +13,7 @@ from werkzeug.utils import secure_filename
 from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from postgrest.exceptions import APIError
 
 app = Flask(__name__)
 
@@ -58,15 +59,32 @@ from chatbot import *
 from helper import *
 load_dotenv()
 
-url: str = os.getenv("SUPABASE_URL")
+url: str = (os.getenv("SUPABASE_URL") or "").strip()
 key: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
 
 supabase: Client = None
+
+url = url.rstrip("/")
+if url.lower().endswith("/rest/v1"):
+    url = url[:-8].rstrip("/")
 
 if url and key:
     supabase = create_client(url, key)
 else:
     print("WARNING: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_KEY) is missing.")
+
+
+def _extract_missing_column_name(error: APIError):
+    payload = error.args[0] if error.args else None
+    message = payload.get("message", "") if isinstance(payload, dict) else str(error)
+    marker = "Could not find the '"
+    if marker not in message:
+        return None
+    start = message.find(marker) + len(marker)
+    end = message.find("' column", start)
+    if end <= start:
+        return None
+    return message[start:end]
 
 def now_kst():
 
@@ -2713,17 +2731,23 @@ def register():
             flash('username already exists')
             return render_template('signup.html')
 
-        supabase.table("users").insert(
-            {
-                "username": username,
-                "password": password,
-                "email": email,
-                "gender": gender,
-                "age": age,
-            }
-        ).execute()
-
-        return redirect(url_for('register', registered=1))
+        payload = {
+            "username": username,
+            "password": password,
+            "email": email,
+            "gender": gender,
+            "age": age,
+        }
+        while True:
+            try:
+                supabase.table("users").insert(payload).execute()
+                return redirect(url_for('register', registered=1))
+            except APIError as e:
+                missing_col = _extract_missing_column_name(e)
+                if missing_col and missing_col in payload:
+                    payload.pop(missing_col, None)
+                    continue
+                raise
 
     registered = request.args.get('registered') == '1'
 
@@ -2752,9 +2776,7 @@ def login():
             .execute()
         )
         if not user_result.data:
-
             flash('Username or password is wrong')
-
             return render_template('login.html')
 
         password_db = user_result.data[0]["password"]
@@ -2765,12 +2787,17 @@ def login():
 
             current_time = now_kst().strftime('%Y-%m-%d %H:%M:%S')
 
-            (
-                supabase.table("users")
-                .update({"recent_login": current_time})
-                .eq("username", username)
-                .execute()
-            )
+            try:
+                (
+                    supabase.table("users")
+                    .update({"recent_login": current_time})
+                    .eq("username", username)
+                    .execute()
+                )
+            except APIError as e:
+                missing_col = _extract_missing_column_name(e)
+                if missing_col != "recent_login":
+                    raise
 
             return redirect(url_for('index'))
 
