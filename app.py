@@ -2699,45 +2699,31 @@ def register():
 
         age = request.form["age"]
 
+        if supabase is None:
+            abort(500, description="Supabase is not configured.")
 
-
-        conn = sqlite3.connect('static/database.db')
-
-        cursor = conn.cursor()
-
-
-
-        cursor.execute("SELECT 1 FROM Users WHERE username = ?;", (username,))
-
-        exists = cursor.fetchone()
-
-        if exists:
-
-            conn.close()
-
+        existing_user = (
+            supabase.table("users")
+            .select("username")
+            .eq("username", username)
+            .limit(1)
+            .execute()
+        )
+        if existing_user.data:
             flash('username already exists')
-
             return render_template('signup.html')
 
-
-
-        cursor.execute(
-
-            "INSERT INTO Users (username, password, email, gender, age) VALUES (?,?,?,?,?)",
-
-            (username, password, email, gender, age)
-
-        )
-
-        conn.commit()
-
-        conn.close()
-
-
+        supabase.table("users").insert(
+            {
+                "username": username,
+                "password": password,
+                "email": email,
+                "gender": gender,
+                "age": age,
+            }
+        ).execute()
 
         return redirect(url_for('register', registered=1))
-
-
 
     registered = request.args.get('registered') == '1'
 
@@ -2755,49 +2741,44 @@ def login():
 
         password = request.form["password"]
 
-        conn = sqlite3.connect('static/database.db')
+        if supabase is None:
+            abort(500, description="Supabase is not configured.")
 
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT password FROM Users WHERE username = ?;", (username,))
-
-        result = cursor.fetchone()
-
-        if result is None:
+        user_result = (
+            supabase.table("users")
+            .select("password")
+            .eq("username", username)
+            .limit(1)
+            .execute()
+        )
+        if not user_result.data:
 
             flash('Username or password is wrong')
 
             return render_template('login.html')
 
-        else:
+        password_db = user_result.data[0]["password"]
 
-            password_db = result[0]
+        if password == password_db:
 
-            if password == password_db:
+            session["username"] = username
 
-                session["username"] = username
+            current_time = now_kst().strftime('%Y-%m-%d %H:%M:%S')
 
-                current_time = now_kst().strftime('%Y-%m-%d %H:%M:%S')
+            (
+                supabase.table("users")
+                .update({"recent_login": current_time})
+                .eq("username", username)
+                .execute()
+            )
 
-                cursor.execute("UPDATE Users SET recent_login = ? WHERE username = ?;",
+            return redirect(url_for('index'))
 
-                               (current_time, username))
-
-                conn.commit()
-
-                conn.close()
-
-                return redirect(url_for('index'))
-
-            else:
-
-                flash('username or password is wrong')
-
-                return render_template('login.html')
-
-    else:
+        flash('username or password is wrong')
 
         return render_template('login.html')
+
+    return render_template('login.html')
 
 
 
