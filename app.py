@@ -1,27 +1,17 @@
 import ast
 import json
-
-from collections import Counter, defaultdict
-
-
-
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort
-
+import os
 import sqlite3
-
-from chatbot import *
-
-from datetime import datetime, timedelta, date
-
-from werkzeug.utils import secure_filename
-
-from helper import extract_news_content
-
-from zoneinfo import ZoneInfo
-
+import sys
 import time
 
-
+from collections import Counter, defaultdict
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, abort
+from datetime import datetime, timedelta, date
+from werkzeug.utils import secure_filename
+from zoneinfo import ZoneInfo
+from dotenv import load_dotenv
+from supabase import create_client, Client
 
 app = Flask(__name__)
 
@@ -29,21 +19,14 @@ app.config['APP_TZ'] = ZoneInfo("Asia/Seoul")
 
 app.secret_key = "abc"
 
-import os
-from flask import Flask, render_template, request, jsonify
-from dotenv import load_dotenv
-from supabase import create_client, Client
-import sys
-import os
-
 # Ensure Vercel finds local modules in the same directory
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.append(BASE_DIR)
 
 from chatbot import *
 from helper import *
 load_dotenv()
-
-app = Flask(__name__)
 
 url: str = os.getenv("SUPABASE_URL")
 key: str = os.getenv("SUPABASE_KEY")
