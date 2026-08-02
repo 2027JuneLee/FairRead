@@ -102,6 +102,8 @@ def _next_numeric_id(table_name):
 
 def _insert_chatlog_resilient(payload):
     working = dict(payload)
+    if "id" not in working or working.get("id") is None:
+        working["id"] = _next_numeric_id("chatlog")
     id_retry_count = 0
     while True:
         try:
@@ -115,8 +117,9 @@ def _insert_chatlog_resilient(payload):
             message = _api_error_message(e)
             code = _api_error_code(e)
             needs_manual_id = (
-                'null value in column "id" of relation "chatlog" violates not-null constraint' in message
-                and "id" not in working
+                code == "23502"
+                and 'column "id"' in message
+                and "chatlog" in message
             )
             duplicate_id = code == "23505" and "id" in working
             if (needs_manual_id or duplicate_id) and id_retry_count < 3:
