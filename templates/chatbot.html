@@ -453,7 +453,17 @@ function uploadFile(file){
   formData.append("pdf_file",file);
 
   fetch("/upload_pdf",{ method:"POST", body:formData })
-    .then(response => response.json())
+    .then(async response => {
+      const contentType = response.headers.get("content-type") || "";
+      const isJson = contentType.includes("application/json");
+      const body = isJson ? await response.json() : await response.text();
+      if (!response.ok) {
+        const message = isJson ? (body.error || `HTTP ${response.status}`) : `HTTP ${response.status}`;
+        throw new Error(message);
+      }
+      if (!isJson) throw new Error("Server returned non-JSON response.");
+      return body;
+    })
     .then(data => {
       var chatBox = document.getElementById("chat-box");
       const doneMsg = getUITextTranslation('Done Processing. Please check the right side.', getCurrentLanguage());
@@ -501,14 +511,18 @@ function sendMessage(){
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({message: userInput}),
   })
-  .then(response => {
-      // Check for HTTP error status (e.g., 400 for URL fetch errors)
+  .then(async response => {
+      const contentType = response.headers.get("content-type") || "";
+      const isJson = contentType.includes("application/json");
+      const body = isJson ? await response.json() : await response.text();
       if (!response.ok) {
-          return response.json().then(err => {
-              throw new Error(err.error || `HTTP ${response.status}`);
-          });
+          const message = isJson ? (body.error || `HTTP ${response.status}`) : `HTTP ${response.status}`;
+          throw new Error(message);
       }
-      return response.json();
+      if (!isJson) {
+          throw new Error("Server returned non-JSON response.");
+      }
+      return body;
   })
   .then(data => {
       // Remove the loading message

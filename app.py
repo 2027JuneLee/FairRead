@@ -3025,7 +3025,13 @@ def login():
 @app.route('/upload_pdf', methods=["POST"])
 
 def read_file():
+    username = current_user()
+    if not username:
+        return jsonify({"error": "Please log in first."}), 401
 
+    if "pdf_file" not in request.files:
+        return jsonify({"error": "No file uploaded."}), 400
+ 
     file = request.files["pdf_file"]
 
     filename = secure_filename(file.filename)
@@ -3056,7 +3062,7 @@ def read_file():
 
     current_date = now_kst().isoformat()
     _insert_chatlog_resilient({
-        "username": session["username"],
+        "username": username,
         "created_at": current_date,
         "question": text,
         "bias_class": bias_class,
@@ -3065,7 +3071,7 @@ def read_file():
         "reason": reason,
         "keywords": keywords,
         "is_url": False
-    }).execute()
+    })
 
 
 
@@ -3092,15 +3098,18 @@ def read_file():
 @app.route('/get_response', methods=["POST"])
 
 def get_chatbot_response():
+    username = current_user()
+    if not username:
+        return jsonify({"error": "Please log in first."}), 401
 
-    data = request.json
+    data = request.get_json(silent=True) or {}
+    text = str(data.get("message", "")).strip()
+    if not text:
+        return jsonify({"error": "Message is required."}), 400
 
-    text = data["message"].strip()
-    
     # Check if input is a URL
     is_url = text.lower().startswith(('http://', 'https://', 'www.'))
-    
-    error_message = None
+
     if is_url:
         # Fetch article from URL
         from chatbot import fetch_article_from_url
@@ -3131,7 +3140,7 @@ def get_chatbot_response():
 
     current_date = now_kst().isoformat()
     insert_res = _insert_chatlog_resilient({
-        "username": session["username"],
+        "username": username,
         "created_at": current_date,
         "question": text,
         "bias_class": bias_class,
@@ -3140,14 +3149,14 @@ def get_chatbot_response():
         "reason": reason,
         "keywords": keywords,
         "is_url": bool(is_url)
-    }).execute()
+    })
     inserted = (insert_res.data or [None])[0]
     article_id = inserted.get("id") if inserted else None
     if article_id is None:
         latest_res = (
             supabase.table("chatlog")
             .select("id")
-            .eq("username", session["username"])
+            .eq("username", username)
             .order("id", desc=True)
             .limit(1)
             .execute()
