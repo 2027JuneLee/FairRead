@@ -29,7 +29,21 @@ app.config['APP_TZ'] = ZoneInfo("Asia/Seoul")
 
 app.secret_key = "abc"
 
+import os
+from dotenv import load_dotenv
+from supabase import create_client, Client
 
+# Load environment variables (for local testing)
+load_dotenv()
+
+app = Flask(__name__)
+
+# Fetch environment variables
+url: str = os.getenv("SUPABASE_URL")
+key: str = os.getenv("SUPABASE_KEY")
+
+# Initialize Supabase client
+supabase: Client = create_client(url, key)
 
 def now_kst():
 
