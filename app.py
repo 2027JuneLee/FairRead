@@ -2835,28 +2835,31 @@ def translate_example():
 
     data = request.get_json() or {}
     text = (data.get('text') or '').strip()
-    article_language = (data.get('article_language') or 'en').strip().lower()
+    source_language = (data.get('source_language') or 'en').strip().lower()
+    target_language = (data.get('target_language') or source_language).strip().lower()
     language_names = {
         'en': 'English',
         'es': 'Spanish',
         'zh': 'Chinese',
         'ko': 'Korean'
     }
-    if article_language not in language_names:
-        article_language = 'en'
+    if source_language not in language_names:
+        source_language = 'en'
+    if target_language not in language_names:
+        target_language = source_language
     if not text:
         return jsonify({'ok': False, 'error': 'empty_text'}), 400
 
-    if article_language == 'en':
+    if source_language == 'en' and target_language == 'en':
         return jsonify({'ok': True, 'en': text, 'target': text})
 
     prompt = f"""
-Translate this text into English and {language_names[article_language]}.
+Translate this text from {language_names[source_language]} into English and {language_names[target_language]}.
 Preserve names and factual meaning.
 Return ONLY valid JSON:
 {{
   "en": "English translation",
-  "target": "{language_names[article_language]} translation"
+  "target": "{language_names[target_language]} translation"
 }}
 
 Text:

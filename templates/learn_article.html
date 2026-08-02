@@ -675,7 +675,12 @@
     const languageNames = { en: 'English', es: 'Spanish', zh: 'Chinese', ko: 'Korean' };
     const articleShort = (articleLanguage || 'en').toUpperCase();
     const englishShort = 'EN';
-    const articleLanguageName = languageNames[articleLanguage] || 'Article';
+    const uiLanguage = (currentLanguage || 'en').toLowerCase();
+    const sourceLanguage = (articleLanguage || 'en').toLowerCase();
+    const detailTargetLanguage = uiLanguage === 'en' ? sourceLanguage : uiLanguage;
+    const detailTargetShort = (detailTargetLanguage || 'en').toUpperCase();
+    const detailTargetLanguageName = languageNames[detailTargetLanguage] || 'Target';
+    const showSecondaryLanguage = detailTargetLanguage !== 'en';
     const miniGameState = {
         active: false,
         ready: false,
@@ -1104,7 +1109,7 @@
     }
 
     async function getDualTranslations(text, cacheObj) {
-        const key = `en::${articleLanguage}::${text || ''}`;
+        const key = `en::${sourceLanguage}::${detailTargetLanguage}::${text || ''}`;
         if (!text) return { en: '-', target: '-' };
         if (cacheObj[key]) return cacheObj[key];
 
@@ -1112,7 +1117,11 @@
             const response = await fetch('/translate_example', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, article_language: articleLanguage })
+                body: JSON.stringify({
+                    text,
+                    source_language: sourceLanguage,
+                    target_language: detailTargetLanguage
+                })
             });
             const data = await response.json();
             const result = {
@@ -1153,40 +1162,49 @@
 
             html += `<div>
                 <div class="detail-label">{{ translate_ui("Definition", current_language) }}</div>
-                <div class="detail-value" id="definition-en-${termId}"><strong>English (${escapeHtml(englishShort)}):</strong> ...</div>
-                <div class="detail-value" id="definition-article-${termId}"><strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ...</div>
-            </div>`;
+                <div class="detail-value" id="definition-en-${termId}"><strong>English (${escapeHtml(englishShort)}):</strong> ...</div>` +
+                (showSecondaryLanguage
+                    ? `<div class="detail-value" id="definition-article-${termId}"><strong>${escapeHtml(detailTargetLanguageName)} (${escapeHtml(detailTargetShort)}):</strong> ...</div>`
+                    : ``) +
+            `</div>`;
         }
 
-        // Part of speech (English + article language)
+        // Part of speech (English + UI language)
         if (ann.part_of_speech) {
             const posEn = ann.part_of_speech || '';
-            const posArticle = partOfSpeechLabel(ann.part_of_speech || '', articleLanguage);
+            const posTarget = partOfSpeechLabel(ann.part_of_speech || '', detailTargetLanguage);
             html += `<div>
                 <div class="detail-label">{{ translate_ui("Part of Speech", current_language) }}</div>
-                <div class="detail-value"><strong>English (${escapeHtml(englishShort)}):</strong> ${escapeHtml(posEn || '-')}</div>
-                <div class="detail-value"><strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ${escapeHtml(posArticle || '-')}</div>
-            </div>`;
+                <div class="detail-value"><strong>English (${escapeHtml(englishShort)}):</strong> ${escapeHtml(posEn || '-')}</div>` +
+                (showSecondaryLanguage
+                    ? `<div class="detail-value"><strong>${escapeHtml(detailTargetLanguageName)} (${escapeHtml(detailTargetShort)}):</strong> ${escapeHtml(posTarget || '-')}</div>`
+                    : ``) +
+            `</div>`;
         }
 
-        // Example sentence (English + article language)
+        // Example sentence (English + UI language)
         if (ann.example_sentence) {
             html += `<div>
                 <div class="detail-label">{{ translate_ui("Example", current_language) }}</div>
                 <div class="detail-example-box" id="example-box-${termId}">
-                    <div><strong>English (${escapeHtml(englishShort)}):</strong> ...</div>
-                    <div><strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ...</div>
+                    <div><strong>English (${escapeHtml(englishShort)}):</strong> ...</div>` +
+                    (showSecondaryLanguage
+                        ? `<div><strong>${escapeHtml(detailTargetLanguageName)} (${escapeHtml(detailTargetShort)}):</strong> ...</div>`
+                        : ``) +
+                `</div>
                 </div>
             </div>`;
         }
 
-        // Grammar note (English + article language)
+        // Grammar note (English + UI language)
         if (ann.type === 'grammar' && ann.grammar_note) {
             html += `<div>
                 <div class="detail-label">{{ translate_ui("Grammar Note", current_language) }}</div>
-                <div class="detail-value" id="grammar-en-${termId}"><strong>English (${escapeHtml(englishShort)}):</strong> ...</div>
-                <div class="detail-value" id="grammar-article-${termId}"><strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ...</div>
-            </div>`;
+                <div class="detail-value" id="grammar-en-${termId}"><strong>English (${escapeHtml(englishShort)}):</strong> ...</div>` +
+                (showSecondaryLanguage
+                    ? `<div class="detail-value" id="grammar-article-${termId}"><strong>${escapeHtml(detailTargetLanguageName)} (${escapeHtml(detailTargetShort)}):</strong> ...</div>`
+                    : ``) +
+            `</div>`;
         }
 
         html += '</div>';
@@ -1197,10 +1215,11 @@
             getDualTranslations(ann.example_sentence, exampleTranslationCache).then((translated) => {
                 const box = document.getElementById(`example-box-${termId}`);
                 if (!box) return;
-                box.innerHTML = `
-                    <div><strong>English (${escapeHtml(englishShort)}):</strong> ${escapeHtml(translated.en || '-')}</div>
-                    <div><strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ${highlightTermText(ann.example_sentence || '-', termName)}</div>
-                `;
+                const englishLine = `<div><strong>English (${escapeHtml(englishShort)}):</strong> ${highlightTermText(translated.en || '-', termName)}</div>`;
+                const targetLine = showSecondaryLanguage
+                    ? `<div><strong>${escapeHtml(detailTargetLanguageName)} (${escapeHtml(detailTargetShort)}):</strong> ${escapeHtml(translated.target || '-')}</div>`
+                    : '';
+                box.innerHTML = englishLine + targetLine;
             });
         }
 
@@ -1213,7 +1232,7 @@
                     definitionEn.innerHTML = `<strong>English (${escapeHtml(englishShort)}):</strong> ${escapeHtml(translated.en || '-')}`;
                 }
                 if (definitionArticle) {
-                    definitionArticle.innerHTML = `<strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ${escapeHtml(translated.target || '-')}`;
+                    definitionArticle.innerHTML = `<strong>${escapeHtml(detailTargetLanguageName)} (${escapeHtml(detailTargetShort)}):</strong> ${escapeHtml(translated.target || '-')}`;
                 }
             });
         }
@@ -1226,7 +1245,7 @@
                     grammarEn.innerHTML = `<strong>English (${escapeHtml(englishShort)}):</strong> ${escapeHtml(translated.en || '-')}`;
                 }
                 if (grammarArticle) {
-                    grammarArticle.innerHTML = `<strong>${escapeHtml(articleLanguageName)} (${escapeHtml(articleShort)}):</strong> ${escapeHtml(translated.target || '-')}`;
+                    grammarArticle.innerHTML = `<strong>${escapeHtml(detailTargetLanguageName)} (${escapeHtml(detailTargetShort)}):</strong> ${escapeHtml(translated.target || '-')}`;
                 }
             });
         }
